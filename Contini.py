@@ -1,17 +1,32 @@
-from typing import Union, Optional
 from collections import OrderedDict
+from typing import Optional, Union
 
-def Contini(rho: Union[int, float], t: Union[int, float], s: Union[int, float], mua: Union[int, float], musp: Union[int, float], n1: Union[int, float], n2: Union[int, float], phantom: Optional[str], DD: Optional[str], m: int = 200):
-    
+from numpy import exp, pi
+
+
+def Contini(
+    rho: Union[int, float],
+    t: Union[int, float],
+    s: Union[int, float],
+    mua: Union[int, float],
+    musp: Union[int, float],
+    n1: Union[int, float],
+    n2: Union[int, float],
+    phantom: Optional[str],
+    DD: Optional[str],
+    m: int = 200,
+):
     t = t * 1e-9
     rho = rho * 1e-3
     s = s * 1e-3
     mua = mua * 1e3
     musp = musp * 1e3
 
-    err = 1e-6
-    
-    R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(rho, t, s, m, mua, musp, n1, n2, DD)
+    err = 1e-6  # noqa: F841
+
+    R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
+        rho, t, s, m, mua, musp, n1, n2, DD
+    )
 
     R_rho, T_rho = Reflectance_Transmittance_rho(rho, s, m, mua, musp, n1, n2, DD)
 
@@ -27,10 +42,55 @@ def Contini(rho: Union[int, float], t: Union[int, float], s: Union[int, float], 
 
     return R_rho_t, T_rho_t, R_rho, T_rho, R_t, T_t, l_rho_R, l_rho_T, R, T, A, Z
 
-    
+
+def D_parameter(DD, mua, musp):
+    D = None
+
+    return D
+
 
 def Reflectance_Transmittance_rho_t(rho, t, s, m, mua, musp, n1, n2, DD):
-    R_rho_t, T_rho_t = None
+    c = 299792458
+    v = c / n2
+
+    D = D_parameter(DD, mua, musp)
+
+    R_rho_t = 0.0
+    T_rho_t = 0.0
+
+    R_rho_t_source_sum = 0.0
+    T_rho_t_source_sum = 0.0
+
+    Z = Image_Sources_Positions(s, mua, musp, n1, n2, DD, m)
+
+    for index in range(-m, m + 1):
+        z1, z2, z3, z4 = Z[f"Z_{index}"]
+
+        R_rho_t_source_sum += z3 * exp(-(z3**2) / (4 * D * v * t)) - z4 * exp(
+            -(z4**2) / (4 * D * v * t)
+        )
+
+        T_rho_t_source_sum += z1 * exp(-(z1**2) / (4 * D * v * t)) - z2 * exp(
+            -(z2**2) / (4 * D * v * t)
+        )
+
+    R_rho_t = (
+        -exp(-(mua * v * t - rho**2) / (4 * D * v * t))
+        / (2 * ((4 * pi * D * v) ** (3 / 2)) * t ** (5 / 2))
+        * R_rho_t_source_sum
+    )
+    T_rho_t = (
+        exp(-(mua * v * t - rho**2) / (4 * D * v * t))
+        / (2 * ((4 * pi * D * v) ** (3 / 2)) * t ** (5 / 2))
+        * T_rho_t_source_sum
+    )
+
+    R_rho_t *= 1e-6 * 1e-12
+    T_rho_t *= 1e-6 * 1e-12
+
+    R_rho_t = R_rho_t if t > 0 else 0
+    T_rho_t = T_rho_t if t > 0 else 0
+
     return R_rho_t, T_rho_t
 
 
@@ -61,7 +121,7 @@ def A_param(n1, n2):
 
 def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m):
     Z = OrderedDict()
-    for index in range(-m, m+1):
+    for index in range(-m, m + 1):
         z1, z2, z3, z4 = None
-        Z[f"Z_{i}"] = z1, z2, z3, z4
+        Z[f"Z_{index}"] = z1, z2, z3, z4
     return Z
