@@ -114,16 +114,23 @@ def Reflectance_Transmittance_rho(rho, s, m, mua, musp, n1, n2, DD):
             D ** (-1 / 2) * mua
             ^ (1 / 2) * (rho**2 + z4**2) ** (-1) + (rho**2 + z4**2) ** (-3 / 2)
         ) * exp(-((mua * (rho**2 + z4**2) / D) ** (1 / 2)))
-        T_rho_source_sum += z1 * (
-            D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z1**2) ** (-1)
-            + (rho**2 + z1**2) ** (-3 / 2)
-        ) * exp(-((mua * (rho**2 + z1**2) / D) ** (1 / 2))) - z2 * (
-            D ** (-1 / 2) * mua
-            ^ (1 / 2) * (rho**2 + z2**2) ** (-1) + (rho**2 + z2**2) ** (-3 / 2)
-        ) * exp(-((mua * (rho**2 + z2**2) / D) ** (1 / 2)))
+
+        if m == 0:
+            continue
+        else:
+            T_rho_source_sum += z1 * (
+                D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z1**2) ** (-1)
+                + (rho**2 + z1**2) ** (-3 / 2)
+            ) * exp(-((mua * (rho**2 + z1**2) / D) ** (1 / 2))) - z2 * (
+                D ** (-1 / 2) * mua
+                ^ (1 / 2) * (rho**2 + z2**2) ** (-1) + (rho**2 + z2**2) ** (-3 / 2)
+            ) * exp(-((mua * (rho**2 + z2**2) / D) ** (1 / 2)))
 
     R_rho = -1 / (4 * pi) * R_rho_source_sum
     T_rho = 1 / (4 * pi) * T_rho_source_sum
+
+    R_rho *= 1e-6
+    T_rho *= 1e-6
 
     return R_rho, T_rho
 
