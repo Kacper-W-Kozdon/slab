@@ -1,7 +1,8 @@
 from collections import OrderedDict
 from typing import Optional, Union
 
-from numpy import exp, log, pi
+from numpy import exp, log, pi, sqrt
+from scipy.special import factorial, gamma
 
 
 def Contini(
@@ -13,7 +14,7 @@ def Contini(
     n1: Union[int, float],
     n2: Union[int, float],
     phantom: Optional[str],
-    DD: Optional[str],
+    DD: Optional[str] = "Dmus",
     m: int = 200,
     eq: str = "RTE",
 ):
@@ -37,7 +38,7 @@ def Contini(
 
     R, T = Reflectance_Transmittance(s, m, mua, musp, n1, n2, DD, eq)
 
-    A = A_param(n1, n2)
+    A = A_parameter(n1, n2)
 
     Z = Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq)
 
@@ -46,6 +47,10 @@ def Contini(
 
 def D_parameter(DD, mua, musp, eq):
     D = None
+    if DD == "Dmuas":
+        D = 1 / (3 * (musp + mua))
+    elif DD == "Dmus":
+        D = 1 / (3 * (musp))
 
     return D
 
@@ -53,8 +58,9 @@ def D_parameter(DD, mua, musp, eq):
 def Reflectance_Transmittance_rho_t(rho, t, s, m, mua, musp, n1, n2, DD, eq):
     c = 299792458
     v = c / n2
-
     D = D_parameter(DD, mua, musp, eq)
+    A = A_parameter(n1, n2)
+    ze = 2 * A * D  # noqa: F841
 
     R_rho_t = 0.0
     T_rho_t = 0.0
@@ -63,28 +69,84 @@ def Reflectance_Transmittance_rho_t(rho, t, s, m, mua, musp, n1, n2, DD, eq):
     T_rho_t_source_sum = 0.0
 
     Z = Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq)
+    if eq == "DE":
+        for index in range(-m, m + 1):
+            z1, z2, z3, z4 = Z[f"Z_{index}"]
 
-    for index in range(-m, m + 1):
-        z1, z2, z3, z4 = Z[f"Z_{index}"]
+            R_rho_t_source_sum += z3 * exp(-(z3**2) / (4 * D * v * t)) - z4 * exp(
+                -(z4**2) / (4 * D * v * t)
+            )
 
-        R_rho_t_source_sum += z3 * exp(-(z3**2) / (4 * D * v * t)) - z4 * exp(
-            -(z4**2) / (4 * D * v * t)
+            T_rho_t_source_sum += z1 * exp(-(z1**2) / (4 * D * v * t)) - z2 * exp(
+                -(z2**2) / (4 * D * v * t)
+            )
+
+        R_rho_t = (
+            -exp(-(mua * v * t - rho**2) / (4 * D * v * t))
+            / (2 * ((4 * pi * D * v) ** (3 / 2)) * t ** (5 / 2))
+            * R_rho_t_source_sum
+        )
+        T_rho_t = (
+            exp(-(mua * v * t - rho**2) / (4 * D * v * t))
+            / (2 * ((4 * pi * D * v) ** (3 / 2)) * t ** (5 / 2))
+            * T_rho_t_source_sum
         )
 
-        T_rho_t_source_sum += z1 * exp(-(z1**2) / (4 * D * v * t)) - z2 * exp(
-            -(z2**2) / (4 * D * v * t)
-        )
+    if eq == "RTE":
+        mean_free_path = 1 / (mua + musp)
 
-    R_rho_t = (
-        -exp(-(mua * v * t - rho**2) / (4 * D * v * t))
-        / (2 * ((4 * pi * D * v) ** (3 / 2)) * t ** (5 / 2))
-        * R_rho_t_source_sum
-    )
-    T_rho_t = (
-        exp(-(mua * v * t - rho**2) / (4 * D * v * t))
-        / (2 * ((4 * pi * D * v) ** (3 / 2)) * t ** (5 / 2))
-        * T_rho_t_source_sum
-    )
+        for index in range(-m, m + 1):
+            z_plus, z_minus = Z[f"Z_{index}"]
+
+            r_plus = sqrt(rho**2 + (z_plus) ** 2)
+            r_minus = sqrt(rho**2 + (z_minus) ** 2)
+
+            Delta_plus = 1 if r_plus == c * t else 0
+            Delta_minus = 1 if r_minus == c * t else 0
+            Theta_plus = 1 if r_plus >= c * t else 0
+            Theta_minus = 1 if r_minus >= c * t else 0
+
+            G_plus = G_func(
+                c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t) ** 2) ** (3 / 4)
+            )
+            G_minus = G_func(
+                c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t) ** 2) ** (3 / 4)
+            )
+
+            R_rho_t_source_sum += (
+                exp(-c * t / mean_free_path) / (4 * pi * r_plus**2) * Delta_plus
+                + exp(-c * t / mean_free_path) / (4 * pi * r_minus**2) * Delta_minus
+                + G_plus * Theta_plus
+                + G_minus * Theta_minus
+            )
+
+        for index in range(-m, m + 1):
+            z_plus, z_minus = Z[f"Z_{index}"]
+
+            r_plus = sqrt(rho**2 + (s - z_plus) ** 2)
+            r_minus = sqrt(rho**2 + (s - z_minus) ** 2)
+
+            Delta_plus = 1 if r_plus == c * t else 0
+            Delta_minus = 1 if r_minus == c * t else 0
+            Theta_plus = 1 if r_plus >= c * t else 0
+            Theta_minus = 1 if r_minus >= c * t else 0
+
+            G_plus = G_func(
+                c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t) ** 2) ** (3 / 4)
+            )
+            G_minus = G_func(
+                c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t) ** 2) ** (3 / 4)
+            )
+
+            T_rho_t_source_sum += (
+                exp(-c * t / mean_free_path) / (4 * pi * r_plus**2) * Delta_plus
+                + exp(-c * t / mean_free_path) / (4 * pi * r_minus**2) * Delta_minus
+                + G_plus * Theta_plus
+                + G_minus * Theta_minus
+            )
+
+        R_rho_t = 1 / (2 * A) * R_rho_t_source_sum
+        T_rho_t = 1 / (2 * A) * T_rho_t_source_sum
 
     R_rho_t *= 1e-6 * 1e-12
     T_rho_t *= 1e-6 * 1e-12
@@ -93,6 +155,26 @@ def Reflectance_Transmittance_rho_t(rho, t, s, m, mua, musp, n1, n2, DD, eq):
     T_rho_t = T_rho_t if t > 0 else 0
 
     return R_rho_t, T_rho_t
+
+
+def G_func(x, N_scatter=200, mode: str = "approx"):
+    G = 0
+    if mode == "sum":
+        factor = 8 * (3 * x) ** (-3 / 2)
+
+        for N in range(1, N_scatter + 1):
+            G += (
+                factor
+                * gamma(3 / 4 * N + 3 / 2)
+                / gamma(3 / 4 * N)
+                * x**N
+                / factorial(N)
+            )
+
+        return G
+    if mode == "approx":
+        G += exp(x) * sqrt(1 + 2.026 / x)
+        return G
 
 
 def Reflectance_Transmittance_rho(rho, s, m, mua, musp, n1, n2, DD, eq):
@@ -105,27 +187,31 @@ def Reflectance_Transmittance_rho(rho, s, m, mua, musp, n1, n2, DD, eq):
 
     Z = Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq)
 
-    for index in range(-m, m + 1):
-        z1, z2, z3, z4 = Z[f"Z_{index}"]
+    if eq == "DE":
+        for index in range(-m, m + 1):
+            z1, z2, z3, z4 = Z[f"Z_{index}"]
 
-        R_rho_source_sum += z3 * (
-            D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z3**2) ** (-1)
-            + (rho**2 + z3**2) ** (-3 / 2)
-        ) * exp(-((mua * (rho**2 + z3**2) / D) ** (1 / 2))) - z4 * (
-            D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z4**2) ** (-1)
-            + (rho**2 + z4**2) ** (-3 / 2)
-        ) * exp(-((mua * (rho**2 + z4**2) / D) ** (1 / 2)))
+            R_rho_source_sum += z3 * (
+                D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z3**2) ** (-1)
+                + (rho**2 + z3**2) ** (-3 / 2)
+            ) * exp(-((mua * (rho**2 + z3**2) / D) ** (1 / 2))) - z4 * (
+                D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z4**2) ** (-1)
+                + (rho**2 + z4**2) ** (-3 / 2)
+            ) * exp(-((mua * (rho**2 + z4**2) / D) ** (1 / 2)))
 
-        if m == 0:
-            continue
-        else:
-            T_rho_source_sum += z1 * (
-                D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z1**2) ** (-1)
-                + (rho**2 + z1**2) ** (-3 / 2)
-            ) * exp(-((mua * (rho**2 + z1**2) / D) ** (1 / 2))) - z2 * (
-                D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z2**2) ** (-1)
-                + (rho**2 + z2**2) ** (-3 / 2)
-            ) * exp(-((mua * (rho**2 + z2**2) / D) ** (1 / 2)))
+            if m == 0:
+                continue
+            else:
+                T_rho_source_sum += z1 * (
+                    D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z1**2) ** (-1)
+                    + (rho**2 + z1**2) ** (-3 / 2)
+                ) * exp(-((mua * (rho**2 + z1**2) / D) ** (1 / 2))) - z2 * (
+                    D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z2**2) ** (-1)
+                    + (rho**2 + z2**2) ** (-3 / 2)
+                ) * exp(-((mua * (rho**2 + z2**2) / D) ** (1 / 2)))
+
+    if eq == "RTE":
+        pass
 
     R_rho = -1 / (4 * pi) * R_rho_source_sum
     T_rho = 1 / (4 * pi) * T_rho_source_sum
@@ -180,7 +266,7 @@ def Reflectance_Transmittance(s, m, mua, musp, n1, n2, DD, eq):
     return R, T
 
 
-def A_param_approx(n1, n2):
+def A_parameter_approx(n1, n2):
     A = None
     A = (
         504.332889
@@ -195,7 +281,7 @@ def A_param_approx(n1, n2):
     return A
 
 
-def A_param(n1, n2):
+def A_parameter(n1, n2):
     A = 0
     n = n2 / n1
 
@@ -339,10 +425,27 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
     z0 = 1 / musp  # noqa: F841
     # z0 = 1 / (mua + musp)
 
-    A = A_param(n1, n2)  # noqa: F841
+    A = A_parameter(n1, n2)  # noqa: F841
+    D = D_parameter(DD, mua, musp, eq)
 
-    for index in range(-m, m + 1):
-        z1, z2, z3, z4 = None, None, None, None
+    if eq == "DE":
+        for index in range(-m, m + 1):
+            ze = 2 * A * D
 
-        Z[f"Z_{index}"] = z1, z2, z3, z4
-    return Z
+            z1 = s * (1 - 2 * m) - 4 * m * ze - z0
+            z2 = s * (1 - 2 * m) - (4 * m - 2) * ze + z0
+            z3 = -2 * m * s - 4 * m * ze - z0
+            z4 = -2 * m * s - (4 * m - 2) * ze + z0
+
+            Z[f"Z_{index}"] = z1, z2, z3, z4
+        return Z
+
+    if eq == "RTE":
+        for index in range(-m, m + 1):
+            ze = 2 * A * D
+
+            z_plus = 2 * m * (s + 2 * ze) + z0
+            z_minus = 2 * m * (s + 2 * ze) - 2 * ze - z0
+
+            Z[f"Z_{index}"] = z_plus, z_minus
+        return Z
