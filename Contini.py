@@ -170,8 +170,8 @@ def Reflectance_Transmittance_t(t, s, m, mua, musp, n1, n2, DD, eq):
     return R_t, T_t
 
 
-def Mean_Path_T_R(rho, s, m, mua, musp, n1, n2, DD):
-    l_rho_R, l_rho_T = None
+def Mean_Path_T_R(rho, s, m, mua, musp, n1, n2, DD, eq):
+    l_rho_R, l_rho_T = None, None
     return l_rho_R, l_rho_T
 
 
