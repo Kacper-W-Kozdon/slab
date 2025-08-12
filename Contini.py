@@ -137,6 +137,35 @@ def Reflectance_Transmittance_rho(rho, s, m, mua, musp, n1, n2, DD):
 
 def Reflectance_Transmittance_t(t, s, m, mua, musp, n1, n2, DD):
     R_t, T_t = None
+
+    c = 299792458
+    v = c / n2
+    D = D_parameter(DD, mua, musp)
+
+    R_t_source_sum = 0
+    T_t_source_sum = 0
+
+    Z = Image_Sources_Positions(s, mua, musp, n1, n2, DD, m)
+
+    for index in range(-m, m + 1):
+        z1, z2, z3, z4 = Z[f"Z_{index}"]
+        R_t_source_sum += z3 * exp(-(z3**2) / (4 * D * v * t)) - z4 * exp(
+            -(z4**2) / (4 * D * v * t)
+        )
+        T_t_source_sum += z1 * exp(-(z1**2) / (4 * D * v * t)) - z2 * exp(
+            -(z2**2) / (4 * D * v * t)
+        )
+
+    R_t = (
+        -exp(-mua * v * t)
+        / (2 * (4 * pi * D * v) ** (1 / 2) * t ** (3 / 2))
+        * R_t_source_sum
+    )
+    T_t = (
+        exp(-mua * v * t)
+        / (2 * (4 * pi * D * v) ** (1 / 2) * t ** (3 / 2))
+        * T_t_source_sum
+    )
     return R_t, T_t
 
 
@@ -152,6 +181,16 @@ def Reflectance_Transmittance(s, m, mua, musp, n1, n2, DD):
 
 def A_param(n1, n2):
     A = None
+    A = (
+        504.332889
+        - 2641.0021 * (n2 / n1)
+        + 5923.699064 * (n2 / n1) ** 2
+        - 7376.355814 * (n2 / n1) ** 3
+        + 5507.53041 * (n2 / n1) ** 4
+        - 2463.357945 * (n2 / n1) ** 5
+        + 610.956547 * (n2 / n1) ** 6
+        - 64.8047 * (n2 / n1) ** 7
+    )
     return A
 
 
