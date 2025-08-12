@@ -95,7 +95,7 @@ def Reflectance_Transmittance_rho_t(rho, t, s, m, mua, musp, n1, n2, DD):
 
 
 def Reflectance_Transmittance_rho(rho, s, m, mua, musp, n1, n2, DD):
-    R_rho, T_rho = None
+    R_rho, T_rho = None, None
 
     D = D_parameter(DD, mua, musp)
 
@@ -136,7 +136,7 @@ def Reflectance_Transmittance_rho(rho, s, m, mua, musp, n1, n2, DD):
 
 
 def Reflectance_Transmittance_t(t, s, m, mua, musp, n1, n2, DD):
-    R_t, T_t = None
+    R_t, T_t = None, None
 
     c = 299792458
     v = c / n2
@@ -175,7 +175,7 @@ def Mean_Path_T_R(rho, s, m, mua, musp, n1, n2, DD):
 
 
 def Reflectance_Transmittance(s, m, mua, musp, n1, n2, DD):
-    R, T = None
+    R, T = None, None
     return R, T
 
 
@@ -197,6 +197,6 @@ def A_param(n1, n2):
 def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m):
     Z = OrderedDict()
     for index in range(-m, m + 1):
-        z1, z2, z3, z4 = None
+        z1, z2, z3, z4 = None, None, None, None
         Z[f"Z_{index}"] = z1, z2, z3, z4
     return Z
