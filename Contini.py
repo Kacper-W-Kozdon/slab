@@ -96,6 +96,35 @@ def Reflectance_Transmittance_rho_t(rho, t, s, m, mua, musp, n1, n2, DD):
 
 def Reflectance_Transmittance_rho(rho, s, m, mua, musp, n1, n2, DD):
     R_rho, T_rho = None
+
+    D = D_parameter(DD, mua, musp)
+
+    R_rho_source_sum = 0
+    T_rho_source_sum = 0
+
+    Z = Image_Sources_Positions(s, mua, musp, n1, n2, DD, m)
+
+    for index in range(-m, m + 1):
+        z1, z2, z3, z4 = Z[f"Z_{index}"]
+
+        R_rho_source_sum += z3 * (
+            D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z3**2) ** (-1)
+            + (rho**2 + z3**2) ** (-3 / 2)
+        ) * exp(-((mua * (rho**2 + z3**2) / D) ** (1 / 2))) - z4 * (
+            D ** (-1 / 2) * mua
+            ^ (1 / 2) * (rho**2 + z4**2) ** (-1) + (rho**2 + z4**2) ** (-3 / 2)
+        ) * exp(-((mua * (rho**2 + z4**2) / D) ** (1 / 2)))
+        T_rho_source_sum += z1 * (
+            D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z1**2) ** (-1)
+            + (rho**2 + z1**2) ** (-3 / 2)
+        ) * exp(-((mua * (rho**2 + z1**2) / D) ** (1 / 2))) - z2 * (
+            D ** (-1 / 2) * mua
+            ^ (1 / 2) * (rho**2 + z2**2) ** (-1) + (rho**2 + z2**2) ** (-3 / 2)
+        ) * exp(-((mua * (rho**2 + z2**2) / D) ** (1 / 2)))
+
+    R_rho = -1 / (4 * pi) * R_rho_source_sum
+    T_rho = 1 / (4 * pi) * T_rho_source_sum
+
     return R_rho, T_rho
 
 
