@@ -186,24 +186,23 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
 
     if eq == "DE":
         for index in range(-m, m + 1):
-            z1 = s * (1 - 2 * m) - 4 * m * ze - z0
-            z2 = s * (1 - 2 * m) - (4 * m - 2) * ze + z0
-            z3 = -2 * m * s - 4 * m * ze - z0
-            z4 = -2 * m * s - (4 * m - 2) * ze + z0
+            z1 = s * (1 - 2 * index) - 4 * m * ze - z0
+            z2 = s * (1 - 2 * index) - (4 * m - 2) * ze + z0
+            z3 = -2 * index * s - 4 * index * ze - z0
+            z4 = -2 * index * s - (4 * index - 2) * ze + z0
 
             Z[f"Z_{index}"] = z1, z2, z3, z4
         return Z
 
     if eq == "RTE":
         for index in range(-m, m + 1):
-            z_plus = 2 * m * (s + 2 * ze) + z0
-            z_minus = 2 * m * (s + 2 * ze) - 2 * ze - z0
-
+            z_plus = 2 * index * (s + 2 * ze) + z0
+            z_minus = 2 * index * (s + 2 * ze) - 2 * ze - z0
             Z[f"Z_{index}"] = z_plus, z_minus
         return Z
 
 
-def G_func(x, N_scatter=10, mode: str = "sum"):
+def G_func(x, N_scatter=200, mode: str = "sum"):
     G = 0
     if mode == "sum":
         factor = 8 * (3 * x) ** (-3 / 2)
@@ -220,4 +219,5 @@ def G_func(x, N_scatter=10, mode: str = "sum"):
         return G
     if mode == "approx":
         G += exp(x) * sqrt(1 + 2.026 / x)
+
         return G

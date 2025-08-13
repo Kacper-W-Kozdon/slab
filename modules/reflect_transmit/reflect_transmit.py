@@ -51,26 +51,43 @@ def Reflectance_Transmittance_rho_t(rho, t, mua, musp, s, m, n1, n2, DD, eq):
 
             Delta_plus = 1 if r_plus == c * t else 0
             Delta_minus = 1 if r_minus == c * t else 0
-            Theta_plus = 1 if r_plus >= c * t else 0
-            Theta_minus = 1 if r_minus >= c * t else 0
+            Theta_plus = 1 if r_plus < c * t else 0
+            Theta_minus = 1 if r_minus < c * t else 0
             # print(z_plus)
-            # print((r_plus**2 / (c**2 * t**2)))
+            if Theta_plus:
+                pass
+                # print(c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4))
             # print(c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3/4))
-            G_plus = G_func(
-                c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4)
+            G_plus = (
+                0
+                if not Theta_plus
+                else G_func(
+                    c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4)
+                )
             )
-            G_minus = G_func(
-                c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4)
+            G_minus = (
+                0
+                if not Theta_minus
+                else G_func(
+                    c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4)
+                )
             )
+            if Theta_plus:
+                factor_plus = (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
+            else:
+                factor_plus = 0
+
+            if Theta_minus:
+                factor_minus = (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
+            else:
+                factor_minus = 0
 
             R_rho_t_source_sum += exp(-c * t / mean_free_path) * (
                 1 / (4 * pi * r_plus**2) * Delta_plus
                 + 1 / (4 * pi * r_minus**2) * Delta_minus
                 + (
-                    G_plus * Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
-                    + G_minus
-                    * Theta_minus
-                    * (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
+                    G_plus * Theta_plus * factor_plus
+                    + G_minus * Theta_minus * factor_minus
                 )
                 / ((1 / 3 * 4 * pi * mean_free_path * c * t) ** (3 / 2))
             )
@@ -83,24 +100,40 @@ def Reflectance_Transmittance_rho_t(rho, t, mua, musp, s, m, n1, n2, DD, eq):
 
             Delta_plus = 1 if r_plus == c * t else 0
             Delta_minus = 1 if r_minus == c * t else 0
-            Theta_plus = 1 if r_plus >= c * t else 0
-            Theta_minus = 1 if r_minus >= c * t else 0
+            Theta_plus = 1 if r_plus < c * t else 0
+            Theta_minus = 1 if r_minus < c * t else 0
 
-            G_plus = G_func(
-                c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t) ** 2) ** (3 / 4)
+            G_plus = (
+                0
+                if not Theta_plus
+                else G_func(
+                    c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4)
+                )
             )
-            G_minus = G_func(
-                c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t) ** 2) ** (3 / 4)
+            G_minus = (
+                0
+                if not Theta_minus
+                else G_func(
+                    c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4)
+                )
             )
+
+            if Theta_plus:
+                factor_plus = (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
+            else:
+                factor_plus = 0
+
+            if Theta_minus:
+                factor_minus = (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
+            else:
+                factor_minus = 0
 
             T_rho_t_source_sum += exp(-c * t / mean_free_path) * (
                 1 / (4 * pi * r_plus**2) * Delta_plus
                 + 1 / (4 * pi * r_minus**2) * Delta_minus
                 + (
-                    G_plus * Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
-                    + G_minus
-                    * Theta_minus
-                    * (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
+                    G_plus * Theta_plus * factor_plus
+                    + G_minus * Theta_minus * factor_minus
                 )
                 / ((1 / 3 * 4 * pi * mean_free_path * c * t) ** (3 / 2))
             )

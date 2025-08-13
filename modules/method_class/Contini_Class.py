@@ -19,7 +19,7 @@ class Contini:
         n2: Union[int, float] = 0,
         phantom: Optional[str] = "",
         DD: Optional[str] = "Dmus",
-        m: int = 200,
+        m: int = 100,
         eq: str = "RTE",
     ):
         self.s = s * 1e-3
@@ -36,10 +36,9 @@ class Contini:
 
     def __call__(self, t_rho, mua=0, musp=0):
         if isinstance(t_rho, tuple):
-            mua = mua if self.mua is None else self.mua
-            musp = musp if self.musp is None else self.musp
-            mua *= 1e3
-            musp *= 1e3
+            mua = mua * 1e3 if self.mua is None else self.mua
+            musp = musp * 1e3 if self.musp is None else self.musp
+
             t = t_rho[0] * 1e-9
             rho = t_rho[1] * 1e-3
             s = self.s
@@ -96,10 +95,8 @@ class Contini:
             T = []
             A = []
             Z = []
-            mua = mua if self.mua is None else self.mua
-            musp = musp if self.musp is None else self.musp
-            mua *= 1e3
-            musp *= 1e3
+            mua = mua * 1e3 if self.mua is None else self.mua
+            musp = musp * 1e3 if self.musp is None else self.musp
 
             for value in t_rho:
                 t = value[0] * 1e-9
