@@ -1,12 +1,11 @@
 # placeholder
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import curve_fit
 
 from modules import Contini
 
 if __name__ == "__main__":
-    contini = Contini(s=40, mua=0, musp=1, n1=1, n2=1)
+    contini = Contini(s=40, mua=0.05, musp=0.5, n1=1, n2=1)
 
     rho = 1
 
@@ -30,10 +29,11 @@ if __name__ == "__main__":
 
     # print(ydata)
 
-    contini.mua = 0
+    contini.mua = 0.05
     contini.musp = None
 
-    popt, pcov = curve_fit(contini.fit, xdata, ydata_noisy, [0.9])
+    # popt, pcov = curve_fit(contini._fit, xdata, ydata_noisy, [0.9])
+    popt, pcov = contini.fit(xdata, ydata_noisy, [0.4])
 
     print(popt)
     print(pcov)

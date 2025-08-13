@@ -3,7 +3,7 @@ from numpy import exp, pi, sqrt
 from ..other.utils import A_parameter, D_parameter, G_func, Image_Sources_Positions
 
 
-def Reflectance_Transmittance_rho_t(rho, t, mua, musp, s, m, n1, n2, DD, eq):
+def Reflectance_Transmittance_rho_t(rho, t, mua, musp, s, m, n1, n2, DD, eq, **kwargs):
     c = 299792458
     v = c / n2
     D = D_parameter(DD, mua, musp, eq)
@@ -57,14 +57,19 @@ def Reflectance_Transmittance_rho_t(rho, t, mua, musp, s, m, n1, n2, DD, eq):
                 0
                 if not Theta_plus
                 else G_func(
-                    c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4)
+                    c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
+                    **kwargs,
                 )
             )
             G_minus = (
                 0
                 if not Theta_minus
                 else G_func(
-                    c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4)
+                    c
+                    * t
+                    / mean_free_path
+                    * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4),
+                    **kwargs,
                 )
             )
             if Theta_plus:
@@ -102,14 +107,19 @@ def Reflectance_Transmittance_rho_t(rho, t, mua, musp, s, m, n1, n2, DD, eq):
                 0
                 if not Theta_plus
                 else G_func(
-                    c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4)
+                    c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
+                    **kwargs,
                 )
             )
             G_minus = (
                 0
                 if not Theta_minus
                 else G_func(
-                    c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4)
+                    c
+                    * t
+                    / mean_free_path
+                    * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4),
+                    **kwargs,
                 )
             )
 

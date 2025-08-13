@@ -202,7 +202,7 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
         return Z
 
 
-def G_func(x, N_scatter=200, mode: str = "sum"):
+def G_func(x, N_scatter=200, mode: str = "sum", **kwargs):
     G = 0
     if mode == "sum":
         factor = 8 * (3 * x) ** (-3 / 2)

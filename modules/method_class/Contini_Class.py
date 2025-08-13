@@ -1,5 +1,7 @@
 from typing import List, Optional, Tuple, Union
 
+from scipy.optimize import curve_fit
+
 from ..other.utils import A_parameter, Image_Sources_Positions, Mean_Path_T_R
 from ..reflect_transmit.reflect_transmit import (
     Reflectance_Transmittance,
@@ -34,7 +36,7 @@ class Contini:
 
         self.err = 1e-6  # noqa: F841
 
-    def __call__(self, t_rho, mua=0, musp=0):
+    def __call__(self, t_rho, mua=0, musp=0, **kwargs):
         if isinstance(t_rho, tuple):
             mua = mua * 1e3 if self.mua is None else self.mua
             musp = musp * 1e3 if self.musp is None else self.musp
@@ -50,7 +52,7 @@ class Contini:
             eq = self.eq
 
             R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
-                rho, t, mua, musp, s, m, n1, n2, DD, eq
+                rho, t, mua, musp, s, m, n1, n2, DD, eq, **kwargs
             )
 
             R_rho, T_rho = Reflectance_Transmittance_rho(
@@ -162,6 +164,7 @@ class Contini:
         *args,
         values_to_fit: List[str] = ["R_rho_t"],
         free_params: List[str] = ["musp"],
+        **kwargs,
     ):
         available_values = [
             "R_rho_t",
@@ -198,28 +201,28 @@ class Contini:
                 args_list.insert(param_index, value)
 
         args = tuple(args_list)
-        print(args)
 
         if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
             ret = {}
             for value in values_to_fit:
                 index = values_to_fit.index(value)
-                ret[value] = self(t_rho_array_like, *args)[index]
+                ret[value] = self(t_rho_array_like, *args, **kwargs)[index]
 
             return ret
 
         elif isinstance(values_to_fit, list) and len(values_to_fit) == 1:
             for value in values_to_fit:
                 index = available_values.index(value)
-                ret = self(t_rho_array_like, *args)[index]
+                ret = self(t_rho_array_like, *args, **kwargs)[index]
 
             return ret
 
         elif isinstance(values_to_fit, str):
             index = available_values.index(values_to_fit)
-            ret = self(t_rho_array_like, *args)[index]
+            ret = self(t_rho_array_like, *args, **kwargs)[index]
 
             return ret
 
-    def fit(self, _t_rho_array_like: List[Tuple], *args):
-        return self._fit(_t_rho_array_like, *args)
+    def fit(self, _t_rho_array_like: List[Tuple], *args, **kwargs):
+        popt, pcov, *_ = curve_fit(self._fit, _t_rho_array_like, *args, **kwargs)
+        return popt, pcov
