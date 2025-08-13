@@ -179,12 +179,13 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
     # z0 = 1 / (mua + musp)
 
     A = A_parameter(n1, n2)  # noqa: F841
+
     D = D_parameter(DD, mua, musp, eq)
+
+    ze = 2 * A * D
 
     if eq == "DE":
         for index in range(-m, m + 1):
-            ze = 2 * A * D
-
             z1 = s * (1 - 2 * m) - 4 * m * ze - z0
             z2 = s * (1 - 2 * m) - (4 * m - 2) * ze + z0
             z3 = -2 * m * s - 4 * m * ze - z0
@@ -195,8 +196,6 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
 
     if eq == "RTE":
         for index in range(-m, m + 1):
-            ze = 2 * A * D
-
             z_plus = 2 * m * (s + 2 * ze) + z0
             z_minus = 2 * m * (s + 2 * ze) - 2 * ze - z0
 
@@ -204,7 +203,7 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
         return Z
 
 
-def G_func(x, N_scatter=200, mode: str = "approx"):
+def G_func(x, N_scatter=10, mode: str = "sum"):
     G = 0
     if mode == "sum":
         factor = 8 * (3 * x) ** (-3 / 2)

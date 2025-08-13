@@ -53,19 +53,26 @@ def Reflectance_Transmittance_rho_t(rho, t, mua, musp, s, m, n1, n2, DD, eq):
             Delta_minus = 1 if r_minus == c * t else 0
             Theta_plus = 1 if r_plus >= c * t else 0
             Theta_minus = 1 if r_minus >= c * t else 0
-
+            # print(z_plus)
+            # print((r_plus**2 / (c**2 * t**2)))
+            # print(c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3/4))
             G_plus = G_func(
-                c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t) ** 2) ** (3 / 4)
+                c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4)
             )
             G_minus = G_func(
-                c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t) ** 2) ** (3 / 4)
+                c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4)
             )
 
-            R_rho_t_source_sum += (
-                exp(-c * t / mean_free_path) / (4 * pi * r_plus**2) * Delta_plus
-                + exp(-c * t / mean_free_path) / (4 * pi * r_minus**2) * Delta_minus
-                + G_plus * Theta_plus
-                + G_minus * Theta_minus
+            R_rho_t_source_sum += exp(-c * t / mean_free_path) * (
+                1 / (4 * pi * r_plus**2) * Delta_plus
+                + 1 / (4 * pi * r_minus**2) * Delta_minus
+                + (
+                    G_plus * Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
+                    + G_minus
+                    * Theta_minus
+                    * (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
+                )
+                / ((1 / 3 * 4 * pi * mean_free_path * c * t) ** (3 / 2))
             )
 
         for index in range(-m, m + 1):
@@ -86,11 +93,16 @@ def Reflectance_Transmittance_rho_t(rho, t, mua, musp, s, m, n1, n2, DD, eq):
                 c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t) ** 2) ** (3 / 4)
             )
 
-            T_rho_t_source_sum += (
-                exp(-c * t / mean_free_path) / (4 * pi * r_plus**2) * Delta_plus
-                + exp(-c * t / mean_free_path) / (4 * pi * r_minus**2) * Delta_minus
-                + G_plus * Theta_plus
-                + G_minus * Theta_minus
+            T_rho_t_source_sum += exp(-c * t / mean_free_path) * (
+                1 / (4 * pi * r_plus**2) * Delta_plus
+                + 1 / (4 * pi * r_minus**2) * Delta_minus
+                + (
+                    G_plus * Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
+                    + G_minus
+                    * Theta_minus
+                    * (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
+                )
+                / ((1 / 3 * 4 * pi * mean_free_path * c * t) ** (3 / 2))
             )
 
         R_rho_t = 1 / (2 * A) * R_rho_t_source_sum
