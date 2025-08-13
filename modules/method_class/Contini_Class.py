@@ -198,6 +198,7 @@ class Contini:
                 args_list.insert(param_index, value)
 
         args = tuple(args_list)
+        print(args)
 
         if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
             ret = {}

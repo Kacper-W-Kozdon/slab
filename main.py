@@ -14,7 +14,7 @@ if __name__ == "__main__":
     xdata = []
     ydata_noisy = []
 
-    for t_index, t in enumerate(range(10, 4001, 1)):
+    for t_index, t in enumerate(range(10, 2010, 10)):
         picot = t * 1e-5
         subresult = contini((picot, rho))
 
@@ -22,18 +22,18 @@ if __name__ == "__main__":
         xdata.append(tuple([picot, rho]))
 
     rng = np.random.default_rng()
-    noise = 0.0000005 * rng.normal(size=len(xdata))
+    noise = rng.normal(size=len(xdata))
     # print(noise)
 
     for index in range(len(ydata)):
-        ydata_noisy.append(ydata[index] + noise[index])
+        ydata_noisy.append(ydata[index] + 0.1 * ydata[index] * noise[index])
 
     # print(ydata)
 
     contini.mua = 0
     contini.musp = None
 
-    popt, pcov = curve_fit(contini.fit, xdata, ydata_noisy, [1], bounds=(0.001, 2.0))
+    popt, pcov = curve_fit(contini.fit, xdata, ydata_noisy, [0.9])
 
     print(popt)
     print(pcov)
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         xdata_t.append(coord[0])
 
     # print(xdata_t)
-    plot1 = plt.plot(xdata_t, ydata, color="r", label="data1")
+    plot1 = plt.plot(xdata_t, ydata_noisy, color="r", label="data1")
 
     contini2 = Contini(s=40, musp=popt[0], n1=1, n2=1)
 
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     xdata = []
     ydata_noisy = []
 
-    for t_index, t in enumerate(range(10, 4001, 1)):
+    for t_index, t in enumerate(range(10, 2010, 10)):
         picot = t * 1e-5
         subresult = contini2((picot, rho))
 
