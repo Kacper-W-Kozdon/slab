@@ -162,25 +162,30 @@ def Reflectance_Transmittance_t(t, mua, musp, s, m, n1, n2, DD, eq):
 
     Z = Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq)
 
-    for index in range(-m, m + 1):
-        z1, z2, z3, z4 = Z[f"Z_{index}"]
-        R_t_source_sum += z3 * exp(-(z3**2) / (4 * D * v * t)) - z4 * exp(
-            -(z4**2) / (4 * D * v * t)
+    if eq == "DE":
+        for index in range(-m, m + 1):
+            z1, z2, z3, z4 = Z[f"Z_{index}"]
+            R_t_source_sum += z3 * exp(-(z3**2) / (4 * D * v * t)) - z4 * exp(
+                -(z4**2) / (4 * D * v * t)
+            )
+            T_t_source_sum += z1 * exp(-(z1**2) / (4 * D * v * t)) - z2 * exp(
+                -(z2**2) / (4 * D * v * t)
+            )
+
+        R_t = (
+            -exp(-mua * v * t)
+            / (2 * (4 * pi * D * v) ** (1 / 2) * t ** (3 / 2))
+            * R_t_source_sum
         )
-        T_t_source_sum += z1 * exp(-(z1**2) / (4 * D * v * t)) - z2 * exp(
-            -(z2**2) / (4 * D * v * t)
+        T_t = (
+            exp(-mua * v * t)
+            / (2 * (4 * pi * D * v) ** (1 / 2) * t ** (3 / 2))
+            * T_t_source_sum
         )
 
-    R_t = (
-        -exp(-mua * v * t)
-        / (2 * (4 * pi * D * v) ** (1 / 2) * t ** (3 / 2))
-        * R_t_source_sum
-    )
-    T_t = (
-        exp(-mua * v * t)
-        / (2 * (4 * pi * D * v) ** (1 / 2) * t ** (3 / 2))
-        * T_t_source_sum
-    )
+    if eq == "RTE":
+        pass
+
     return R_t, T_t
 
 

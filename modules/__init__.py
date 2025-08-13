@@ -1,3 +1,3 @@
-from modules.method_class import Contini_Class
+from modules.method_class.Contini_Class import Contini
 
-__all__ = ["Contini_Class"]
+__all__ = ["Contini"]
