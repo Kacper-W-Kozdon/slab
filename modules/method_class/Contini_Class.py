@@ -198,8 +198,6 @@ class Contini:
                 args_list.insert(param_index, value)
 
         args = tuple(args_list)
-        # print(f"---MUA--- : {args[0]}\n")
-        # print(f"---MUSP--- : {args[1]}\n\n")
 
         if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
             ret = {}
@@ -223,5 +221,4 @@ class Contini:
             return ret
 
     def fit(self, _t_rho_array_like: List[Tuple], *args):
-        # print(args)
         return self._fit(_t_rho_array_like, *args)

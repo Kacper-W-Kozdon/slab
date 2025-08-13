@@ -53,11 +53,6 @@ def Reflectance_Transmittance_rho_t(rho, t, mua, musp, s, m, n1, n2, DD, eq):
             Delta_minus = 1 if r_minus == c * t else 0
             Theta_plus = 1 if r_plus < c * t else 0
             Theta_minus = 1 if r_minus < c * t else 0
-            # print(z_plus)
-            if Theta_plus:
-                pass
-                # print(c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4))
-            # print(c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3/4))
             G_plus = (
                 0
                 if not Theta_plus
