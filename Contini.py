@@ -27,16 +27,16 @@ def Contini(
     err = 1e-6  # noqa: F841
 
     R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
-        rho, t, s, m, mua, musp, n1, n2, DD, eq
+        rho, t, mua, musp, s, m, n1, n2, DD, eq
     )
 
-    R_rho, T_rho = Reflectance_Transmittance_rho(rho, s, m, mua, musp, n1, n2, DD, eq)
+    R_rho, T_rho = Reflectance_Transmittance_rho(rho, mua, musp, s, m, n1, n2, DD, eq)
 
-    R_t, T_t = Reflectance_Transmittance_t(t, s, m, mua, musp, n1, n2, DD, eq)
+    R_t, T_t = Reflectance_Transmittance_t(t, mua, musp, s, m, n1, n2, DD, eq)
 
-    l_rho_R, l_rho_T = Mean_Path_T_R(rho, s, m, mua, musp, n1, n2, DD, eq)
+    l_rho_R, l_rho_T = Mean_Path_T_R(rho, mua, musp, s, m, n1, n2, DD, eq)
 
-    R, T = Reflectance_Transmittance(s, m, mua, musp, n1, n2, DD, eq)
+    R, T = Reflectance_Transmittance(mua, musp, s, m, n1, n2, DD, eq)
 
     A = A_parameter(n1, n2)
 
@@ -55,7 +55,7 @@ def D_parameter(DD, mua, musp, eq):
     return D
 
 
-def Reflectance_Transmittance_rho_t(rho, t, s, m, mua, musp, n1, n2, DD, eq):
+def Reflectance_Transmittance_rho_t(rho, t, mua, musp, s, m, n1, n2, DD, eq):
     c = 299792458
     v = c / n2
     D = D_parameter(DD, mua, musp, eq)
@@ -177,7 +177,7 @@ def G_func(x, N_scatter=200, mode: str = "approx"):
         return G
 
 
-def Reflectance_Transmittance_rho(rho, s, m, mua, musp, n1, n2, DD, eq):
+def Reflectance_Transmittance_rho(rho, mua, musp, s, m, n1, n2, DD, eq):
     R_rho, T_rho = None, None
 
     D = D_parameter(DD, mua, musp, eq)
@@ -222,7 +222,7 @@ def Reflectance_Transmittance_rho(rho, s, m, mua, musp, n1, n2, DD, eq):
     return R_rho, T_rho
 
 
-def Reflectance_Transmittance_t(t, s, m, mua, musp, n1, n2, DD, eq):
+def Reflectance_Transmittance_t(t, mua, musp, s, m, n1, n2, DD, eq):
     R_t, T_t = None, None
 
     c = 299792458
@@ -256,12 +256,12 @@ def Reflectance_Transmittance_t(t, s, m, mua, musp, n1, n2, DD, eq):
     return R_t, T_t
 
 
-def Mean_Path_T_R(rho, s, m, mua, musp, n1, n2, DD, eq):
+def Mean_Path_T_R(rho, mua, musp, s, m, n1, n2, DD, eq):
     l_rho_R, l_rho_T = None, None
     return l_rho_R, l_rho_T
 
 
-def Reflectance_Transmittance(s, m, mua, musp, n1, n2, DD, eq):
+def Reflectance_Transmittance(mua, musp, s, m, n1, n2, DD, eq):
     R, T = None, None
     return R, T
 
