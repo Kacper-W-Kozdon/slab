@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from scipy.optimize import curve_fit
 
@@ -24,7 +24,7 @@ class Contini:
         DD: Optional[str] = "Dmus",
         m: int = 100,
         eq: str = "RTE",
-    ):
+    ) -> None:
         """
         The class initiating the slab model with the RTE and DE Green's functions. Source- Contini.
 
@@ -224,12 +224,34 @@ class Contini:
 
     def _fit(
         self,
-        t_rho_array_like: List[Tuple],
-        *args,
-        values_to_fit: List[str] = ["R_rho_t"],
-        free_params: List[str] = ["musp"],
-        **kwargs,
-    ):
+        t_rho_array_like: List[Tuple[float, float]],
+        *args: Any,
+        values_to_fit: Union[List[str], Any] = ["R_rho_t"],
+        free_params: Union[List[str], Any] = ["musp"],
+        **kwargs: Any,
+    ) -> Union[float, int, None, List[float], Dict[Any, Any]]:
+        """
+        The call method returning the function used for scipy.curve_fit().
+
+        :param t_rho_array_like: Variables of the model in the form List[(time, radial_coordinate), ...], passed as xdata to scipy.curve_fit(f, ydata, xdata, params).
+        :type t_rho_array_like: List[Tuple[float, float]]
+        :param mua: Absorption coefficient of the slab in [mm^-1]. Default: None.
+        :param args: An iterable of the free_parameters for fitting in the order (mua, musp). The parameters have to match the free_params param. Anisothropy_coeff to be added.
+        :type args: Any
+        :param values_to_fit: Values passed to scipy.curve_fit(f, ydata, xdata, params) as ydata.
+        :type values_to_fit: Union[List[str], Any]
+        :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
+        :type free_params: Union[List[str], Any]
+        :param kwargs: Optional kwargs:
+                       mode: available values: "approx", "sum"- controls G_function's computation method.
+                       kwargs supported by the scipy.curve_fit() method
+        :type kwargs: Any
+
+        Returns:
+        A dictionary with keys as passed in the values_to_fit param or a Union[float, List[float]] if a single value was provided.
+
+        """
+
         available_values = [
             "R_rho_t",
             "T_rho_t",
@@ -256,27 +278,29 @@ class Contini:
                 f"Obtained values: {values_to_fit} not in the list of values available for fitting."
             )
 
-        ret = None
+        ret: Union[Dict[Any, Any], Any] = None
         args_list = list(args)
 
         for param_index, param in enumerate(available_free_params):
             if param not in free_params:
-                value = self.mua if param_index == 0 else self.musp
-                args_list.insert(param_index, value)
+                param_value = self.mua if param_index == 0 else self.musp
+                args_list.insert(param_index, param_value)
 
         args = tuple(args_list)
+
+        value: Any
 
         if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
             ret = {}
             for value in values_to_fit:
-                index = values_to_fit.index(value)
+                index = int(values_to_fit.index(str(value)))
                 ret[value] = self(t_rho_array_like, *args, **kwargs)[index]
 
             return ret
 
         elif isinstance(values_to_fit, list) and len(values_to_fit) == 1:
             for value in values_to_fit:
-                index = available_values.index(value)
+                index = int(available_values.index(str(value)))
                 ret = self(t_rho_array_like, *args, **kwargs)[index]
 
             return ret
@@ -287,6 +311,26 @@ class Contini:
 
             return ret
 
-    def fit(self, _t_rho_array_like: List[Tuple], *args, **kwargs):
+        else:
+            return None
+
+    def fit(
+        self, _t_rho_array_like: List[Tuple[float, float]], *args: Any, **kwargs: Any
+    ) -> Tuple[List[float], ...]:
+        """
+        Method used to fit the model by Contini to existing data.
+
+        :param _t_rho_array_like: An array-like input with tuples of the form (time, radial_coordinate), xdata.
+        :type _t_rho_array_like: List[Tuple[float, float]]
+        :param args: A tuple of free parameters for fitting.
+        :type args: Any
+        :param kwargs: Supports kwargs of the scipy.curve_fit() as well as mode: "approx", "sum" of the G_function().
+        :type kwargs: Any
+
+        Returns:
+        popt: Values of the free parameters obtained after the function has been fit to the data.
+        pcov: Covariance matrix of the output popt.
+
+        """
         popt, pcov, *_ = curve_fit(self._fit, _t_rho_array_like, *args, **kwargs)
         return popt, pcov
