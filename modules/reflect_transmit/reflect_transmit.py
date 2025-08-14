@@ -3,7 +3,9 @@ from numpy import exp, pi, sqrt
 from ..other.utils import A_parameter, D_parameter, G_func, Image_Sources_Positions
 
 
-def Reflectance_Transmittance_rho_t(rho, t, mua, musp, s, m, n1, n2, DD, eq, **kwargs):
+def Reflectance_Transmittance_rho_t(
+    rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff, **kwargs
+):
     c = 299792458
     v = c / n2
     D = D_parameter(DD, mua, musp, eq)
@@ -41,6 +43,7 @@ def Reflectance_Transmittance_rho_t(rho, t, mua, musp, s, m, n1, n2, DD, eq, **k
         )
 
     if eq == "RTE":
+        mus = musp / (1 - anisothropy_coeff)  # noqa: F841
         mean_free_path = 1 / (mua + musp)
 
         for index in range(-m, m + 1):

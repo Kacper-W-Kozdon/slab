@@ -19,6 +19,7 @@ class Contini:
         musp: Union[int, float, None] = None,
         n1: Union[int, float] = 0,
         n2: Union[int, float] = 0,
+        anisothropy_coeff: Union[int, float, None] = 0.85,
         phantom: Optional[str] = "",
         DD: Optional[str] = "Dmus",
         m: int = 100,
@@ -33,13 +34,15 @@ class Contini:
         self.DD = DD
         self.m = m
         self.eq = eq
+        self.anisothropy_coeff = anisothropy_coeff
 
         self.err = 1e-6  # noqa: F841
 
-    def __call__(self, t_rho, mua=0, musp=0, **kwargs):
+    def __call__(self, t_rho, mua=0, musp=0, anisothropy_coeff=None, **kwargs):
         if isinstance(t_rho, tuple):
             mua = mua * 1e3 if self.mua is None else self.mua
             musp = musp * 1e3 if self.musp is None else self.musp
+            anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
 
             t = t_rho[0] * 1e-9
             rho = t_rho[1] * 1e-3
@@ -52,7 +55,7 @@ class Contini:
             eq = self.eq
 
             R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
-                rho, t, mua, musp, s, m, n1, n2, DD, eq, **kwargs
+                rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff, **kwargs
             )
 
             R_rho, T_rho = Reflectance_Transmittance_rho(
@@ -99,6 +102,7 @@ class Contini:
             Z = []
             mua = mua * 1e3 if self.mua is None else self.mua
             musp = musp * 1e3 if self.musp is None else self.musp
+            anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
 
             for value in t_rho:
                 t = value[0] * 1e-9
@@ -112,7 +116,7 @@ class Contini:
                 eq = self.eq
 
                 R_rho_t_, T_rho_t_ = Reflectance_Transmittance_rho_t(
-                    rho, t, mua, musp, s, m, n1, n2, DD, eq
+                    rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff
                 )
                 R_rho_t.append(R_rho_t_)
                 T_rho_t.append(T_rho_t_)

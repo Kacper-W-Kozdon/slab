@@ -1,0 +1,58 @@
+[project]
+name = "medscatter"
+version = "0.1.1"
+authors = [
+  { name="Kacper Kozdon", email="k.kozdon@gmail.com" },
+]
+description = "The package to compute the scattering of a pencil beam in a medium."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/Kacper-W-Kozdon/slab"
+Issues = "https://github.com/Kacper-W-Kozdon/slab/issues"
+
+[tool.poetry]
+packages = [{include = "modules"}]
+
+[tool.poetry.dependencies]
+scipy = "*"
+numpy = "*"
+typing = "*"
+
+[tool.poetry.group.dev.dependencies]
+types-requests = "*"
+flake8 = "~4.0.1"
+mypy = "^1.1.1"
+isort = "^5.11.4"
+pre-commit = "^3.0.1"
+wemake-python-styleguide = "^0.17.0"
+black = "^24.3.0"
+autoflake = "^1.6.1"
+pydoc-markdown = "^4.0.0"
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+src_paths = ["orchestra",]
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+allow_subclassing_any = true
+allow_untyped_calls = true
+pretty = true
+show_error_codes = true
+implicit_reexport = true
+allow_untyped_decorators = true
+warn_unused_ignores = false
+warn_return_any = false
+namespace_packages = true
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

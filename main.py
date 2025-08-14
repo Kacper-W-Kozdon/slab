@@ -1,7 +1,6 @@
 # placeholder
 import matplotlib.pyplot as plt
 import numpy as np
-
 from modules import Contini
 
 if __name__ == "__main__":
@@ -13,7 +12,7 @@ if __name__ == "__main__":
     xdata = []
     ydata_noisy = []
 
-    for t_index, t in enumerate(range(1, 203, 2)):
+    for t_index, t in enumerate(range(1, 311, 2)):
         picot = t * 1e-3
         subresult = contini((picot, rho))
 
@@ -28,7 +27,7 @@ if __name__ == "__main__":
         ydata_noisy.append(ydata[index] + 0.05 * ydata[index] * noise[index])
 
     # print(ydata)
-
+    print(ydata_noisy)
     contini.mua = 0.05
     contini.musp = None
 
@@ -52,7 +51,7 @@ if __name__ == "__main__":
     xdata = []
     ydata_noisy = []
 
-    for t_index, t in enumerate(range(1, 203, 2)):
+    for t_index, t in enumerate(range(1, 311, 2)):
         picot = t * 1e-3
         subresult = contini2((picot, rho))
 
