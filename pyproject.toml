@@ -19,6 +19,13 @@ Issues = "https://github.com/Kacper-W-Kozdon/slab/issues"
 
 [tool.poetry]
 packages = [{include = "modules"}]
+name = "medscatter"
+version = "0.1.1"
+authors = [
+  { name="Kacper Kozdon", email="k.kozdon@gmail.com" },
+]
+description = "The package to compute the scattering of a pencil beam in a medium."
+
 
 [tool.poetry.dependencies]
 scipy = "*"
