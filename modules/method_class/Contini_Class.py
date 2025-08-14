@@ -104,7 +104,7 @@ class Contini:
             musp = musp * 1e3 if self.musp is None else self.musp
             anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
 
-            t = t_rho[0] * 1e-9
+            t = t_rho[0] * 1e-12
             rho = t_rho[1] * 1e-3
             s = self.s
             n1 = self.n1
@@ -165,7 +165,7 @@ class Contini:
             anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
 
             for value in t_rho:
-                t = value[0] * 1e-9
+                t = value[0] * 1e-12
                 rho = value[1] * 1e-3
                 s = self.s
                 n1 = self.n1
@@ -243,7 +243,7 @@ class Contini:
         :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
         :type free_params: Union[List[str], Any]
         :param kwargs: Optional kwargs:
-                       mode: available values: "approx", "sum"- controls G_function's computation method.
+                       mode: available values: "approx", "sum", "correction", "mixed"- controls G_function's computation method.
                        kwargs supported by the scipy.curve_fit() method
         :type kwargs: Any
 

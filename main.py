@@ -4,16 +4,16 @@ import numpy as np
 from modules import Contini
 
 if __name__ == "__main__":
-    contini = Contini(s=40, mua=0.05, musp=0.05, n1=1, n2=1)
+    contini = Contini(s=40, mua=0.05, musp=0.3, n1=1, n2=1)
 
-    rho = 1
+    rho = 4
 
     ydata = []
     xdata = []
     ydata_noisy = []
 
     for t_index, t in enumerate(range(1, 311, 2)):
-        picot = t * 1e-3
+        picot = t
         subresult = contini((picot, rho))
 
         ydata.append(subresult[0])
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     contini.musp = None
 
     # popt, pcov = curve_fit(contini._fit, xdata, ydata_noisy, [0.9])
-    popt, pcov = contini.fit(xdata, ydata_noisy, [0.04])
+    popt, pcov = contini.fit(xdata, ydata_noisy, [0.25])
 
     print(popt)
     print(pcov)
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     ydata_noisy = []
 
     for t_index, t in enumerate(range(1, 311, 2)):
-        picot = t * 1e-3
+        picot = t
         subresult = contini2((picot, rho))
 
         ydata.append(subresult[0])
