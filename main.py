@@ -59,5 +59,5 @@ if __name__ == "__main__":
         xdata.append(tuple([picot, rho]))
 
     plot2 = plt.plot(xdata_t, ydata, color="g", label="fit")
-    plt.yscale("log")
+    # plt.yscale("log")
     plt.show()
