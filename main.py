@@ -13,7 +13,7 @@ if __name__ == "__main__":
     xdata = []
     ydata_noisy = []
 
-    for t_index, t in enumerate(range(1, 201, 1)):
+    for t_index, t in enumerate(range(1, 203, 2)):
         picot = t * 1e-3
         subresult = contini((picot, rho))
 
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # print(noise)
 
     for index in range(len(ydata)):
-        ydata_noisy.append(ydata[index] + 0.1 * ydata[index] * noise[index])
+        ydata_noisy.append(ydata[index] + 0.05 * ydata[index] * noise[index])
 
     # print(ydata)
 
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         xdata_t.append(coord[0])
 
     # print(xdata_t)
-    plot1 = plt.plot(xdata_t, np.log(ydata_noisy), color="r", label="data1")
+    plot1 = plt.plot(xdata_t, ydata_noisy, color="r", label="data1")
 
     contini2 = Contini(s=40, musp=popt[0], n1=1, n2=1)
 
@@ -51,12 +51,12 @@ if __name__ == "__main__":
     xdata = []
     ydata_noisy = []
 
-    for t_index, t in enumerate(range(1, 201, 1)):
+    for t_index, t in enumerate(range(1, 203, 2)):
         picot = t * 1e-3
         subresult = contini2((picot, rho))
 
         ydata.append(subresult[0])
         xdata.append(tuple([picot, rho]))
 
-    plot2 = plt.plot(xdata_t, np.log(ydata), color="g", label="data2")
+    plot2 = plt.plot(xdata_t, ydata, color="g", label="data2")
     plt.show()
