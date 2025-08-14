@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # print(noise)
 
     for index in range(len(ydata)):
-        ydata_noisy.append(ydata[index] + 0.05 * ydata[index] * noise[index])
+        ydata_noisy.append(ydata[index] + 0.05 * noise[index])
 
     # print(ydata)
 
