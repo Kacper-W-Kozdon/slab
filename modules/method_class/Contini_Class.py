@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from scipy.optimize import curve_fit
 
@@ -25,6 +25,29 @@ class Contini:
         m: int = 100,
         eq: str = "RTE",
     ):
+        """
+        The class initiating the slab model with the RTE and DE Green's functions. Source- Contini.
+
+        :param s: The thickness of the diffusing slab in [mm]. Default: 0.
+        :type s: Union[int, float]
+        :param mua: Absorption coefficient of the slab in [mm^-1]. Default: None.
+        :type mua: Union[int, float]
+        :param musp: Reduced scattering coefficient of the slab in [mm^-1]. Default: None.
+        :type musp: Union[int, float]
+        :param n1: Refractive index of the external medium. Default: 0.
+        :type n1: Union[int, float]
+        :param n2: Refractive index of the diffusing medium (slab). Default: 0.
+        :type n2: Union[int, float]
+        :param anisothropy_coeff: The anisothropy coefficient g. musp = (1 - g) * mus. Default: 0.85
+        :type anisothropy_coeff: Union[int, float, None]
+        :param DD: Flag parameter to switch between mu = musp + mua for DD == "Dmuas" and mu = musp for DD == "Dmus" (Default).
+        :type DD: str
+        :param m: Number of mirror images (delta sources) in the lattice. Default: 100
+        :type m: int
+        :param eq: Flag parameter to switch between "RTE" and "DE" Green's functions. Default: "RTE"
+        :type eq: str
+        """
+
         self.s = s * 1e-3
         self.mua = None if not mua else mua * 1e3
         self.musp = None if not musp else musp * 1e3
@@ -38,7 +61,44 @@ class Contini:
 
         self.err = 1e-6  # noqa: F841
 
-    def __call__(self, t_rho, mua=0, musp=0, anisothropy_coeff=None, **kwargs):
+    def __call__(
+        self,
+        t_rho: Union[Tuple[float, float], List[Tuple[float, float],]],
+        mua: Union[int, float] = 0,
+        musp: Union[int, float] = 0,
+        anisothropy_coeff: Union[int, float, None] = None,
+        **kwargs: Any,
+    ) -> Union[Tuple[Any, ...], Tuple[List[Any], ...]]:
+        """
+        The call method evaluating parameters of the Contini model.
+
+        :param t_rho: Variables of the model in the form (time, radial_coordinate).
+        :type t_rho: Union[Tuple[float, float], List[Tuple[float, float]]]
+        :param mua: Absorption coefficient of the slab in [mm^-1]. Default: None.
+        :type mua: Union[int, float]
+        :param musp: Reduced scattering coefficient of the slab in [mm^-1]. Default: None.
+        :type musp: Union[int, float]
+        :param anisothropy_coeff: The anisothropy coefficient g. musp = (1 - g) * mus. Default: 0.85
+        :type anisothropy_coeff: Union[int, float, None]
+        :param kwargs: Optional kwargs:
+                       mode: available values: "approx", "sum"- controls G_function's computation method.
+        :type kwargs: Any
+
+        Returns:
+        R_rho_t: time resolved reflectance mm^(-2) ps^(-1)
+        T_rho_t: time resolved transmittance mm^(-2) ps^(-1)
+        R_rho: reflectance mm^(-2)
+        T_rho: transmittance mm^(-2)
+        R_t: ps^(-1)
+        T_t: ps^(-1)
+        l_rho_R: mean free path (reflected) mm
+        l_rho_T: mean free path (transmitted) mm
+        R: to be added
+        T: to be added
+        A: A parameter
+        Z: Positions of the source images
+
+        """
         if isinstance(t_rho, tuple):
             mua = mua * 1e3 if self.mua is None else self.mua
             musp = musp * 1e3 if self.musp is None else self.musp
