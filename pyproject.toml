@@ -22,7 +22,7 @@ packages = [{include = "modules"}]
 name = "medscatter"
 version = "0.1.1"
 authors = [
-  { name="Kacper Kozdon", email="k.kozdon@gmail.com" },
+  "Kacper Kozdon",
 ]
 description = "The package to compute the scattering of a pencil beam in a medium."
 
