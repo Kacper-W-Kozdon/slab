@@ -44,6 +44,7 @@ if __name__ == "__main__":
 
     # print(xdata_t)
     plot1 = plt.plot(xdata_t, ydata_noisy, color="r", label="noisy")
+    plot0 = plt.plot(xdata_t, ydata, color="b", label="control")
 
     contini2 = Contini(s=40, musp=popt[0], n1=1, n2=1)
 
