@@ -146,8 +146,8 @@ def Reflectance_Transmittance_rho_t(rho, t, mua, musp, s, m, n1, n2, DD, eq, **k
         R_rho_t = 1 / (2 * A) * R_rho_t_source_sum
         T_rho_t = 1 / (2 * A) * T_rho_t_source_sum
 
-    R_rho_t *= 1e-6 * 1e-12
-    T_rho_t *= 1e-6 * 1e-12
+    # R_rho_t *= 1e-6 * 1e-12
+    # T_rho_t *= 1e-6 * 1e-12
 
     R_rho_t = R_rho_t if t > 0 else 0
     T_rho_t = T_rho_t if t > 0 else 0

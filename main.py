@@ -43,7 +43,7 @@ if __name__ == "__main__":
         xdata_t.append(coord[0])
 
     # print(xdata_t)
-    plot1 = plt.plot(xdata_t, ydata_noisy, color="r", label="data1")
+    plot1 = plt.plot(xdata_t, ydata_noisy, color="r", label="noisy")
 
     contini2 = Contini(s=40, musp=popt[0], n1=1, n2=1)
 
@@ -58,5 +58,6 @@ if __name__ == "__main__":
         ydata.append(subresult[0])
         xdata.append(tuple([picot, rho]))
 
-    plot2 = plt.plot(xdata_t, ydata, color="g", label="data2")
+    plot2 = plt.plot(xdata_t, ydata, color="g", label="fit")
+    plt.yscale("log")
     plt.show()
