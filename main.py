@@ -100,12 +100,18 @@ if __name__ == "__main__":
         popt, pcov = contini.fit(xdata, df_ydata, [0.35], IRF=df_irf)
         print(popt, pcov)
         contini.musp = popt[0]
-        ydata = []
-        for t in df_time:
-            subresult = contini((t, rho))
+        # ydata = []
+        # for t in df_time:
+        #     subresult = contini((t, rho))
 
-            ydata.append(subresult[0])
+        #     ydata.append(subresult[0])
 
-        fit = plt.plot(df_time, ydata, color="r", label="raw data")
+        contini.IRF = None
+        ydata_fit = None
+        if not contini.normalize:
+            contini.normalize = True
+        ydata_fit = contini.forward(xdata)
+
+        fit = plt.plot(df_time, ydata_fit, color="r", label="raw data")
 
         plt.show()
