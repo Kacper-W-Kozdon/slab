@@ -334,6 +334,8 @@ class Contini:
                 ret[value] = self(t_rho_array_like, *args, **kwargs)[index]
                 if IRF:
                     ret[value] = convolve(ret[value], IRF, mode="same")
+                if normalize:
+                    ret[value] = np.array(ret[value]) / np.max(ret[value])
 
             return ret
 
@@ -343,6 +345,8 @@ class Contini:
                 ret = self(t_rho_array_like, *args, **kwargs)[index]
                 if IRF:
                     ret = convolve(ret, IRF, mode="same")
+                if normalize:
+                    ret = np.array(ret) / np.max(ret)
 
             return ret
 
@@ -351,6 +355,8 @@ class Contini:
             ret = self(t_rho_array_like, *args, **kwargs)[index]
             if IRF:
                 ret = convolve(ret, IRF, mode="same")
+            if normalize:
+                ret = np.array(ret) / np.max(ret)
             return ret
 
         else:
@@ -401,23 +407,27 @@ class Contini:
             values_to_fit=values_to_fit, free_params=free_params, normalize=normalize
         )
 
+        fun_to_fit = self._fit
+
         if self.normalize:
-            ydata_max = np.max(ydata)  # noqa: F841
-            y_data_min = np.min(ydata)  # noqa: F841
+            ydata_max = np.max(ydata)
+            ydata_min = np.min(ydata)
+
+            fun_to_fit = ydata_max * self._fit + ydata_min
 
         popt, pcov, *_ = curve_fit(
-            self._fit, _t_rho_array_like, ydata, initial_free_params, *args, **kwargs
+            fun_to_fit, _t_rho_array_like, ydata, initial_free_params, *args, **kwargs
         )
         return popt, pcov
 
     def load_data(self, *args: Any, **kwargs: Any) -> None:
-        pass
+        return NotImplemented
 
     def _load_IRF(self, *args: Any, **kwargs: Any) -> None:
-        pass
+        return NotImplemented
 
     def load_xdata(self, *args: Any, **kwargs: Any) -> None:
-        pass
+        return NotImplemented
 
     def _convolve(self, *args: Any, **kwargs: Any) -> None:
-        pass
+        return NotImplemented
