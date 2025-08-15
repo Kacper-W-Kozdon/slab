@@ -109,6 +109,7 @@ def Reflectance_Transmittance_rho_t(
             r_plus = float(sqrt(rho**2 + (s - z_plus) ** 2))
             r_minus = float(sqrt(rho**2 + (s - z_minus) ** 2))
             t = float(t)
+
             if t == 0:
                 continue
 

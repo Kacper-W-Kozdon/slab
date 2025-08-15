@@ -428,7 +428,7 @@ class Contini:
         )
         print(pcov[0][0], math.isinf(pcov[0][0]))
         if math.isinf(pcov[0][0]):
-            xdata = torch.tensor(_t_rho_array_like)
+            xdata = torch.tensor(_t_rho_array_like, requires_grad=True)
             func = self._fit
             target = torch.tensor(ydata, dtype=torch.float64)
 
@@ -436,7 +436,7 @@ class Contini:
             weights_LBFGS = torch.tensor(guess, requires_grad=True)
             weights = weights_LBFGS
 
-            optimizer = torch.optim.Adam([weights_LBFGS], lr=0.3)
+            optimizer = torch.optim.Adam([{"params": weights_LBFGS}], lr=0.3)
             guesses = []
             losses = []
 

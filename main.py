@@ -76,7 +76,8 @@ if __name__ == "__main__":
         # df_time = df.iloc[:, 0].fillna(0)
         # df_ydata = df.iloc[:, 1].fillna(0)
         df_time = df_clean.iloc[:, 0]
-        df_ydata = df_clean.iloc[:, 1]
+        df_ydata = df_clean.iloc[:, 2]
+        df_irf = df_clean.iloc[:, 1]
         # df_time = df_time.loc[(df[xdata_column_name] != 0.0)]
         # df_ydata = df_ydata.loc[(df[xdata_column_name] != 0.0)]
         # ~df['column_name'].isin(some_values)
@@ -90,7 +91,7 @@ if __name__ == "__main__":
         xdata = [tuple([time, rho]) for time in df_time]
         # print(xdata)
         # print(np.max(df_ydata))
-        popt, pcov = contini.fit(xdata, df_ydata, [0.25])
+        popt, pcov = contini.fit(xdata, df_ydata, [0.25], IRF=df_irf)
         print(popt, pcov)
 
         ydata = []
