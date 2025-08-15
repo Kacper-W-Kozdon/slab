@@ -430,7 +430,7 @@ class Contini:
         if math.isinf(pcov[0][0]):
             xdata = torch.Tensor(_t_rho_array_like)
             func = self._fit
-            target = torch.Tensor(ydata)
+            target = torch.Tensor(ydata, dtype=torch.float64)
 
             guess = initial_free_params
             weights_LBFGS = torch.tensor(guess, requires_grad=True)
@@ -443,7 +443,7 @@ class Contini:
             def closure() -> Any:
                 optimizer.zero_grad()
                 output = func(xdata, weights)
-                input = torch.tensor(output, requires_grad=True)
+                input = torch.tensor(output, requires_grad=True, dtype=torch.float64)
                 loss = F.mse_loss(input, target)
                 loss.backward()
                 guesses.append(weights.clone())
