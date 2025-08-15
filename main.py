@@ -66,6 +66,7 @@ if __name__ == "__main__":
 
     plot2 = plt.plot(xdata_t, ydata, color="g", label="fit")
     plt.show()
+    plt.clf()
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
@@ -105,6 +106,6 @@ if __name__ == "__main__":
 
             ydata.append(subresult[0])
 
-        # fit = plt.plot(df_time, ydata, color="r", label="raw data")
+        fit = plt.plot(df_time, ydata, color="r", label="raw data")
 
         plt.show()
