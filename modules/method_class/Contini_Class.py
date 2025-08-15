@@ -443,7 +443,8 @@ class Contini:
             def closure() -> Any:
                 optimizer.zero_grad()
                 output = func(xdata, weights)
-                loss = F.mse_loss(output, target)
+                input = torch.tensor(output, requires_grad=True)
+                loss = F.mse_loss(input, target)
                 loss.backward()
                 guesses.append(weights.clone())
                 losses.append(loss.clone())
@@ -451,7 +452,7 @@ class Contini:
 
             optimizer.step(closure)
 
-            popt = {[v.item() for v in weights]}
+            popt = weights
 
         return popt, pcov
 
