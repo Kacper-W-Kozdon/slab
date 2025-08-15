@@ -1,6 +1,8 @@
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import numpy as np
 from scipy.optimize import curve_fit
+from scipy.signal import convolve
 
 from ..other.utils import A_parameter, Image_Sources_Positions, Mean_Path_T_R
 from ..reflect_transmit.reflect_transmit import (
@@ -24,6 +26,10 @@ class Contini:
         DD: Optional[str] = "Dmus",
         m: int = 100,
         eq: str = "RTE",
+        IRF: Union[List[Union[float, int]], None] = None,
+        normalize: bool = True,
+        values_to_fit: Union[List[str], Any] = ["R_rho_t"],
+        free_params: Union[List[str], Any] = ["musp"],
     ) -> None:
         """
         The class initiating the slab model with the RTE and DE Green's functions. Source- Contini.
@@ -46,6 +52,14 @@ class Contini:
         :type m: int
         :param eq: Flag parameter to switch between "RTE" and "DE" Green's functions. Default: "RTE"
         :type eq: str
+        :param IRF: Instrument Response Function as a list of the function's outputs. Default: None.
+        :type IRF: Union[List[Union[float, int]], None]
+        :param normalize: Decide whether to normalize the function's output to the data to fit. Default: True.
+        :type normalize: bool
+        :param values_to_fit: Values passed to scipy.curve_fit(f, ydata, xdata, params) as ydata.
+        :type values_to_fit: Union[List[str], Any]
+        :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
+        :type free_params: Union[List[str], Any]
         """
 
         self.s = s * 1e-3
@@ -58,6 +72,11 @@ class Contini:
         self.m = m
         self.eq = eq
         self.anisothropy_coeff = anisothropy_coeff
+        self.IRF = IRF
+        self.normalize = normalize
+        self.values_to_fit = values_to_fit
+        self.free_params = free_params
+        self.ydata_info = {}
 
         self.err = 1e-6  # noqa: F841
 
@@ -104,7 +123,7 @@ class Contini:
             musp = musp * 1e3 if self.musp is None else self.musp
             anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
 
-            t = t_rho[0] * 1e-9
+            t = t_rho[0] * 1e-12
             rho = t_rho[1] * 1e-3
             s = self.s
             n1 = self.n1
@@ -113,6 +132,7 @@ class Contini:
             DD = self.DD
             m = self.m
             eq = self.eq
+            # print(mua, musp)
 
             R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
                 rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff, **kwargs
@@ -165,7 +185,7 @@ class Contini:
             anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
 
             for value in t_rho:
-                t = value[0] * 1e-9
+                t = value[0] * 1e-12
                 rho = value[1] * 1e-3
                 s = self.s
                 n1 = self.n1
@@ -222,12 +242,29 @@ class Contini:
                 Z,
             )
 
-    def _fit(
+    def fit_settings(
+        self,
+        values_to_fit: Union[List[str], Any] = None,
+        free_params: Union[List[str], Any] = None,
+        normalize: Union[bool, None] = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Updates fit settings.
+        :param values_to_fit: Values passed to scipy.curve_fit(f, ydata, xdata, params) as ydata.
+        :type values_to_fit: Union[List[str], Any]
+        :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
+        :type free_params: Union[List[str], Any]
+        """
+        self.values_to_fit = values_to_fit or self.values_to_fit
+        self.free_params = free_params or self.free_params
+        self.normalize = normalize if normalize is not None else self.normalize
+
+    def forward(
         self,
         t_rho_array_like: List[Tuple[float, float]],
         *args: Any,
-        values_to_fit: Union[List[str], Any] = ["R_rho_t"],
-        free_params: Union[List[str], Any] = ["musp"],
         **kwargs: Any,
     ) -> Union[float, int, None, List[float], Dict[Any, Any]]:
         """
@@ -238,12 +275,8 @@ class Contini:
         :param mua: Absorption coefficient of the slab in [mm^-1]. Default: None.
         :param args: An iterable of the free_parameters for fitting in the order (mua, musp). The parameters have to match the free_params param. Anisothropy_coeff to be added.
         :type args: Any
-        :param values_to_fit: Values passed to scipy.curve_fit(f, ydata, xdata, params) as ydata.
-        :type values_to_fit: Union[List[str], Any]
-        :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
-        :type free_params: Union[List[str], Any]
         :param kwargs: Optional kwargs:
-                       mode: available values: "approx", "sum"- controls G_function's computation method.
+                       mode: available values: "approx", "sum", "correction", "mixed"- controls G_function's computation method.
                        kwargs supported by the scipy.curve_fit() method
         :type kwargs: Any
 
@@ -251,6 +284,12 @@ class Contini:
         A dictionary with keys as passed in the values_to_fit param or a Union[float, List[float]] if a single value was provided.
 
         """
+
+        values_to_fit: Union[List[str], Any] = self.values_to_fit or ["R_rho_t"]
+        free_params: Union[List[str], Any] = self.free_params or ["musp"]
+        normalize: Union[bool, None] = self.normalize or False  # noqa: F841
+
+        IRF = self.IRF
 
         available_values = [
             "R_rho_t",
@@ -288,6 +327,8 @@ class Contini:
 
         args = tuple(args_list)
 
+        # print(args)
+
         value: Any
 
         if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
@@ -296,6 +337,11 @@ class Contini:
                 index = int(values_to_fit.index(str(value)))
                 ret[value] = self(t_rho_array_like, *args, **kwargs)[index]
 
+                if normalize:
+                    ret[value] = np.array(ret[value]) / np.max(ret[value])
+                if IRF is not None:
+                    ret[value] = convolve(ret[value], IRF, mode="same")
+            # ret = np.log(ret + 1)
             return ret
 
         elif isinstance(values_to_fit, list) and len(values_to_fit) == 1:
@@ -303,25 +349,56 @@ class Contini:
                 index = int(available_values.index(str(value)))
                 ret = self(t_rho_array_like, *args, **kwargs)[index]
 
+                if normalize:
+                    ret = np.array(ret) / np.max(ret)
+                if IRF is not None:
+                    ret = convolve(ret, IRF, mode="same")
+            # ret = np.log(ret + 1)
             return ret
 
         elif isinstance(values_to_fit, str):
             index = available_values.index(values_to_fit)
             ret = self(t_rho_array_like, *args, **kwargs)[index]
 
+            if normalize:
+                ret = np.array(ret) / np.max(ret)
+            if IRF is not None:
+                ret = convolve(ret, IRF, mode="same")
+            # ret = np.log(ret + 1)
             return ret
 
         else:
             return None
 
     def fit(
-        self, _t_rho_array_like: List[Tuple[float, float]], *args: Any, **kwargs: Any
+        self,
+        _t_rho_array_like: List[Tuple[float, float]],
+        ydata: List[float],
+        initial_free_params: List[Union[float, int]],
+        IRF: Union[List[Union[float, int]], None] = None,
+        normalize: bool = True,
+        values_to_fit: Union[List[str], Any] = ["R_rho_t"],
+        free_params: Union[List[str], Any] = ["musp"],
+        *args: Any,
+        **kwargs: Any,
     ) -> Tuple[List[float], ...]:
         """
         Method used to fit the model by Contini to existing data.
 
         :param _t_rho_array_like: An array-like input with tuples of the form (time, radial_coordinate), xdata.
         :type _t_rho_array_like: List[Tuple[float, float]]
+        :param ydata: The data the model's function gets fit to.
+        :type ydata: List[float]
+        :param initial_free_params: The initial values for the free parameters to fit.
+        :type initial_free_params: List[Union[int, float]]
+        :param IRF: Instrument Response Function as a list of the function's outputs. Default: None.
+        :type IRF: Union[List[Union[float, int]]
+        :param normalize: Decide whether to normalize the function's output to the data to fit. Default: True.
+        :type normalize: bool
+        :param values_to_fit: Values passed to scipy.curve_fit(f, ydata, xdata, params) as ydata.
+        :type values_to_fit: Union[List[str], Any]
+        :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
+        :type free_params: Union[List[str], Any]
         :param args: A tuple of free parameters for fitting.
         :type args: Any
         :param kwargs: Supports kwargs of the scipy.curve_fit() as well as mode: "approx", "sum" of the G_function().
@@ -332,5 +409,64 @@ class Contini:
         pcov: Covariance matrix of the output popt.
 
         """
-        popt, pcov, *_ = curve_fit(self._fit, _t_rho_array_like, *args, **kwargs)
+
+        self.IRF = IRF if IRF is not None else self.IRF
+        self.fit_settings(
+            values_to_fit=values_to_fit, free_params=free_params, normalize=normalize
+        )
+        # if IRF:
+        #     for entry_index, entry in enumerate(IRF):
+        #         IRF[entry_index] = entry if entry else entry + 1e-5
+        # ydata = np.array(ydata)
+        # if IRF is not None:
+        #     _, ydata = deconvolve(ydata, IRF)
+        #     print(ydata)
+        # print(self.normalize, normalize)
+        if self.normalize:
+            ydata = ydata / np.max(ydata) - np.min(ydata)
+        self.ydata_info = {"ydata_min": np.min(ydata), "ydata_max": np.max(ydata)}
+
+        popt, pcov, *_ = curve_fit(
+            self.forward, _t_rho_array_like, ydata, initial_free_params, *args, **kwargs
+        )
+        # print(pcov[0][0], math.isinf(pcov[0][0]))
+        # if math.isinf(pcov[0][0]):
+        #     xdata = torch.tensor(_t_rho_array_like, requires_grad=True)
+        #     func = self.forward
+        #     target = torch.tensor(ydata, dtype=torch.float64)
+
+        #     guess = initial_free_params
+        #     weights_LBFGS = torch.tensor(guess, requires_grad=True)
+        #     weights = weights_LBFGS
+
+        #     optimizer = torch.optim.Adam([{"params": weights_LBFGS}], lr=0.3)
+        #     guesses = []
+        #     losses = []
+
+        #     for epoch in range(5):
+        #         print(f"---EPOCH {epoch}---\n")
+        #         optimizer.zero_grad()
+        #         output = func(xdata, weights)
+        #         input = torch.tensor(output, requires_grad=True, dtype=torch.float64)
+        #         loss = F.mse_loss(input, target)
+        #         loss.backward()
+        #         optimizer.step()
+        #         guesses.append(weights.clone())
+        #         losses.append(loss.clone())
+        #         print(weights, loss, guesses)
+
+        #     popt = weights
+
         return popt, pcov
+
+    def load_data(self, *args: Any, **kwargs: Any) -> None:
+        return NotImplemented
+
+    def _load_IRF(self, *args: Any, **kwargs: Any) -> None:
+        return NotImplemented
+
+    def load_xdata(self, *args: Any, **kwargs: Any) -> None:
+        return NotImplemented
+
+    def _convolve(self, *args: Any, **kwargs: Any) -> None:
+        return NotImplemented

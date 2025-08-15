@@ -1,5 +1,7 @@
+import warnings
 from collections import OrderedDict
 
+import numpy as np
 from numpy import exp, log, sqrt
 from scipy.special import factorial, gamma
 
@@ -202,7 +204,7 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
         return Z
 
 
-def G_func(x, N_scatter=200, mode: str = "sum", **kwargs):
+def G_func(x, N_scatter=200, mode: str = "correction", **kwargs):
     G = 0
     if mode == "sum":
         factor = 8 * (3 * x) ** (-3 / 2)
@@ -221,3 +223,27 @@ def G_func(x, N_scatter=200, mode: str = "sum", **kwargs):
         G += exp(x) * sqrt(1 + 2.026 / x)
 
         return G
+
+    if mode == "correction":
+        with warnings.catch_warnings():  # stop warnings about negative value under sqrt, we don't use that region
+            warnings.simplefilter("ignore")
+            G = (
+                G_func(x, N_scatter=N_scatter, mode="sum", **kwargs)
+                if x <= 80
+                else G_func(x, N_scatter=N_scatter, mode="approx", **kwargs)
+                / cor_factor(x, 1.19318303, 1.41879319, 4.98107131, 5.54541984)
+            )
+        return G
+
+    if mode == "mixed":
+        G = (
+            G_func(x, N_scatter=N_scatter, mode="sum", **kwargs)
+            if x <= 0.98
+            else G_func(x, N_scatter=N_scatter, mode="approx", **kwargs)
+        )
+        return G
+
+
+def cor_factor(x, a, b, x_0, c):
+    r = a * np.sqrt(b * (x - x_0) + c)
+    return r
