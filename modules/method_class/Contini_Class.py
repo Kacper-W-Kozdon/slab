@@ -24,6 +24,7 @@ class Contini:
         DD: Optional[str] = "Dmus",
         m: int = 100,
         eq: str = "RTE",
+        IRF: Union[List[Union[float, int]], None] = None,
     ) -> None:
         """
         The class initiating the slab model with the RTE and DE Green's functions. Source- Contini.
@@ -46,6 +47,8 @@ class Contini:
         :type m: int
         :param eq: Flag parameter to switch between "RTE" and "DE" Green's functions. Default: "RTE"
         :type eq: str
+        :param IRF: Instrument Response Function as a list of the function's outputs. Default: None.
+        :type IRF: Union[List[Union[float, int]], None]
         """
 
         self.s = s * 1e-3
@@ -58,6 +61,7 @@ class Contini:
         self.m = m
         self.eq = eq
         self.anisothropy_coeff = anisothropy_coeff
+        self.IRF = IRF
 
         self.err = 1e-6  # noqa: F841
 
@@ -315,13 +319,19 @@ class Contini:
             return None
 
     def fit(
-        self, _t_rho_array_like: List[Tuple[float, float]], *args: Any, **kwargs: Any
+        self,
+        _t_rho_array_like: List[Tuple[float, float]],
+        IRF: Union[List[Union[float, int]], None] = None,
+        *args: Any,
+        **kwargs: Any,
     ) -> Tuple[List[float], ...]:
         """
         Method used to fit the model by Contini to existing data.
 
         :param _t_rho_array_like: An array-like input with tuples of the form (time, radial_coordinate), xdata.
         :type _t_rho_array_like: List[Tuple[float, float]]
+        :param IRF: Instrument Response Function as a list of the function's outputs. Default: None.
+        :type IRF: Union[List[Union[float, int]]
         :param args: A tuple of free parameters for fitting.
         :type args: Any
         :param kwargs: Supports kwargs of the scipy.curve_fit() as well as mode: "approx", "sum" of the G_function().
@@ -332,5 +342,19 @@ class Contini:
         pcov: Covariance matrix of the output popt.
 
         """
+        if IRF:
+            pass  # If IRF provided- convolve with the __call__.
         popt, pcov, *_ = curve_fit(self._fit, _t_rho_array_like, *args, **kwargs)
         return popt, pcov
+
+    def load_data(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
+    def _load_IRF(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
+    def load_xdata(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
+    def _convolve(self, *args: Any, **kwargs: Any) -> None:
+        pass
