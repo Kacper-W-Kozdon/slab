@@ -96,7 +96,7 @@ if __name__ == "__main__":
         xdata = [tuple([time, rho]) for time in df_time]
         # print(xdata)
         # print(np.max(df_ydata))
-        popt, pcov = contini.fit(xdata, df_ydata, [0.25], IRF=df_irf)
+        popt, pcov = contini.fit(xdata, df_ydata, [0.35], IRF=df_irf)
         print(popt, pcov)
 
         ydata = []

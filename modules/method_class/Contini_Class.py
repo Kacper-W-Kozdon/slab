@@ -327,7 +327,7 @@ class Contini:
 
         args = tuple(args_list)
 
-        print(args)
+        # print(args)
 
         value: Any
 
