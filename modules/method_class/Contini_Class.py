@@ -428,9 +428,9 @@ class Contini:
         )
         print(pcov[0][0], math.isinf(pcov[0][0]))
         if math.isinf(pcov[0][0]):
-            xdata = torch.Tensor(_t_rho_array_like)
+            xdata = torch.tensor(_t_rho_array_like)
             func = self._fit
-            target = torch.Tensor(ydata, dtype=torch.float64)
+            target = torch.tensor(ydata, dtype=torch.float64)
 
             guess = initial_free_params
             weights_LBFGS = torch.tensor(guess, requires_grad=True)
