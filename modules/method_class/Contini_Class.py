@@ -1,11 +1,8 @@
-import math
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-import torch
 from scipy.optimize import curve_fit
 from scipy.signal import convolve
-from torch.functional import F
 
 from ..other.utils import A_parameter, Image_Sources_Positions, Mean_Path_T_R
 from ..reflect_transmit.reflect_transmit import (
@@ -135,6 +132,7 @@ class Contini:
             DD = self.DD
             m = self.m
             eq = self.eq
+            # print(mua, musp)
 
             R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
                 rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff, **kwargs
@@ -261,9 +259,9 @@ class Contini:
         """
         self.values_to_fit = values_to_fit or self.values_to_fit
         self.free_params = free_params or self.free_params
-        self.normalize = normalize or self.normalize
+        self.normalize = normalize if normalize is not None else self.normalize
 
-    def _fit(
+    def forward(
         self,
         t_rho_array_like: List[Tuple[float, float]],
         *args: Any,
@@ -289,13 +287,10 @@ class Contini:
 
         values_to_fit: Union[List[str], Any] = self.values_to_fit or ["R_rho_t"]
         free_params: Union[List[str], Any] = self.free_params or ["musp"]
-        normalize: Union[bool, None] = self.normalize or True  # noqa: F841
-        ydata_max = self.ydata_info.get("ydata_max") or 1
-        ydata_min = self.ydata_info.get("ydata_min") or 0
+        normalize: Union[bool, None] = self.normalize or False  # noqa: F841
 
-        IRF: Union[List[Any], None] = None
-        if list(self.IRF):
-            IRF = self.IRF.copy()
+        IRF = self.IRF
+
         available_values = [
             "R_rho_t",
             "T_rho_t",
@@ -332,7 +327,7 @@ class Contini:
 
         args = tuple(args_list)
 
-        print(args[1])
+        print(args)
 
         value: Any
 
@@ -341,13 +336,11 @@ class Contini:
             for value in values_to_fit:
                 index = int(values_to_fit.index(str(value)))
                 ret[value] = self(t_rho_array_like, *args, **kwargs)[index]
-                if IRF:
-                    ret[value] = convolve(ret[value], IRF, mode="same")
+
                 if normalize:
-                    ret[value] = (
-                        ydata_max * np.array(ret[value]) / np.max(ret[value])
-                        + ydata_min
-                    )
+                    ret[value] = np.array(ret[value]) / np.max(ret[value])
+                if IRF is not None:
+                    ret[value] = convolve(ret[value], IRF, mode="same")
             # ret = np.log(ret + 1)
             return ret
 
@@ -355,20 +348,22 @@ class Contini:
             for value in values_to_fit:
                 index = int(available_values.index(str(value)))
                 ret = self(t_rho_array_like, *args, **kwargs)[index]
-                if list(IRF):
-                    ret = convolve(ret, IRF, mode="same")
+
                 if normalize:
-                    ret = ydata_max * np.array(ret) / np.max(ret) + ydata_min
+                    ret = np.array(ret) / np.max(ret)
+                if IRF is not None:
+                    ret = convolve(ret, IRF, mode="same")
             # ret = np.log(ret + 1)
             return ret
 
         elif isinstance(values_to_fit, str):
             index = available_values.index(values_to_fit)
             ret = self(t_rho_array_like, *args, **kwargs)[index]
-            if IRF:
-                ret = convolve(ret, IRF, mode="same")
+
             if normalize:
-                ret = ydata_max * np.array(ret) / np.max(ret) + ydata_min
+                ret = np.array(ret) / np.max(ret)
+            if IRF is not None:
+                ret = convolve(ret, IRF, mode="same")
             # ret = np.log(ret + 1)
             return ret
 
@@ -415,44 +410,52 @@ class Contini:
 
         """
 
-        self.IRF = IRF if list(IRF) else self.IRF
+        self.IRF = IRF if IRF is not None else self.IRF
         self.fit_settings(
             values_to_fit=values_to_fit, free_params=free_params, normalize=normalize
         )
-        ydata = np.array(ydata)
-
+        # if IRF:
+        #     for entry_index, entry in enumerate(IRF):
+        #         IRF[entry_index] = entry if entry else entry + 1e-5
+        # ydata = np.array(ydata)
+        # if IRF is not None:
+        #     _, ydata = deconvolve(ydata, IRF)
+        #     print(ydata)
+        # print(self.normalize, normalize)
+        if self.normalize:
+            ydata = ydata / np.max(ydata) - np.min(ydata)
         self.ydata_info = {"ydata_min": np.min(ydata), "ydata_max": np.max(ydata)}
 
         popt, pcov, *_ = curve_fit(
-            self._fit, _t_rho_array_like, ydata, initial_free_params, *args, **kwargs
+            self.forward, _t_rho_array_like, ydata, initial_free_params, *args, **kwargs
         )
-        print(pcov[0][0], math.isinf(pcov[0][0]))
-        if math.isinf(pcov[0][0]):
-            xdata = torch.tensor(_t_rho_array_like, requires_grad=True)
-            func = self._fit
-            target = torch.tensor(ydata, dtype=torch.float64)
+        # print(pcov[0][0], math.isinf(pcov[0][0]))
+        # if math.isinf(pcov[0][0]):
+        #     xdata = torch.tensor(_t_rho_array_like, requires_grad=True)
+        #     func = self.forward
+        #     target = torch.tensor(ydata, dtype=torch.float64)
 
-            guess = initial_free_params
-            weights_LBFGS = torch.tensor(guess, requires_grad=True)
-            weights = weights_LBFGS
+        #     guess = initial_free_params
+        #     weights_LBFGS = torch.tensor(guess, requires_grad=True)
+        #     weights = weights_LBFGS
 
-            optimizer = torch.optim.Adam([{"params": weights_LBFGS}], lr=0.3)
-            guesses = []
-            losses = []
+        #     optimizer = torch.optim.Adam([{"params": weights_LBFGS}], lr=0.3)
+        #     guesses = []
+        #     losses = []
 
-            for epoch in range(5):
-                print(f"---EPOCH {epoch}---\n")
-                optimizer.zero_grad()
-                output = func(xdata, weights)
-                input = torch.tensor(output, requires_grad=True, dtype=torch.float64)
-                loss = F.mse_loss(input, target)
-                loss.backward()
-                optimizer.step()
-                guesses.append(weights.clone())
-                losses.append(loss.clone())
-                print(weights, loss, guesses)
+        #     for epoch in range(5):
+        #         print(f"---EPOCH {epoch}---\n")
+        #         optimizer.zero_grad()
+        #         output = func(xdata, weights)
+        #         input = torch.tensor(output, requires_grad=True, dtype=torch.float64)
+        #         loss = F.mse_loss(input, target)
+        #         loss.backward()
+        #         optimizer.step()
+        #         guesses.append(weights.clone())
+        #         losses.append(loss.clone())
+        #         print(weights, loss, guesses)
 
-            popt = weights
+        #     popt = weights
 
         return popt, pcov
 

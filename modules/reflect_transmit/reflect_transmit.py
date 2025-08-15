@@ -1,7 +1,14 @@
+import sys
+
 import torch
 from numpy import exp, pi, sqrt
 
 from ..other.utils import A_parameter, D_parameter, G_func, Image_Sources_Positions
+
+if not sys.warnoptions:
+    import warnings
+
+    warnings.simplefilter("ignore")
 
 
 def Reflectance_Transmittance_rho_t(
