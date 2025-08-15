@@ -69,15 +69,36 @@ if __name__ == "__main__":
         print(df.head())
 
         df = pd.read_excel(path, engine="openpyxl")
-        df_time = df.iloc[:, 0]
-        df_ydata = df.iloc[:, 1]
+        df = df.fillna(0.0)
+        column_names = df.columns.values.tolist()
+        xdata_column_name = column_names[0]
+        df_clean = df.loc[df[xdata_column_name] != 0.0]
+        # df_time = df.iloc[:, 0].fillna(0)
+        # df_ydata = df.iloc[:, 1].fillna(0)
+        df_time = df_clean.iloc[:, 0]
+        df_ydata = df_clean.iloc[:, 1]
+        # df_time = df_time.loc[(df[xdata_column_name] != 0.0)]
+        # df_ydata = df_ydata.loc[(df[xdata_column_name] != 0.0)]
+        # ~df['column_name'].isin(some_values)
+        print(xdata_column_name)
+        print(df_time)
 
         raw_data = plt.plot(
             df_time, df_ydata, color="b", label="raw data", marker="o", linestyle=" "
         )
 
         xdata = [tuple([time, rho]) for time in df_time]
-        popt, pcov = contini.fit(xdata, df_ydata, [0.25])
+        # print(xdata)
+        # print(np.max(df_ydata))
+        popt, pcov = contini.fit(xdata, df_ydata, [0.3])
         print(popt, pcov)
+
+        ydata = []
+        for t in df_time:
+            subresult = contini((t, rho))
+
+            ydata.append(subresult[0])
+
+        # fit = plt.plot(df_time, ydata, color="r", label="raw data")
 
         plt.show()

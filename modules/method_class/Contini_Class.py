@@ -1,8 +1,11 @@
+import math
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+import torch
 from scipy.optimize import curve_fit
 from scipy.signal import convolve
+from torch.functional import F
 
 from ..other.utils import A_parameter, Image_Sources_Positions, Mean_Path_T_R
 from ..reflect_transmit.reflect_transmit import (
@@ -76,6 +79,7 @@ class Contini:
         self.normalize = normalize
         self.values_to_fit = values_to_fit
         self.free_params = free_params
+        self.ydata_info = None
 
         self.err = 1e-6  # noqa: F841
 
@@ -282,9 +286,12 @@ class Contini:
         A dictionary with keys as passed in the values_to_fit param or a Union[float, List[float]] if a single value was provided.
 
         """
+
         values_to_fit: Union[List[str], Any] = self.values_to_fit or ["R_rho_t"]
         free_params: Union[List[str], Any] = self.free_params or ["musp"]
         normalize: Union[bool, None] = self.normalize or True  # noqa: F841
+        ydata_max = self.ydata_info.get("ydata_max") or 1
+        ydata_min = self.ydata_info.get("ydata_min") or 0
 
         IRF: Union[List[Any], None] = None
         if self.IRF:
@@ -325,6 +332,8 @@ class Contini:
 
         args = tuple(args_list)
 
+        print(args[1])
+
         value: Any
 
         if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
@@ -335,8 +344,11 @@ class Contini:
                 if IRF:
                     ret[value] = convolve(ret[value], IRF, mode="same")
                 if normalize:
-                    ret[value] = np.array(ret[value]) / np.max(ret[value])
-
+                    ret[value] = (
+                        ydata_max * np.array(ret[value]) / np.max(ret[value])
+                        + ydata_min
+                    )
+            ret = np.log(ret)
             return ret
 
         elif isinstance(values_to_fit, list) and len(values_to_fit) == 1:
@@ -346,8 +358,8 @@ class Contini:
                 if IRF:
                     ret = convolve(ret, IRF, mode="same")
                 if normalize:
-                    ret = np.array(ret) / np.max(ret)
-
+                    ret = ydata_max * np.array(ret) / np.max(ret) + ydata_min
+            ret = np.log(ret + 1)
             return ret
 
         elif isinstance(values_to_fit, str):
@@ -356,7 +368,8 @@ class Contini:
             if IRF:
                 ret = convolve(ret, IRF, mode="same")
             if normalize:
-                ret = np.array(ret) / np.max(ret)
+                ret = ydata_max * np.array(ret) / np.max(ret) + ydata_min
+            ret = np.log(ret)
             return ret
 
         else:
@@ -365,7 +378,7 @@ class Contini:
     def fit(
         self,
         _t_rho_array_like: List[Tuple[float, float]],
-        ydata: List[Tuple[float, float]],
+        ydata: List[float],
         initial_free_params: List[Union[float, int]],
         IRF: Union[List[Union[float, int]], None] = None,
         normalize: bool = True,
@@ -380,7 +393,7 @@ class Contini:
         :param _t_rho_array_like: An array-like input with tuples of the form (time, radial_coordinate), xdata.
         :type _t_rho_array_like: List[Tuple[float, float]]
         :param ydata: The data the model's function gets fit to.
-        :type ydata: List[Tuple[float, float]]
+        :type ydata: List[float]
         :param initial_free_params: The initial values for the free parameters to fit.
         :type initial_free_params: List[Union[int, float]]
         :param IRF: Instrument Response Function as a list of the function's outputs. Default: None.
@@ -406,18 +419,40 @@ class Contini:
         self.fit_settings(
             values_to_fit=values_to_fit, free_params=free_params, normalize=normalize
         )
+        ydata = np.log(np.array(ydata) + 1)
 
-        fun_to_fit = self._fit
-
-        if self.normalize:
-            ydata_max = np.max(ydata)
-            ydata_min = np.min(ydata)
-
-            fun_to_fit = ydata_max * self._fit + ydata_min
+        self.ydata_info = {"ydata_min": np.min(ydata), "ydata_max": np.max(ydata)}
 
         popt, pcov, *_ = curve_fit(
-            fun_to_fit, _t_rho_array_like, ydata, initial_free_params, *args, **kwargs
+            self._fit, _t_rho_array_like, ydata, initial_free_params, *args, **kwargs
         )
+        print(pcov[0][0], math.isinf(pcov[0][0]))
+        if math.isinf(pcov[0][0]):
+            xdata = torch.Tensor(_t_rho_array_like)
+            func = self._fit
+            target = torch.Tensor(ydata)
+
+            guess = initial_free_params
+            weights_LBFGS = torch.tensor(guess, requires_grad=True)
+            weights = weights_LBFGS
+
+            optimizer = torch.optim.LBFGS([weights_LBFGS], max_iter=100, lr=0.1)
+            guesses = []
+            losses = []
+
+            def closure() -> Any:
+                optimizer.zero_grad()
+                output = func(xdata, weights)
+                loss = F.mse_loss(output, target)
+                loss.backward()
+                guesses.append(weights.clone())
+                losses.append(loss.clone())
+                return loss
+
+            optimizer.step(closure)
+
+            popt = {[v.item() for v in weights]}
+
         return popt, pcov
 
     def load_data(self, *args: Any, **kwargs: Any) -> None:

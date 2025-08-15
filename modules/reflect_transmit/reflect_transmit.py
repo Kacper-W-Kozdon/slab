@@ -48,9 +48,13 @@ def Reflectance_Transmittance_rho_t(
 
         for index in range(-m, m + 1):
             z_plus, z_minus = Z[f"Z_{index}"]
-
-            r_plus = sqrt(rho**2 + (z_plus) ** 2)
-            r_minus = sqrt(rho**2 + (z_minus) ** 2)
+            z_plus = float(z_plus)
+            z_minus = float(z_minus)
+            r_plus = float(sqrt(rho**2 + (z_plus) ** 2))
+            r_minus = float(sqrt(rho**2 + (z_minus) ** 2))
+            t = float(t)
+            if t == 0:
+                continue
 
             Delta_plus = 1 if r_plus == c * t else 0
             Delta_minus = 1 if r_minus == c * t else 0
@@ -85,6 +89,8 @@ def Reflectance_Transmittance_rho_t(
             else:
                 factor_minus = 0
 
+            # print(r_plus, r_minus, type(r_plus), type(r_minus))
+
             R_rho_t_source_sum += exp(-c * t / mean_free_path) * (
                 1 / (4 * pi * r_plus**2) * Delta_plus
                 - 1 / (4 * pi * r_minus**2) * Delta_minus
@@ -97,9 +103,14 @@ def Reflectance_Transmittance_rho_t(
 
         for index in range(-m, m + 1):
             z_plus, z_minus = Z[f"Z_{index}"]
+            z_plus = float(z_plus)
+            z_minus = float(z_minus)
 
-            r_plus = sqrt(rho**2 + (s - z_plus) ** 2)
-            r_minus = sqrt(rho**2 + (s - z_minus) ** 2)
+            r_plus = float(sqrt(rho**2 + (s - z_plus) ** 2))
+            r_minus = float(sqrt(rho**2 + (s - z_minus) ** 2))
+            t = float(t)
+            if t == 0:
+                continue
 
             Delta_plus = 1 if r_plus == c * t else 0
             Delta_minus = 1 if r_minus == c * t else 0
