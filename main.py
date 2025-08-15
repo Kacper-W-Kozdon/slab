@@ -1,6 +1,9 @@
 # placeholder
+import pathlib
+
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from modules import Contini
 
 if __name__ == "__main__":
@@ -61,3 +64,8 @@ if __name__ == "__main__":
     plot2 = plt.plot(xdata_t, ydata, color="g", label="fit")
     # plt.yscale("log")
     plt.show()
+
+    path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
+    if pathlib.Path(path).exists():
+        df = pd.read_excel(path, engine="openpyxl")
+        print(df.head())
