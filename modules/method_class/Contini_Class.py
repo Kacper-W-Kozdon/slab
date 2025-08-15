@@ -415,7 +415,7 @@ class Contini:
 
         """
 
-        self.IRF = IRF or self.IRF
+        self.IRF = IRF if IRF else self.IRF
         self.fit_settings(
             values_to_fit=values_to_fit, free_params=free_params, normalize=normalize
         )
