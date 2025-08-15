@@ -436,21 +436,21 @@ class Contini:
             weights_LBFGS = torch.tensor(guess, requires_grad=True)
             weights = weights_LBFGS
 
-            optimizer = torch.optim.LBFGS([weights_LBFGS], max_iter=100, lr=0.1)
+            optimizer = torch.optim.Adam([weights_LBFGS], lr=0.3)
             guesses = []
             losses = []
 
-            def closure() -> Any:
+            for epoch in range(5):
+                print(f"---EPOCH {epoch}---\n")
                 optimizer.zero_grad()
                 output = func(xdata, weights)
                 input = torch.tensor(output, requires_grad=True, dtype=torch.float64)
                 loss = F.mse_loss(input, target)
                 loss.backward()
+                optimizer.step()
                 guesses.append(weights.clone())
                 losses.append(loss.clone())
-                return loss
-
-            optimizer.step(closure)
+                print(weights, loss, guesses)
 
             popt = weights
 
