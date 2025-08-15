@@ -79,7 +79,7 @@ class Contini:
         self.normalize = normalize
         self.values_to_fit = values_to_fit
         self.free_params = free_params
-        self.ydata_info = None
+        self.ydata_info = {}
 
         self.err = 1e-6  # noqa: F841
 
@@ -294,7 +294,7 @@ class Contini:
         ydata_min = self.ydata_info.get("ydata_min") or 0
 
         IRF: Union[List[Any], None] = None
-        if self.IRF:
+        if list(self.IRF):
             IRF = self.IRF.copy()
         available_values = [
             "R_rho_t",
@@ -348,18 +348,18 @@ class Contini:
                         ydata_max * np.array(ret[value]) / np.max(ret[value])
                         + ydata_min
                     )
-            ret = np.log(ret)
+            # ret = np.log(ret + 1)
             return ret
 
         elif isinstance(values_to_fit, list) and len(values_to_fit) == 1:
             for value in values_to_fit:
                 index = int(available_values.index(str(value)))
                 ret = self(t_rho_array_like, *args, **kwargs)[index]
-                if IRF:
+                if list(IRF):
                     ret = convolve(ret, IRF, mode="same")
                 if normalize:
                     ret = ydata_max * np.array(ret) / np.max(ret) + ydata_min
-            ret = np.log(ret + 1)
+            # ret = np.log(ret + 1)
             return ret
 
         elif isinstance(values_to_fit, str):
@@ -369,7 +369,7 @@ class Contini:
                 ret = convolve(ret, IRF, mode="same")
             if normalize:
                 ret = ydata_max * np.array(ret) / np.max(ret) + ydata_min
-            ret = np.log(ret)
+            # ret = np.log(ret + 1)
             return ret
 
         else:
@@ -415,11 +415,11 @@ class Contini:
 
         """
 
-        self.IRF = IRF if IRF else self.IRF
+        self.IRF = IRF if list(IRF) else self.IRF
         self.fit_settings(
             values_to_fit=values_to_fit, free_params=free_params, normalize=normalize
         )
-        ydata = np.log(np.array(ydata) + 1)
+        ydata = np.array(ydata)
 
         self.ydata_info = {"ydata_min": np.min(ydata), "ydata_max": np.max(ydata)}
 

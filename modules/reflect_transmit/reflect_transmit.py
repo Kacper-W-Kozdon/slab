@@ -1,3 +1,4 @@
+import torch
 from numpy import exp, pi, sqrt
 
 from ..other.utils import A_parameter, D_parameter, G_func, Image_Sources_Positions
@@ -45,11 +46,14 @@ def Reflectance_Transmittance_rho_t(
     if eq == "RTE":
         mus = musp / (1 - anisothropy_coeff)  # noqa: F841
         mean_free_path = 1 / (mua + musp)
+        if type(rho) is torch.Tensor:
+            rho = rho.detach().numpy()
 
         for index in range(-m, m + 1):
             z_plus, z_minus = Z[f"Z_{index}"]
             z_plus = float(z_plus)
             z_minus = float(z_minus)
+
             r_plus = float(sqrt(rho**2 + (z_plus) ** 2))
             r_minus = float(sqrt(rho**2 + (z_minus) ** 2))
             t = float(t)
