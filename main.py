@@ -58,7 +58,7 @@ if __name__ == "__main__":
     plot0 = plt.plot(xdata_t, ydata_conv_norm, color="b", label="control")
 
     contini2 = Contini(s=40, mua=0.05, musp=popt, n1=1, n2=1)
-    contini.musp = popt[0] * 1e3
+    contini.musp = popt[0]
     # print(xdata, IRF, contini.musp, contini.mua)
     ydata_fit = contini.forward(xdata, normalize=True, IRF=IRF)
 
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         # print(np.max(df_ydata))
         popt, pcov = contini2.fit(xdata, df_ydata, [0.35], IRF=df_irf, normalize=True)
         print(popt, pcov)
-        contini.musp = popt[0] * 1e3
+        contini.musp = popt[0]
         # ydata = []
         # for t in df_time:
         #     subresult = contini((t, rho))

@@ -1,5 +1,8 @@
+import datetime
+import pathlib
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.signal import convolve
@@ -62,9 +65,9 @@ class Contini:
         :type free_params: Union[List[str], Any]
         """
 
-        self.s = s * 1e-3
-        self.mua = None if not mua else mua * 1e3
-        self.musp = None if not musp else musp * 1e3
+        self._s = s * 1e-3
+        self._mua = None if not mua else mua * 1e3
+        self._musp = None if not musp else musp * 1e3
         self.n1 = n1
         self.n2 = n2
         self.phantom = phantom
@@ -79,6 +82,42 @@ class Contini:
         self.ydata_info = {}
 
         self.err = 1e-6  # noqa: F841
+
+    @property
+    def mua(self) -> float:
+        return self._mua
+
+    @mua.setter
+    def mua(self, value: float) -> None:
+        self._mua = value * 1e3
+
+    @mua.deleter
+    def mua(self) -> None:
+        self._mua = None
+
+    @property
+    def musp(self) -> float:
+        return self._musp
+
+    @musp.setter
+    def musp(self, value: float) -> None:
+        self._musp = value * 1e3
+
+    @musp.deleter
+    def musp(self) -> None:
+        self._musp = None
+
+    @property
+    def s(self) -> float:
+        return self._s
+
+    @s.setter
+    def s(self, value: float) -> None:
+        self._s = value * 1e-3
+
+    @s.deleter
+    def s(self) -> None:
+        self._s = 0
 
     def __call__(
         self,
@@ -339,10 +378,12 @@ class Contini:
                 index = int(values_to_fit.index(str(value)))
                 ret[value] = self(t_rho_array_like, *args, **kwargs)[index]
 
-                if normalize:
-                    ret[value] = np.array(ret[value]) / np.max(ret[value])
                 if IRF is not None:
                     ret[value] = convolve(ret[value], IRF, mode="same")
+                if normalize:
+                    max_ret = np.max(ret[value]) or 1
+                    ret[value] = np.array(ret[value]) / max_ret
+
             # ret = np.log(ret + 1)
             return ret
 
@@ -352,11 +393,13 @@ class Contini:
                 ret = self(t_rho_array_like, *args, **kwargs)[index]
                 # print(ret)
 
-                if normalize:
-                    ret = np.array(ret) / np.max(ret)
                 if IRF is not None:
                     # try:
                     ret = convolve(ret, IRF, mode="same")
+                if normalize:
+                    max_ret = np.max(ret) or 1
+                    ret = np.array(ret) / max_ret
+
                     # except Exception:
                     #     print(free_params, values_to_fit)
                     #     print(
@@ -376,10 +419,12 @@ class Contini:
             index = available_values.index(values_to_fit)
             ret = self(t_rho_array_like, *args, **kwargs)[index]
 
-            if normalize:
-                ret = np.array(ret) / np.max(ret)
             if IRF is not None:
                 ret = convolve(ret, IRF, mode="same")
+            if normalize:
+                max_ret = np.max(ret) or 1
+                ret = np.array(ret) / max_ret
+
             # ret = np.log(ret + 1)
             return ret
 
@@ -395,6 +440,10 @@ class Contini:
         normalize: bool = True,
         values_to_fit: Union[List[str], Any] = ["R_rho_t"],
         free_params: Union[List[str], Any] = ["musp"],
+        plot: bool = False,
+        show_plot: bool = False,
+        save_path: str = "",
+        save: bool = False,
         *args: Any,
         **kwargs: Any,
     ) -> Tuple[List[float], ...]:
@@ -415,6 +464,12 @@ class Contini:
         :type values_to_fit: Union[List[str], Any]
         :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
         :type free_params: Union[List[str], Any]
+        :param plot: Controls whether to plot the results. The plots will be saved. Default: False.
+        :type plot: bool
+        :param show_plot: Controls whether to display the plots. Default: False.
+        :type show_plot: bool
+        :param save_path: The path where the plots will be saved if provided. Default: "".
+        :type save_path: str
         :param args: A tuple of free parameters for fitting.
         :type args: Any
         :param kwargs: Supports kwargs of the scipy.curve_fit() as well as mode: "approx", "sum" of the G_function().
@@ -427,6 +482,7 @@ class Contini:
         """
 
         self.IRF = IRF if IRF is not None else self.IRF
+        IRF = self.IRF
         self.fit_settings(
             values_to_fit=values_to_fit, free_params=free_params, normalize=normalize
         )
@@ -439,7 +495,8 @@ class Contini:
         #     print(ydata)
         # print(self.normalize, normalize)
         if self.normalize:
-            ydata = ydata / np.max(ydata) - np.min(ydata)
+            max_ydata = 0 or np.max(ydata)
+            ydata = ydata / max_ydata - np.min(ydata)
         self.ydata_info = {"ydata_min": np.min(ydata), "ydata_max": np.max(ydata)}
 
         popt, pcov, *_ = curve_fit(
@@ -472,6 +529,40 @@ class Contini:
         #         print(weights, loss, guesses)
 
         #     popt = weights
+
+        if plot:
+            rho = _t_rho_array_like[0][1]
+            xdata_t = [t_rho[0] for t_rho in _t_rho_array_like]
+            for value in values_to_fit:
+                index = int(values_to_fit.index(value))
+                ydata_fit = self.forward(_t_rho_array_like, normalize=True, IRF=IRF)[
+                    index
+                ]
+                fit = plt.plot(xdata_t, ydata_fit, color="r", label="fit data")  # noqa: F841
+                ydata_max = np.max(ydata)
+                ydata = ydata if self.normalize else ydata / ydata_max - np.min(ydata)
+                raw_data = plt.plot(  # noqa: F841
+                    xdata_t,
+                    ydata,
+                    color="b",
+                    label="raw data",
+                    marker="o",
+                    linestyle=" ",
+                )
+
+                plt.legend(loc="upper right")
+                plt.xlabel("Time in ps")
+                plt.ylabel(f"{value}(t, rho={rho}[mm])/max({value}(t, rho={rho}[mm]))")
+
+                if show_plot:
+                    plt.show()
+                timestamp = datetime.datetime.now().isoformat()
+                path = (
+                    save_path
+                    or f"{pathlib.Path(__file__).resolve().parent.parent.parent}\\plots"
+                )
+                plt.savefig(f"{path}\\{value}{timestamp}.pdf")
+                plt.clf()
 
         return popt, pcov
 
