@@ -58,6 +58,7 @@ if __name__ == "__main__":
     plot0 = plt.plot(xdata_t, ydata_conv_norm, color="b", label="control")
 
     contini2 = Contini(s=40, mua=0.05, musp=popt, n1=1, n2=1)
+    contini.musp = popt[0]
     ydata_fit = contini.forward(xdata, normalize=True, IRF=IRF)
 
     ydata = []
