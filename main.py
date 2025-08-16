@@ -57,7 +57,6 @@ if __name__ == "__main__":
     plot1 = plt.plot(xdata_t, ydata_conv_noisy_norm, color="r", label="noisy")
     plot0 = plt.plot(xdata_t, ydata_conv_norm, color="b", label="control")
 
-    contini2 = Contini(s=40, mua=0.05, musp=popt, n1=1, n2=1)
     contini.musp = popt[0]
     # print(xdata, IRF, contini.musp, contini.mua)
     ydata_fit = contini.forward(xdata, normalize=True, IRF=IRF)
@@ -68,7 +67,7 @@ if __name__ == "__main__":
 
     for t_index, t in enumerate(range(1, 211, 2)):
         picot = t
-        subresult = contini2((picot, rho))
+        subresult = contini((picot, rho))
 
         ydata.append(subresult[0])
         xdata.append(tuple([picot, rho]))
@@ -82,6 +81,8 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
+        contini2 = Contini(s=40, mua=0.05, musp=0.3, n1=1, n2=1)
+
         df = pd.read_excel(path, engine="openpyxl")
         print(df.head())
 
@@ -103,7 +104,8 @@ if __name__ == "__main__":
         # ~df['column_name'].isin(some_values)
         print(xdata_column_name)
         print(df_time)
-        df_ydata_raw = df_ydata / np.max(df_ydata)
+        df_ydata_raw = df_ydata - np.min(df_ydata)
+        df_ydata_raw = df_ydata_raw / np.max(df_ydata_raw)
         raw_data = plt.plot(
             df_time,
             df_ydata_raw,
@@ -119,7 +121,7 @@ if __name__ == "__main__":
         print(xdata)
         # print(xdata)
         # print(np.max(df_ydata))
-        popt, pcov = contini2.fit(xdata, df_ydata, [0.35], IRF=df_irf, normalize=True)
+        popt, pcov = contini2.fit(xdata, df_ydata, [0.3], IRF=df_irf, normalize=True)
         print(popt, pcov)
         contini.musp = popt[0]
         # ydata = []

@@ -467,7 +467,6 @@ class Contini:
         plot: bool = False,
         show_plot: bool = False,
         save_path: str = "",
-        save: bool = False,
         *args: Any,
         **kwargs: Any,
     ) -> Tuple[List[float], ...]:
@@ -519,8 +518,9 @@ class Contini:
         #     print(ydata)
         # print(self.normalize, normalize)
         if self.normalize:
-            max_ydata = 0 or np.max(ydata)
-            ydata = ydata / max_ydata - np.min(ydata)
+            ydata = ydata - np.min(ydata)
+            max_ydata = np.max(ydata) if np.max(ydata) != 0 else 1
+            ydata = ydata / max_ydata
         self.ydata_info = {"ydata_min": np.min(ydata), "ydata_max": np.max(ydata)}
         try:
             popt, pcov, *_ = curve_fit(
@@ -573,8 +573,12 @@ class Contini:
                     index
                 ]
                 fit = plt.plot(xdata_t, ydata_fit, color="r", label="fit data")  # noqa: F841
-                ydata_max = np.max(ydata)
-                ydata = ydata if self.normalize else ydata / ydata_max - np.min(ydata)
+
+                if not self.normalize:
+                    ydata = ydata - np.min(ydata)
+                    ydata_max = np.max(ydata)
+                    ydata = ydata / ydata_max
+
                 raw_data = plt.plot(  # noqa: F841
                     xdata_t,
                     ydata,
