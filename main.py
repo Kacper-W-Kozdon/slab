@@ -4,7 +4,6 @@ import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy
 from modules import Contini
 
 if __name__ == "__main__":
@@ -14,30 +13,33 @@ if __name__ == "__main__":
 
     ydata = []
     xdata = []
-    ydata_noisy = []
+    ydata_conv_noisy = []
     IRF = [2, 1]
 
     for t_index, t in enumerate(range(1, 211, 2)):
         picot = t
         subresult = contini((picot, rho))
 
-        ydata.append(subresult[0])
         xdata.append(tuple([picot, rho]))
+
+    ydata_conv = contini.forward(xdata, IRF=IRF, normalize=True)
 
     rng = np.random.default_rng()
     noise = rng.normal(size=len(xdata))
     # print(noise)
 
     for index in range(len(ydata)):
-        ydata_noisy.append(ydata[index] + 0.05 * ydata[index] * noise[index])
+        ydata_conv_noisy.append(
+            ydata_conv[index] + 0.05 * ydata_conv[index] * noise[index]
+        )
 
     # print(ydata)
-    print(ydata_noisy)
+    print(ydata_conv_noisy)
     contini.mua = 0.05
     contini.musp = None
-    ydata_conv = scipy.signal.convolve(ydata_noisy, IRF, mode="same")
+    # ydata_conv = scipy.signal.convolve(ydata_noisy, IRF, mode="same")
     # popt, pcov = curve_fit(contini._fit, xdata, ydata_noisy, [0.9])
-    popt, pcov = contini.fit(xdata, ydata_conv, [0.35], normalize=True, IRF=IRF)
+    popt, pcov = contini.fit(xdata, ydata_conv_noisy, [0.35], normalize=True, IRF=IRF)
     contini.mua = 0.05
 
     print(popt)
@@ -48,10 +50,14 @@ if __name__ == "__main__":
         xdata_t.append(coord[0])
 
     # print(xdata_t)
-    plot1 = plt.plot(xdata_t, ydata_noisy, color="r", label="noisy")
-    plot0 = plt.plot(xdata_t, ydata, color="b", label="control")
+    ydata_conv_norm = ydata_conv / np.max(ydata_conv)
+    ydata_conv_noisy_norm = ydata_conv_noisy / np.max(ydata_conv_noisy)
+
+    plot1 = plt.plot(xdata_t, ydata_conv_noisy_norm, color="r", label="noisy")
+    plot0 = plt.plot(xdata_t, ydata_conv_norm, color="b", label="control")
 
     contini2 = Contini(s=40, musp=popt[0], n1=1, n2=1)
+    ydata_fit = contini2.forward(xdata, normalize=True, IRF=IRF)
 
     ydata = []
     xdata = []
@@ -64,7 +70,7 @@ if __name__ == "__main__":
         ydata.append(subresult[0])
         xdata.append(tuple([picot, rho]))
 
-    plot2 = plt.plot(xdata_t, ydata, color="g", label="fit")
+    plot2 = plt.plot(xdata_t, ydata_fit, color="g", label="fit")
     plt.show()
     plt.clf()
 
@@ -89,23 +95,34 @@ if __name__ == "__main__":
         # ~df['column_name'].isin(some_values)
         print(xdata_column_name)
         print(df_time)
-
+        df_ydata_raw = df_ydata / np.max(df_ydata)
         raw_data = plt.plot(
-            df_time, df_ydata, color="b", label="raw data", marker="o", linestyle=" "
+            df_time,
+            df_ydata_raw,
+            color="b",
+            label="raw data",
+            marker="o",
+            linestyle=" ",
         )
 
         xdata = [tuple([time, rho]) for time in df_time]
         # print(xdata)
         # print(np.max(df_ydata))
-        popt, pcov = contini.fit(xdata, df_ydata, [0.35], IRF=df_irf)
+        popt, pcov = contini.fit(xdata, df_ydata, [0.35], IRF=df_irf, normalize=True)
         print(popt, pcov)
         contini.musp = popt[0]
-        ydata = []
-        for t in df_time:
-            subresult = contini((t, rho))
+        # ydata = []
+        # for t in df_time:
+        #     subresult = contini((t, rho))
 
-            ydata.append(subresult[0])
+        #     ydata.append(subresult[0])
 
-        fit = plt.plot(df_time, ydata, color="r", label="raw data")
+        # contini.IRF = None
+        ydata_fit = None
+        if not contini.normalize:
+            contini.normalize = True
+        ydata_fit = contini.forward(xdata)
+
+        fit = plt.plot(df_time, ydata_fit, color="r", label="raw data")
 
         plt.show()
