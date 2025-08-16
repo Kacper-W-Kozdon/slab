@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        contini2 = Contini(s=40, mua=0.05, musp=0.2, offset=0.2, n1=1, n2=1)
+        contini2 = Contini(s=40, mua=0.05, musp=0.2, n1=1, n2=1)
 
         df = pd.read_excel(path, engine="openpyxl")
         print(df.head())
@@ -138,6 +138,7 @@ if __name__ == "__main__":
         )
 
         xdata = [tuple([time, rho]) for time in df_time]
+        contini2.offset = 0.2
         ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
         plt.legend(loc="upper right")
         plt.xlabel("Time in ps")
