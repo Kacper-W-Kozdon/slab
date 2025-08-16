@@ -366,14 +366,21 @@ class Contini:
         ret: Union[Dict[Any, Any], Any] = None
         args_list = list(args)
 
+        if not args:
+            args_list = [self.mua, self.musp]
+
         for param_index, param in enumerate(available_free_params):
-            if param not in free_params:
+            if (param not in free_params) and args:
                 param_value = self.mua if param_index == 0 else self.musp
                 args_list.insert(param_index, param_value)
 
         for param_index, param in enumerate(available_free_params):
-            if param in free_params:
+            if (param in free_params) and args:
+                # try:
                 args_list[param_index] = 1e3 * args_list[param_index]
+                # except:
+                #     print("---ERROR---")
+                #     print(args_list, param_index, args)
 
         args = tuple(args_list)
 
