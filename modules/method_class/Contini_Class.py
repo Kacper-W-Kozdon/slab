@@ -84,24 +84,30 @@ class Contini:
         self.err = 1e-6  # noqa: F841
 
     @property
-    def mua(self) -> float:
+    def mua(self) -> Union[None, float]:
         return self._mua
 
     @mua.setter
     def mua(self, value: float) -> None:
-        self._mua = value * 1e3
+        if value is None:
+            self._mua = None
+        else:
+            self._mua = value * 1e3
 
     @mua.deleter
     def mua(self) -> None:
         self._mua = None
 
     @property
-    def musp(self) -> float:
+    def musp(self) -> Union[None, float]:
         return self._musp
 
     @musp.setter
     def musp(self, value: float) -> None:
-        self._musp = value * 1e3
+        if value is None:
+            self._musp = None
+        else:
+            self._musp = value * 1e3
 
     @musp.deleter
     def musp(self) -> None:

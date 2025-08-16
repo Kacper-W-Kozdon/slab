@@ -77,7 +77,7 @@ if __name__ == "__main__":
     plt.xlabel("Time in ps")
     plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
     plt.legend(loc="upper right")
-    plt.show()
+    # plt.show()
     plt.clf()
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
