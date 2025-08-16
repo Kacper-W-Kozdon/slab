@@ -136,9 +136,9 @@ if __name__ == "__main__":
 
         # contini.IRF = None
         ydata_fit = None
-        if not contini.normalize:
-            contini.normalize = True
-        ydata_fit = contini.forward(xdata)
+        if not contini2.normalize:
+            contini2.normalize = True
+        ydata_fit = contini2.forward(xdata)
 
         fit = plt.plot(df_time, ydata_fit, color="r", label="fit data")
         plt.legend(loc="upper right")
