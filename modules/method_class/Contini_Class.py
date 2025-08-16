@@ -82,6 +82,7 @@ class Contini:
         self.ydata_info = {}
         self._offset = 0
 
+        print(f"---INIT---\n{self.mua, self.musp, self.offset}")
         self.err = 1e-6  # noqa: F841
 
     @property
@@ -401,7 +402,7 @@ class Contini:
 
         args = tuple(args_list)
 
-        # print(args)
+        print(args)
 
         value: Any
         # print(values_to_fit, isinstance(values_to_fit, list) and len(values_to_fit) == 1, t_rho_array_like)

@@ -171,6 +171,7 @@ def Reflectance_Transmittance_rho_t(
 
         R_rho_t = 1 / (2 * A) * R_rho_t_source_sum
         T_rho_t = 1 / (2 * A) * T_rho_t_source_sum
+        print(R_rho_t)
 
     # R_rho_t *= 1e-6 * 1e-12
     # T_rho_t *= 1e-6 * 1e-12

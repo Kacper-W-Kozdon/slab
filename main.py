@@ -5,7 +5,7 @@ import numpy as np
 from modules import Contini
 
 if __name__ == "__main__":
-    contini = Contini(s=40, mua=0.05, musp=0.3, n1=1, n2=1)
+    contini = Contini(s=40, mua=0.5, musp=0.3, n1=1, n2=1)
 
     rho = 4
 
@@ -17,6 +17,7 @@ if __name__ == "__main__":
     for t_index, t in enumerate(range(1, 211, 2)):
         picot = t
         subresult = contini((picot, rho))
+        ydata.append(subresult[0])
 
         xdata.append(tuple([picot, rho]))
 
@@ -26,7 +27,7 @@ if __name__ == "__main__":
 
     print("Computing ydata_conv.")
     ydata_test = contini.forward(xdata)
-    plot_test1 = plt.plot(xdata_t, ydata_test, color="b", label="control")
+    plot_test1 = plt.plot(xdata_t, ydata, color="b", label="control")
     plt.show()
     plt.clf()
     ydata_conv = contini.forward(xdata, IRF=IRF, normalize=True)
