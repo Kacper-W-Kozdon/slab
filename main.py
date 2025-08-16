@@ -90,13 +90,14 @@ if __name__ == "__main__":
         column_names = df.columns.values.tolist()
         xdata_column_name = column_names[0]
         df_clean = df.loc[df[xdata_column_name] != 0.0]
-        print(df_clean)
         # df_clean = df
+
+        print(df_clean)
         # df_time = df.iloc[:, 0].fillna(0)
         # df_ydata = df.iloc[:, 1].fillna(0)
-        df_time = df_clean.iloc[1:, 0]
-        df_ydata = df_clean.iloc[1:, 3]
-        df_irf = df_clean.iloc[1:, 1]
+        df_time = df_clean.iloc[:, 0]
+        df_ydata = df_clean.iloc[:, 3]
+        df_irf = df_clean.iloc[:, 1]
         # df_time = df_time.loc[(df[xdata_column_name] != 0.0)]
         # df_ydata = df_ydata.loc[(df[xdata_column_name] != 0.0)]
         # ~df['column_name'].isin(some_values)

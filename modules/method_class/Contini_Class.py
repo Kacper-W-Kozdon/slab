@@ -164,8 +164,10 @@ class Contini:
 
         """
         if isinstance(t_rho, tuple):
-            mua = mua * 1e3 if self.mua is None else self.mua
-            musp = musp * 1e3 if self.musp is None else self.musp
+            # mua = mua * 1e3 if self.mua is None else self.mua
+            # musp = musp * 1e3 if self.musp is None else self.musp
+            mua = mua if self.mua is None else self.mua
+            musp = musp if self.musp is None else self.musp
             anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
 
             t = t_rho[0] * 1e-12
@@ -225,8 +227,10 @@ class Contini:
             T = []
             A = []
             Z = []
-            mua = mua * 1e3 if self.mua is None else self.mua
-            musp = musp * 1e3 if self.musp is None else self.musp
+            # mua = mua * 1e3 if self.mua is None else self.mua
+            # musp = musp * 1e3 if self.musp is None else self.musp
+            mua = mua if self.mua is None else self.mua
+            musp = musp if self.musp is None else self.musp
             anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
 
             for value in t_rho:
@@ -346,10 +350,6 @@ class Contini:
             "T_t",
             "l_rho_R",
             "l_rho_T",
-            "R",
-            "T",
-            "A",
-            "Z",
         ]
         available_free_params = ["mua", "musp"]
 
@@ -408,15 +408,18 @@ class Contini:
             for value in values_to_fit:
                 index = int(available_values.index(str(value)))
                 ret = self(t_rho_array_like, *args, **kwargs)[index]
+                ret = np.array([float(ret_elem) for ret_elem in ret])
                 # print(ret)
 
                 if IRF is not None:
-                    # try:
-                    ret = convolve(ret, IRF, mode="same")
-                    # except:
-                    #     print("---ERROR---")
-                    #     print(args)
-                    #     print(ret)
+                    try:
+                        ret = convolve(ret, IRF, mode="same")
+                    except Exception as e:
+                        print("---ERROR---")
+                        print(e)
+                        print(args, type(t_rho_array_like))
+                        print(ret)
+                        print("---END ERROR---")
                 if normalize:
                     max_ret = np.max(ret) or 1
                     ret = np.array(ret) / max_ret
@@ -519,10 +522,20 @@ class Contini:
             max_ydata = 0 or np.max(ydata)
             ydata = ydata / max_ydata - np.min(ydata)
         self.ydata_info = {"ydata_min": np.min(ydata), "ydata_max": np.max(ydata)}
-
-        popt, pcov, *_ = curve_fit(
-            self.forward, _t_rho_array_like, ydata, initial_free_params, *args, **kwargs
-        )
+        try:
+            popt, pcov, *_ = curve_fit(
+                self.forward,
+                _t_rho_array_like,
+                ydata,
+                initial_free_params,
+                *args,
+                **kwargs,
+            )
+        except ValueError:
+            print("\n\n---ERROR---\n")
+            print(initial_free_params)
+            print(self.forward(_t_rho_array_like, initial_free_params[0]))
+            print("---END ERROR---")
         # print(pcov[0][0], math.isinf(pcov[0][0]))
         # if math.isinf(pcov[0][0]):
         #     xdata = torch.tensor(_t_rho_array_like, requires_grad=True)
