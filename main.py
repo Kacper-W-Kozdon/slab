@@ -15,91 +15,91 @@ if __name__ == "__main__":
     ydata = []
     xdata = []
     ydata_conv_noisy = []
-    IRF = [2, 1]
+    # IRF = [2, 1]
 
-    for t_index, t in enumerate(range(1, 211, 2)):
-        picot = t
-        subresult = contini((picot, rho))
-        # print(subresult[0])
-        ydata.append(subresult[0])
+    # for t_index, t in enumerate(range(1, 211, 2)):
+    #     picot = t
+    #     subresult = contini((picot, rho))
+    #     # print(subresult[0])
+    #     ydata.append(subresult[0])
 
-        xdata.append(tuple([picot, rho]))
+    #     xdata.append(tuple([picot, rho]))
 
-    xdata_t = []
-    for coord in xdata:
-        xdata_t.append(coord[0])
+    # xdata_t = []
+    # for coord in xdata:
+    #     xdata_t.append(coord[0])
 
-    print("Computing ydata_conv.")
-    ydata_test = contini.forward(xdata, normalize=False)
-    plot_test0 = plt.plot(xdata_t, ydata, color="b", label="control")
+    # print("Computing ydata_conv.")
+    # ydata_test = contini.forward(xdata, normalize=False)
+    # plot_test0 = plt.plot(xdata_t, ydata, color="b", label="control")
 
-    plot_test1 = plt.plot(
-        xdata_t, ydata_test, color="g", label="control", marker="o", linestyle=" "
-    )
-    plt.show()
-    plt.clf()
-    ydata_conv = contini.forward(xdata, IRF=IRF, normalize=True)
-    print(ydata_conv)
-    plot_test2 = plt.plot(xdata_t, ydata_conv, color="b", label="control")
-    plt.show()
-    plt.clf()
+    # plot_test1 = plt.plot(
+    #     xdata_t, ydata_test, color="g", label="control", marker="o", linestyle=" "
+    # )
+    # plt.show()
+    # plt.clf()
+    # ydata_conv = contini.forward(xdata, IRF=IRF, normalize=True)
+    # print(ydata_conv)
+    # plot_test2 = plt.plot(xdata_t, ydata_conv, color="b", label="control")
+    # plt.show()
+    # plt.clf()
 
-    rng = np.random.default_rng()
-    noise = rng.normal(size=len(xdata))
-    # print(noise)
+    # rng = np.random.default_rng()
+    # noise = rng.normal(size=len(xdata))
+    # # print(noise)
 
-    for index in range(len(ydata_conv)):
-        ydata_conv_noisy.append(
-            ydata_conv[index] + 0.05 * ydata_conv[index] * noise[index]
-        )
+    # for index in range(len(ydata_conv)):
+    #     ydata_conv_noisy.append(
+    #         ydata_conv[index] + 0.05 * ydata_conv[index] * noise[index]
+    #     )
 
-    # print(ydata)
-    print(ydata_conv_noisy)
-    contini.mua = 0.05
-    contini.musp = None
-    # ydata_conv = scipy.signal.convolve(ydata_noisy, IRF, mode="same")
-    # popt, pcov = curve_fit(contini._fit, xdata, ydata_noisy, [0.9])
-    popt, pcov = contini.fit(
-        xdata, ydata_conv_noisy, [0.35, 0], normalize=True, IRF=IRF
-    )
-    contini.mua = 0.05
+    # # print(ydata)
+    # print(ydata_conv_noisy)
+    # contini.mua = 0.05
+    # contini.musp = None
+    # # ydata_conv = scipy.signal.convolve(ydata_noisy, IRF, mode="same")
+    # # popt, pcov = curve_fit(contini._fit, xdata, ydata_noisy, [0.9])
+    # popt, pcov = contini.fit(
+    #     xdata, ydata_conv_noisy, [0.35, 0], normalize=True, IRF=IRF
+    # )
+    # contini.mua = 0.05
 
-    print(popt[0])
-    print(pcov)
+    # print(popt[0])
+    # print(pcov)
 
-    # print(xdata_t)
-    ydata_conv_norm = ydata_conv / np.max(ydata_conv)
-    ydata_conv_noisy_norm = ydata_conv_noisy / np.max(ydata_conv_noisy)
+    # # print(xdata_t)
+    # ydata_conv_norm = ydata_conv / np.max(ydata_conv)
+    # ydata_conv_noisy_norm = ydata_conv_noisy / np.max(ydata_conv_noisy)
 
-    plot1 = plt.plot(xdata_t, ydata_conv_noisy_norm, color="r", label="noisy")
-    plot0 = plt.plot(xdata_t, ydata_conv_norm, color="b", label="control")
+    # plot1 = plt.plot(xdata_t, ydata_conv_noisy_norm, color="r", label="noisy")
+    # plot0 = plt.plot(xdata_t, ydata_conv_norm, color="b", label="control")
 
-    contini.musp = popt[0]
-    # print(xdata, IRF, contini.musp, contini.mua)
-    ydata_fit = contini.forward(xdata, normalize=True, IRF=IRF)
+    # contini.musp = popt[0]
+    # # print(xdata, IRF, contini.musp, contini.mua)
+    # ydata_fit = contini.forward(xdata, normalize=True, IRF=IRF)
 
-    ydata = []
-    xdata = []
-    ydata_noisy = []
+    # ydata = []
+    # xdata = []
+    # ydata_noisy = []
 
-    for t_index, t in enumerate(range(1, 211, 2)):
-        picot = t
-        subresult = contini((picot, rho))
+    # for t_index, t in enumerate(range(1, 211, 2)):
+    #     picot = t
+    #     subresult = contini((picot, rho))
 
-        ydata.append(subresult[0])
-        xdata.append(tuple([picot, rho]))
+    #     ydata.append(subresult[0])
+    #     xdata.append(tuple([picot, rho]))
 
-    plot2 = plt.plot(
-        xdata_t,
-        ydata_fit,
-        color="g",
-        label=f"fit: mua={contini.mua}, musp={contini.musp}, off={contini.offset}",
-    )
-    plt.xlabel("Time in ps")
-    plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
-    plt.legend(loc="upper right")
-    plt.show()
-    plt.clf()
+    # plot2 = plt.plot(
+    #     xdata_t,
+    #     ydata_fit,
+    #     color="g",
+    #     label=f"fit: mua={contini.mua}, musp={contini.musp}, off={contini.offset}",
+    # )
+    # plt.xlabel("Time in ps")
+    # plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
+    # plt.legend(loc="upper right")
+    # plt.show()
+    # plt.clf()
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
@@ -148,6 +148,7 @@ if __name__ == "__main__":
         )
         print(popt, pcov)
         contini2.musp = popt[0]
+        contini2.offset = popt[1]
         # ydata = []
         # for t in df_time:
         #     subresult = contini((t, rho))
@@ -158,7 +159,7 @@ if __name__ == "__main__":
         ydata_fit = None
         if not contini2.normalize:
             contini2.normalize = True
-        ydata_fit = contini2.forward(xdata)
+        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
 
         fit = plt.plot(
             df_time,

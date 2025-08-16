@@ -132,7 +132,7 @@ class Contini:
         return self._offset
 
     @offset.setter
-    def s(self, value: float) -> None:
+    def offset(self, value: float) -> None:
         self._offset = value
 
     @offset.deleter
