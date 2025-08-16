@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        contini2 = Contini(s=40, mua=0.05, musp=0.3, n1=1, n2=1)
+        contini2 = Contini(s=40, mua=0.05, musp=0.2, offset=0.2, n1=1, n2=1)
 
         df = pd.read_excel(path, engine="openpyxl")
         print(df.head())
@@ -138,6 +138,13 @@ if __name__ == "__main__":
         )
 
         xdata = [tuple([time, rho]) for time in df_time]
+        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
+        plt.legend(loc="upper right")
+        plt.xlabel("Time in ps")
+        plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
+        plt.show()
+        plt.clf()
+
         print("---TEST DATA FIT---")
         print(df_ydata)
         print(xdata)
@@ -160,6 +167,14 @@ if __name__ == "__main__":
         if not contini2.normalize:
             contini2.normalize = True
         ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
+        raw_data = plt.plot(
+            df_time,
+            df_ydata_raw,
+            color="b",
+            label="raw data",
+            marker="o",
+            linestyle=" ",
+        )
 
         fit = plt.plot(
             df_time,
