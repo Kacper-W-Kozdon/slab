@@ -140,6 +140,12 @@ if __name__ == "__main__":
         xdata = [tuple([time, rho]) for time in df_time]
         contini2.offset = 0.2
         ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
+        fit = plt.plot(
+            df_time,
+            ydata_fit,
+            color="r",
+            label=f"fit: mua={contini2.mua}, musp={contini2.musp}, off={contini2.offset}",
+        )
         plt.legend(loc="upper right")
         plt.xlabel("Time in ps")
         plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
