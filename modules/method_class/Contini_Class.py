@@ -355,19 +355,19 @@ class Contini:
                 if normalize:
                     ret = np.array(ret) / np.max(ret)
                 if IRF is not None:
-                    try:
-                        ret = convolve(ret, IRF, mode="same")
-                    except Exception:
-                        print(free_params, values_to_fit)
-                        print(
-                            t_rho_array_like[0][0],
-                            t_rho_array_like[1][0],
-                            t_rho_array_like[2][0],
-                        )
-                        print(
-                            self(t_rho_array_like, *args, **kwargs)[0],
-                            self(t_rho_array_like, *args, **kwargs)[1],
-                        )
+                    # try:
+                    ret = convolve(ret, IRF, mode="same")
+                    # except Exception:
+                    #     print(free_params, values_to_fit)
+                    #     print(
+                    #         t_rho_array_like[0][0],
+                    #         t_rho_array_like[1][0],
+                    #         t_rho_array_like[2][0],
+                    #     )
+                    #     print(
+                    #         self(t_rho_array_like, *args, **kwargs)[0],
+                    #         self(t_rho_array_like, *args, **kwargs)[1],
+                    #     )
             # ret = np.log(ret + 1)
             # print(ret)
             return ret
