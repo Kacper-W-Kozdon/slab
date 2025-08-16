@@ -184,8 +184,12 @@ class Contini:
 
             if mua is None:
                 mua = self.mua
+            else:
+                mua = 1e3 * mua
             if musp is None:
                 musp = self.musp
+            else:
+                musp = 1e3 * musp
 
             anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
 
@@ -250,8 +254,12 @@ class Contini:
             # musp = musp * 1e3 if self.musp is None else self.musp
             if mua is None:
                 mua = self.mua
+            else:
+                mua = 1e3 * mua
             if musp is None:
                 musp = self.musp
+            else:
+                musp = 1e3 * musp
             anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
 
             for value in t_rho:
