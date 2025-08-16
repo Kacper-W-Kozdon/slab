@@ -59,6 +59,7 @@ if __name__ == "__main__":
 
     contini2 = Contini(s=40, mua=0.05, musp=popt, n1=1, n2=1)
     contini.musp = popt[0]
+    print(xdata, IRF)
     ydata_fit = contini.forward(xdata, normalize=True, IRF=IRF)
 
     ydata = []

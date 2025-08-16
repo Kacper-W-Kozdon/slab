@@ -198,6 +198,7 @@ class Contini:
                 R_rho_t_, T_rho_t_ = Reflectance_Transmittance_rho_t(
                     rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff
                 )
+                # print(R_rho_t)
                 R_rho_t.append(R_rho_t_)
                 T_rho_t.append(T_rho_t_)
 
@@ -354,8 +355,6 @@ class Contini:
                 if normalize:
                     ret = np.array(ret) / np.max(ret)
                 if IRF is not None:
-                    print(ret)
-
                     ret = convolve(ret, IRF, mode="same")
             # ret = np.log(ret + 1)
             # print(ret)
