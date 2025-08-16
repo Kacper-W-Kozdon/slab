@@ -116,7 +116,7 @@ if __name__ == "__main__":
         # print(np.max(df_ydata))
         popt, pcov = contini2.fit(xdata, df_ydata, [0.35], IRF=df_irf, normalize=True)
         print(popt, pcov)
-        contini.musp = popt[0]
+        contini.musp = popt[0] * 1e3
         # ydata = []
         # for t in df_time:
         #     subresult = contini((t, rho))
