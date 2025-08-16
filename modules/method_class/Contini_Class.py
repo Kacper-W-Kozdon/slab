@@ -359,7 +359,11 @@ class Contini:
                         ret = convolve(ret, IRF, mode="same")
                     except Exception:
                         print(free_params, values_to_fit)
-                        print(t_rho_array_like[0:5][0])
+                        print(
+                            t_rho_array_like[0][0],
+                            t_rho_array_like[1][0],
+                            t_rho_array_like[2][0],
+                        )
                         print(
                             self(t_rho_array_like, *args, **kwargs)[0],
                             self(t_rho_array_like, *args, **kwargs)[1],
