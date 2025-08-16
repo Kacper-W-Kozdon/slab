@@ -53,6 +53,7 @@ def Reflectance_Transmittance_rho_t(
     if eq == "RTE":
         mus = musp / (1 - anisothropy_coeff)  # noqa: F841
         mean_free_path = 1 / (mua + musp)
+        # print(mean_free_path, mua, musp)
         if type(rho) is torch.Tensor:
             rho = rho.detach().numpy()
 
@@ -171,7 +172,7 @@ def Reflectance_Transmittance_rho_t(
 
         R_rho_t = 1 / (2 * A) * R_rho_t_source_sum
         T_rho_t = 1 / (2 * A) * T_rho_t_source_sum
-        print(R_rho_t)
+        # print(R_rho_t)
 
     # R_rho_t *= 1e-6 * 1e-12
     # T_rho_t *= 1e-6 * 1e-12

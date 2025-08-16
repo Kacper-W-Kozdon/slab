@@ -181,11 +181,12 @@ class Contini:
         if isinstance(t_rho, tuple):
             # mua = mua * 1e3 if self.mua is None else self.mua
             # musp = musp * 1e3 if self.musp is None else self.musp
-            self.mua = mua if self.mua is None else self.mua
-            self.musp = musp if self.musp is None else self.musp
 
-            mua = self.mua if mua is None else 1e3 * mua
-            musp = self.musp if musp is None else 1e3 * musp
+            if mua is None:
+                mua = self.mua
+            if musp is None:
+                musp = self.musp
+
             anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
 
             t = t_rho[0] * 1e-12
@@ -247,10 +248,10 @@ class Contini:
             Z = []
             # mua = mua * 1e3 if self.mua is None else self.mua
             # musp = musp * 1e3 if self.musp is None else self.musp
-            self.mua = mua if self.mua is None else self.mua
-            self.musp = musp if self.musp is None else self.musp
-            mua = self.mua if mua is None else 1e3 * mua
-            musp = self.musp if musp is None else 1e3 * musp
+            if mua is None:
+                mua = self.mua
+            if musp is None:
+                musp = self.musp
             anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
 
             for value in t_rho:
