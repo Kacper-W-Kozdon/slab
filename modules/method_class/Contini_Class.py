@@ -330,6 +330,7 @@ class Contini:
         # print(args)
 
         value: Any
+        # print(values_to_fit, isinstance(values_to_fit, list) and len(values_to_fit) == 1, t_rho_array_like)
 
         if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
             ret = {}
@@ -348,12 +349,14 @@ class Contini:
             for value in values_to_fit:
                 index = int(available_values.index(str(value)))
                 ret = self(t_rho_array_like, *args, **kwargs)[index]
+                # print(ret)
 
                 if normalize:
                     ret = np.array(ret) / np.max(ret)
                 if IRF is not None:
                     ret = convolve(ret, IRF, mode="same")
             # ret = np.log(ret + 1)
+            # print(ret)
             return ret
 
         elif isinstance(values_to_fit, str):

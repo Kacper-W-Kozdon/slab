@@ -21,14 +21,15 @@ if __name__ == "__main__":
         subresult = contini((picot, rho))
 
         xdata.append(tuple([picot, rho]))
-
+    print("Computing ydata_conv.")
     ydata_conv = contini.forward(xdata, IRF=IRF, normalize=True)
+    print(ydata_conv)
 
     rng = np.random.default_rng()
     noise = rng.normal(size=len(xdata))
     # print(noise)
 
-    for index in range(len(ydata)):
+    for index in range(len(ydata_conv)):
         ydata_conv_noisy.append(
             ydata_conv[index] + 0.05 * ydata_conv[index] * noise[index]
         )
@@ -56,8 +57,8 @@ if __name__ == "__main__":
     plot1 = plt.plot(xdata_t, ydata_conv_noisy_norm, color="r", label="noisy")
     plot0 = plt.plot(xdata_t, ydata_conv_norm, color="b", label="control")
 
-    contini2 = Contini(s=40, musp=popt[0], n1=1, n2=1)
-    ydata_fit = contini2.forward(xdata, normalize=True, IRF=IRF)
+    contini2 = Contini(s=40, mua=0.05, musp=popt[0], n1=1, n2=1)
+    ydata_fit = contini.forward(xdata, normalize=True, IRF=IRF)
 
     ydata = []
     xdata = []
@@ -111,7 +112,7 @@ if __name__ == "__main__":
         xdata = [tuple([time, rho]) for time in df_time]
         # print(xdata)
         # print(np.max(df_ydata))
-        popt, pcov = contini.fit(xdata, df_ydata, [0.35], IRF=df_irf, normalize=True)
+        popt, pcov = contini2.fit(xdata, df_ydata, [0.35], IRF=df_irf, normalize=True)
         print(popt, pcov)
         contini.musp = popt[0]
         # ydata = []
