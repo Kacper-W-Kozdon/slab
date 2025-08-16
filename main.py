@@ -40,7 +40,9 @@ if __name__ == "__main__":
     contini.musp = None
     # ydata_conv = scipy.signal.convolve(ydata_noisy, IRF, mode="same")
     # popt, pcov = curve_fit(contini._fit, xdata, ydata_noisy, [0.9])
-    popt, pcov = contini.fit(xdata, ydata_conv_noisy, [0.35], normalize=True, IRF=IRF)
+    popt, pcov = contini.fit(
+        xdata, ydata_conv_noisy, [0.35, 0], normalize=True, IRF=IRF
+    )
     contini.mua = 0.05
 
     print(popt[0])
@@ -121,7 +123,9 @@ if __name__ == "__main__":
         print(xdata)
         # print(xdata)
         # print(np.max(df_ydata))
-        popt, pcov = contini2.fit(xdata, df_ydata, [0.3], IRF=df_irf, normalize=True)
+        popt, pcov = contini2.fit(
+            xdata, df_ydata, [0.3, 0.0], IRF=df_irf, normalize=True
+        )
         print(popt, pcov)
         contini.musp = popt[0]
         # ydata = []
@@ -136,7 +140,7 @@ if __name__ == "__main__":
             contini.normalize = True
         ydata_fit = contini.forward(xdata)
 
-        fit = plt.plot(df_time, ydata_fit, color="r", label="raw data")
+        fit = plt.plot(df_time, ydata_fit, color="r", label="fit data")
         plt.legend(loc="upper right")
         plt.xlabel("Time in ps")
         plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")

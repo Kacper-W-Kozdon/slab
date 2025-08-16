@@ -32,7 +32,7 @@ class Contini:
         IRF: Union[List[Union[float, int]], None] = None,
         normalize: bool = True,
         values_to_fit: Union[List[str], Any] = ["R_rho_t"],
-        free_params: Union[List[str], Any] = ["musp"],
+        free_params: Union[List[str], Any] = ["musp", "offset"],
     ) -> None:
         """
         The class initiating the slab model with the RTE and DE Green's functions. Source- Contini.
@@ -80,6 +80,7 @@ class Contini:
         self.values_to_fit = values_to_fit
         self.free_params = free_params
         self.ydata_info = {}
+        self._offset = 0
 
         self.err = 1e-6  # noqa: F841
 
@@ -125,11 +126,24 @@ class Contini:
     def s(self) -> None:
         self._s = 0
 
+    @property
+    def offset(self) -> float:
+        return self._offset
+
+    @offset.setter
+    def s(self, value: float) -> None:
+        self._offset = value
+
+    @offset.deleter
+    def offset(self) -> None:
+        self._offset = 0
+
     def __call__(
         self,
         t_rho: Union[Tuple[float, float], List[Tuple[float, float],]],
         mua: Union[int, float] = 0,
         musp: Union[int, float] = 0,
+        offset: Union[int, float] = 0,
         anisothropy_coeff: Union[int, float, None] = None,
         **kwargs: Any,
     ) -> Union[Tuple[Any, ...], Tuple[List[Any], ...]]:
@@ -336,7 +350,7 @@ class Contini:
         """
 
         values_to_fit: Union[List[str], Any] = self.values_to_fit or ["R_rho_t"]
-        free_params: Union[List[str], Any] = self.free_params or ["musp"]
+        free_params: Union[List[str], Any] = self.free_params or ["musp", "offset"]
         normalize: Union[bool, None] = self.normalize or False  # noqa: F841
 
         IRF = self.IRF
@@ -351,7 +365,7 @@ class Contini:
             "l_rho_R",
             "l_rho_T",
         ]
-        available_free_params = ["mua", "musp"]
+        available_free_params = ["mua", "musp", "offset"]
 
         if not all([param in available_free_params for param in free_params]):
             raise ValueError(
@@ -367,7 +381,7 @@ class Contini:
         args_list = list(args)
 
         if not args:
-            args_list = [self.mua, self.musp]
+            args_list = [self.mua, self.musp, self.offset]
 
         for param_index, param in enumerate(available_free_params):
             if (param not in free_params) and args:
@@ -381,6 +395,9 @@ class Contini:
                 # except:
                 #     print("---ERROR---")
                 #     print(args_list, param_index, args)
+
+        index = available_free_params.index("offset")
+        offset = args_list[index] or self.offset
 
         args = tuple(args_list)
 
@@ -402,7 +419,7 @@ class Contini:
                     ret[value] = np.array(ret[value]) / max_ret
 
             # ret = np.log(ret + 1)
-            return ret
+            return ret + offset
 
         elif isinstance(values_to_fit, list) and len(values_to_fit) == 1:
             for value in values_to_fit:
@@ -437,7 +454,7 @@ class Contini:
                     #     )
             # ret = np.log(ret + 1)
             # print(ret)
-            return ret
+            return ret + offset
 
         elif isinstance(values_to_fit, str):
             index = available_values.index(values_to_fit)
@@ -450,7 +467,7 @@ class Contini:
                 ret = np.array(ret) / max_ret
 
             # ret = np.log(ret + 1)
-            return ret
+            return ret + offset
 
         else:
             return None
@@ -463,7 +480,7 @@ class Contini:
         IRF: Union[List[Union[float, int]], None] = None,
         normalize: bool = True,
         values_to_fit: Union[List[str], Any] = ["R_rho_t"],
-        free_params: Union[List[str], Any] = ["musp"],
+        free_params: Union[List[str], Any] = ["musp", "offset"],
         plot: bool = False,
         show_plot: bool = False,
         save_path: str = "",
@@ -569,9 +586,19 @@ class Contini:
             xdata_t = [t_rho[0] for t_rho in _t_rho_array_like]
             for value in values_to_fit:
                 index = int(values_to_fit.index(value))
-                ydata_fit = self.forward(_t_rho_array_like, normalize=True, IRF=IRF)[
-                    index
-                ]
+                params = popt.clone()
+                offset = self.offset if ("offset" not in free_params) else params.pop()
+                musp = self.musp if ("musp" not in free_params) else params.pop()
+                mua = self.mua if ("mua" not in free_params) else params.pop()
+
+                ydata_fit = self.forward(
+                    _t_rho_array_like,
+                    mua=mua,
+                    musp=musp,
+                    offset=offset,
+                    normalize=True,
+                    IRF=IRF,
+                )[index]
                 fit = plt.plot(xdata_t, ydata_fit, color="r", label="fit data")  # noqa: F841
 
                 if not self.normalize:
