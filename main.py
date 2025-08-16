@@ -43,7 +43,7 @@ if __name__ == "__main__":
     popt, pcov = contini.fit(xdata, ydata_conv_noisy, [0.35], normalize=True, IRF=IRF)
     contini.mua = 0.05
 
-    print(popt)
+    print(popt[0])
     print(pcov)
 
     xdata_t = []
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     plot1 = plt.plot(xdata_t, ydata_conv_noisy_norm, color="r", label="noisy")
     plot0 = plt.plot(xdata_t, ydata_conv_norm, color="b", label="control")
 
-    contini2 = Contini(s=40, mua=0.05, musp=popt[0], n1=1, n2=1)
+    contini2 = Contini(s=40, mua=0.05, musp=popt, n1=1, n2=1)
     ydata_fit = contini.forward(xdata, normalize=True, IRF=IRF)
 
     ydata = []
