@@ -354,6 +354,8 @@ class Contini:
                 if normalize:
                     ret = np.array(ret) / np.max(ret)
                 if IRF is not None:
+                    print(ret)
+
                     ret = convolve(ret, IRF, mode="same")
             # ret = np.log(ret + 1)
             # print(ret)
