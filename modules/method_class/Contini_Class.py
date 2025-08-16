@@ -371,6 +371,10 @@ class Contini:
                 param_value = self.mua if param_index == 0 else self.musp
                 args_list.insert(param_index, param_value)
 
+        for param_index, param in enumerate(available_free_params):
+            if param in free_params:
+                args_list[param_index] = 1e3 * args_list[param_index]
+
         args = tuple(args_list)
 
         # print(args)
@@ -402,6 +406,10 @@ class Contini:
                 if IRF is not None:
                     # try:
                     ret = convolve(ret, IRF, mode="same")
+                    # except:
+                    #     print("---ERROR---")
+                    #     print(args)
+                    #     print(ret)
                 if normalize:
                     max_ret = np.max(ret) or 1
                     ret = np.array(ret) / max_ret
