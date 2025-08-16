@@ -144,7 +144,7 @@ if __name__ == "__main__":
         # print(xdata)
         # print(np.max(df_ydata))
         popt, pcov = contini2.fit(
-            xdata, df_ydata, [0.3, 0.0], IRF=df_irf, normalize=True
+            xdata, df_ydata, [0.2, 0.2], IRF=df_irf, normalize=True
         )
         print(popt, pcov)
         contini2.musp = popt[0]
