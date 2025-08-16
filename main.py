@@ -127,7 +127,7 @@ if __name__ == "__main__":
             xdata, df_ydata, [0.3, 0.0], IRF=df_irf, normalize=True
         )
         print(popt, pcov)
-        contini.musp = popt[0]
+        contini2.musp = popt[0]
         # ydata = []
         # for t in df_time:
         #     subresult = contini((t, rho))
