@@ -19,7 +19,7 @@ def Reflectance_Transmittance_rho_t(
     D = D_parameter(DD, mua, musp, eq)
     A = A_parameter(n1, n2)
     ze = 2 * A * D  # noqa: F841
-
+    # print(D, A, rho, t, mua, musp)
     R_rho_t = 0.0
     T_rho_t = 0.0
 

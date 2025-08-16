@@ -82,62 +82,62 @@ class Contini:
         self.ydata_info = {}
         self._offset = 0
 
-        print(f"---INIT---\n{self.mua, self.musp, self.offset}")
+        # print(f"---INIT---\n{self._mua, self._musp, self._offset}")
         self.err = 1e-6  # noqa: F841
 
-    @property
-    def mua(self) -> Union[None, float]:
-        return self._mua
+    # @property
+    # def mua(self) -> Union[None, float]:
+    #     return self._mua
 
-    @mua.setter
-    def mua(self, value: float) -> None:
-        if value is None:
-            self._mua = None
-        else:
-            self._mua = value * 1e3
+    # @mua.setter
+    # def mua(self, value: float) -> None:
+    #     if value is None:
+    #         self._mua = None
+    #     else:
+    #         self._mua = value * 1e3
 
-    @mua.deleter
-    def mua(self) -> None:
-        self._mua = None
+    # @mua.deleter
+    # def mua(self) -> None:
+    #     self._mua = None
 
-    @property
-    def musp(self) -> Union[None, float]:
-        return self._musp
+    # @property
+    # def musp(self) -> Union[None, float]:
+    #     return self._musp
 
-    @musp.setter
-    def musp(self, value: float) -> None:
-        if value is None:
-            self._musp = None
-        else:
-            self._musp = value * 1e3
+    # @musp.setter
+    # def musp(self, value: float) -> None:
+    #     if value is None:
+    #         self._musp = None
+    #     else:
+    #         self._musp = value * 1e3
 
-    @musp.deleter
-    def musp(self) -> None:
-        self._musp = None
+    # @musp.deleter
+    # def musp(self) -> None:
+    #     self._musp = None
 
-    @property
-    def s(self) -> float:
-        return self._s
+    # @property
+    # def s(self) -> float:
+    #     return self._s
 
-    @s.setter
-    def s(self, value: float) -> None:
-        self._s = value * 1e-3
+    # @s.setter
+    # def s(self, value: float) -> None:
+    #     self._s = value * 1e-3
 
-    @s.deleter
-    def s(self) -> None:
-        self._s = 0
+    # @s.deleter
+    # def s(self) -> None:
+    #     self._s = 0
 
-    @property
-    def offset(self) -> float:
-        return self._offset
+    # @property
+    # def offset(self) -> float:
+    #     return self._offset
 
-    @offset.setter
-    def s(self, value: float) -> None:
-        self._offset = value
+    # @offset.setter
+    # def s(self, value: float) -> None:
+    #     self._offset = value
 
-    @offset.deleter
-    def offset(self) -> None:
-        self._offset = 0
+    # @offset.deleter
+    # def offset(self) -> None:
+    #     self._offset = 0
 
     def __call__(
         self,
@@ -179,15 +179,15 @@ class Contini:
 
         """
         if isinstance(t_rho, tuple):
-            # mua = mua * 1e3 if self.mua is None else self.mua
-            # musp = musp * 1e3 if self.musp is None else self.musp
+            # mua = mua * 1e3 if self._mua is None else self._mua
+            # musp = musp * 1e3 if self._musp is None else self._musp
 
             if mua is None:
-                mua = self.mua
+                mua = self._mua
             else:
                 mua = 1e3 * mua
             if musp is None:
-                musp = self.musp
+                musp = self._musp
             else:
                 musp = 1e3 * musp
 
@@ -195,7 +195,7 @@ class Contini:
 
             t = t_rho[0] * 1e-12
             rho = t_rho[1] * 1e-3
-            s = self.s
+            s = self._s
             n1 = self.n1
             n2 = self.n2
             phantom = self.phantom  # noqa: F841
@@ -207,6 +207,7 @@ class Contini:
             R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
                 rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff, **kwargs
             )
+            # print(rho, t, mua, musp, R_rho_t)
 
             R_rho, T_rho = Reflectance_Transmittance_rho(
                 rho, mua, musp, s, m, n1, n2, DD, eq
@@ -250,14 +251,14 @@ class Contini:
             T = []
             A = []
             Z = []
-            # mua = mua * 1e3 if self.mua is None else self.mua
-            # musp = musp * 1e3 if self.musp is None else self.musp
+            # mua = mua * 1e3 if self._mua is None else self._mua
+            # musp = musp * 1e3 if self._musp is None else self._musp
             if mua is None:
-                mua = self.mua
+                mua = self._mua
             else:
                 mua = 1e3 * mua
             if musp is None:
-                musp = self.musp
+                musp = self._musp
             else:
                 musp = 1e3 * musp
             anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
@@ -265,7 +266,7 @@ class Contini:
             for value in t_rho:
                 t = value[0] * 1e-12
                 rho = value[1] * 1e-3
-                s = self.s
+                s = self._s
                 n1 = self.n1
                 n2 = self.n2
                 phantom = self.phantom  # noqa: F841
@@ -351,7 +352,8 @@ class Contini:
 
         :param t_rho_array_like: Variables of the model in the form List[(time, radial_coordinate), ...], passed as xdata to scipy.curve_fit(f, ydata, xdata, params).
         :type t_rho_array_like: List[Tuple[float, float]]
-        :param mua: Absorption coefficient of the slab in [mm^-1]. Default: None.
+        :param normalize: Controls whether normalization is applied to the output.
+        :type normalize: bool
         :param args: An iterable of the free_parameters for fitting in the order (mua, musp). The parameters have to match the free_params param. Anisothropy_coeff to be added.
         :type args: Any
         :param kwargs: Optional kwargs:
@@ -366,7 +368,9 @@ class Contini:
 
         values_to_fit: Union[List[str], Any] = self.values_to_fit or ["R_rho_t"]
         free_params: Union[List[str], Any] = self.free_params or ["musp", "offset"]
-        normalize: Union[bool, None] = self.normalize or False  # noqa: F841
+        normalize = self.normalize or False
+        if kwargs.get("normalize") is not None:
+            normalize = kwargs.get("normalize")  # noqa: F841
 
         IRF = self.IRF
 
@@ -396,12 +400,22 @@ class Contini:
         args_list = list(args)
 
         if not args:
-            args_list = [self.mua, self.musp, self.offset]
+            args_list = [self._mua, self._musp, self._offset]
 
         for param_index, param in enumerate(available_free_params):
+            # print((param not in free_params) and args, args_list, param, param_index)
             if (param not in free_params) and args:
-                param_value = self.mua if param_index == 0 else self.musp
+                # param_value = self._mua if param_index == 0 else self._musp
+                if param_index == 0:
+                    param_value = self._mua
+                if param_index == 1:
+                    param_value = self._musp
+                if param_index == 3:
+                    param_value = self._offset
+
                 args_list.insert(param_index, param_value)
+                # print(args_list)
+        # print(args, kwargs, args_list, free_params, available_free_params)
 
         for param_index, param in enumerate(available_free_params):
             if (param in free_params) and args:
@@ -412,11 +426,14 @@ class Contini:
                 #     print(args_list, param_index, args)
 
         index = available_free_params.index("offset")
-        offset = args_list[index] or self.offset
-
+        offset = args_list[index] or self._offset
+        for arg_index, arg in enumerate(args_list):
+            if arg_index == available_free_params.index("offset"):
+                continue
+            args_list[arg_index] = 1e-3 * arg
         args = tuple(args_list)
 
-        print(args)
+        # print(args)
 
         value: Any
         # print(values_to_fit, isinstance(values_to_fit, list) and len(values_to_fit) == 1, t_rho_array_like)
@@ -439,9 +456,16 @@ class Contini:
         elif isinstance(values_to_fit, list) and len(values_to_fit) == 1:
             for value in values_to_fit:
                 index = int(available_values.index(str(value)))
+                ret = []
+                # for elem in t_rho_array_like:
+                #     ret.append(self(elem, *args, **kwargs)[index])
                 ret = self(t_rho_array_like, *args, **kwargs)[index]
                 ret = np.array([float(ret_elem) for ret_elem in ret])
                 # print(ret)
+                # print("---TEST RETURN---")
+                # print(index, ret, args)
+                # print(t_rho_array_like)
+                # print()
 
                 if IRF is not None:
                     try:
@@ -549,6 +573,7 @@ class Contini:
         #     _, ydata = deconvolve(ydata, IRF)
         #     print(ydata)
         # print(self.normalize, normalize)
+        print("---INITIAL FREE PARAMS---\n", initial_free_params)
         if self.normalize:
             ydata = ydata - np.min(ydata)
             max_ydata = np.max(ydata) if np.max(ydata) != 0 else 1
@@ -602,9 +627,9 @@ class Contini:
             for value in values_to_fit:
                 index = int(values_to_fit.index(value))
                 params = popt.clone()
-                offset = self.offset if ("offset" not in free_params) else params.pop()
-                musp = self.musp if ("musp" not in free_params) else params.pop()
-                mua = self.mua if ("mua" not in free_params) else params.pop()
+                offset = self._offset if ("offset" not in free_params) else params.pop()
+                musp = self._musp if ("musp" not in free_params) else params.pop()
+                mua = self._mua if ("mua" not in free_params) else params.pop()
 
                 ydata_fit = self.forward(
                     _t_rho_array_like,
@@ -614,7 +639,12 @@ class Contini:
                     normalize=True,
                     IRF=IRF,
                 )[index]
-                fit = plt.plot(xdata_t, ydata_fit, color="r", label="fit data")  # noqa: F841
+                fit = plt.plot(  # noqa: F841
+                    xdata_t,
+                    ydata_fit,
+                    color="r",
+                    label=f"fit: mua={mua}, musp={musp}, off={offset}",
+                )  # noqa: F841
 
                 if not self.normalize:
                     ydata = ydata - np.min(ydata)
