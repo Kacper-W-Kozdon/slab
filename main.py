@@ -17,6 +17,7 @@ if __name__ == "__main__":
     for t_index, t in enumerate(range(1, 211, 2)):
         picot = t
         subresult = contini((picot, rho))
+        print(subresult[0])
         ydata.append(subresult[0])
 
         xdata.append(tuple([picot, rho]))
