@@ -71,6 +71,9 @@ if __name__ == "__main__":
         xdata.append(tuple([picot, rho]))
 
     plot2 = plt.plot(xdata_t, ydata_fit, color="g", label="fit")
+    plt.xlabel("Time in ps")
+    plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
+    plt.legend(loc="upper right")
     plt.show()
     plt.clf()
 
@@ -124,5 +127,7 @@ if __name__ == "__main__":
         ydata_fit = contini.forward(xdata)
 
         fit = plt.plot(df_time, ydata_fit, color="r", label="raw data")
-
+        plt.legend(loc="upper right")
+        plt.xlabel("Time in ps")
+        plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
         plt.show()
