@@ -85,59 +85,59 @@ class Contini:
         # print(f"---INIT---\n{self._mua, self._musp, self._offset}")
         self.err = 1e-6  # noqa: F841
 
-    # @property
-    # def mua(self) -> Union[None, float]:
-    #     return self._mua
+    @property
+    def mua(self) -> Union[None, float]:
+        return self._mua
 
-    # @mua.setter
-    # def mua(self, value: float) -> None:
-    #     if value is None:
-    #         self._mua = None
-    #     else:
-    #         self._mua = value * 1e3
+    @mua.setter
+    def mua(self, value: float) -> None:
+        if value is None:
+            self._mua = None
+        else:
+            self._mua = value * 1e3
 
-    # @mua.deleter
-    # def mua(self) -> None:
-    #     self._mua = None
+    @mua.deleter
+    def mua(self) -> None:
+        self._mua = None
 
-    # @property
-    # def musp(self) -> Union[None, float]:
-    #     return self._musp
+    @property
+    def musp(self) -> Union[None, float]:
+        return self._musp
 
-    # @musp.setter
-    # def musp(self, value: float) -> None:
-    #     if value is None:
-    #         self._musp = None
-    #     else:
-    #         self._musp = value * 1e3
+    @musp.setter
+    def musp(self, value: float) -> None:
+        if value is None:
+            self._musp = None
+        else:
+            self._musp = value * 1e3
 
-    # @musp.deleter
-    # def musp(self) -> None:
-    #     self._musp = None
+    @musp.deleter
+    def musp(self) -> None:
+        self._musp = None
 
-    # @property
-    # def s(self) -> float:
-    #     return self._s
+    @property
+    def s(self) -> float:
+        return self._s
 
-    # @s.setter
-    # def s(self, value: float) -> None:
-    #     self._s = value * 1e-3
+    @s.setter
+    def s(self, value: float) -> None:
+        self._s = value * 1e-3
 
-    # @s.deleter
-    # def s(self) -> None:
-    #     self._s = 0
+    @s.deleter
+    def s(self) -> None:
+        self._s = 0
 
-    # @property
-    # def offset(self) -> float:
-    #     return self._offset
+    @property
+    def offset(self) -> float:
+        return self._offset
 
-    # @offset.setter
-    # def s(self, value: float) -> None:
-    #     self._offset = value
+    @offset.setter
+    def s(self, value: float) -> None:
+        self._offset = value
 
-    # @offset.deleter
-    # def offset(self) -> None:
-    #     self._offset = 0
+    @offset.deleter
+    def offset(self) -> None:
+        self._offset = 0
 
     def __call__(
         self,
