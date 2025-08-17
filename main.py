@@ -104,8 +104,8 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        initial_params = {"musp": 4.806035e-02, "offset": 0}
-        contini2 = Contini(s=40, mua=0.05, musp=initial_params["musp"], n1=1, n2=1)
+        initial_params = {"musp": 10.00506035e-02, "offset": 20}
+        contini2 = Contini(s=40, mua=0.0025, musp=initial_params["musp"], n1=1, n2=1)
 
         df = pd.read_excel(path, engine="openpyxl")
         print(df.head())
@@ -122,13 +122,15 @@ if __name__ == "__main__":
         # df_ydata = df.iloc[:, 1].fillna(0)
         df_time = df_clean.iloc[:, 0]
         df_ydata = df_clean.iloc[:, 3]
-        df_irf = df_clean.iloc[:, 1]
+        df_irf_raw = df_clean.iloc[:, 1]
         # df_time = df_time.loc[(df[xdata_column_name] != 0.0)]
         # df_ydata = df_ydata.loc[(df[xdata_column_name] != 0.0)]
         # ~df['column_name'].isin(some_values)
         print(xdata_column_name)
         print(df_time)
         df_ydata_raw = df_ydata
+        df_irf = df_irf_raw.loc[df_irf_raw != 0]
+        # df_irf = df_irf_raw
         # df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
         raw_data = plt.plot(
             df_time,
@@ -152,7 +154,7 @@ if __name__ == "__main__":
         plt.legend(loc="upper right")
         plt.xlabel("Time in ps")
         plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
-        plt.show()
+        # plt.show()
         plt.clf()
 
         df_ydata_raw = df_ydata
@@ -178,7 +180,7 @@ if __name__ == "__main__":
         plt.legend(loc="upper right")
         plt.xlabel("Time in ps")
         plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
-        plt.show()
+        # plt.show()
         plt.clf()
 
         print("---TEST DATA FIT---")
@@ -189,8 +191,9 @@ if __name__ == "__main__":
         popt, pcov = contini2.fit(
             xdata,
             df_ydata,
-            [initial_params["musp"], initial_params["offset"]],
+            [initial_params["mua"], initial_params["musp"], initial_params["offset"]],
             IRF=df_irf,
+            free_params=["mua", "musp", "offset"],
             normalize=True,
         )
         print(popt, pcov)
