@@ -2,4 +2,4 @@
 *.m
 */__pycache__
 */*/__pycache__
-!plots
+!plots/*.pdf
