@@ -236,7 +236,7 @@ if __name__ == "__main__":
         plt.show()
         path = pathlib.Path(__file__).resolve().parent
         plt.savefig(
-            f"{pathlib.Path(__file__).resolve().parent}\\plots\\not_convolved.pdf"
+            f"{pathlib.Path(__file__).resolve().parent}\\plots\\fit_convolved.pdf"
         )
         plt.clf()
 
