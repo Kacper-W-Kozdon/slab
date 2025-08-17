@@ -81,6 +81,7 @@ class Contini:
         self.free_params = free_params
         self.ydata_info = {}
         self._offset = 0
+        self._max_ydata = 1
 
         # print(f"---INIT---\n{self._mua, self._musp, self._offset}")
         self.err = 1e-6  # noqa: F841
@@ -372,7 +373,7 @@ class Contini:
         if kwargs.get("normalize") is not None:
             normalize = kwargs.get("normalize")  # noqa: F841
 
-        IRF = self.IRF
+        IRF = self.IRF or kwargs.get("IRF")
 
         available_values = [
             "R_rho_t",
@@ -448,10 +449,13 @@ class Contini:
                     ret[value] = convolve(ret[value], IRF, mode="same")
                 if normalize:
                     max_ret = np.max(ret[value]) or 1
-                    ret[value] = np.array(ret[value]) / max_ret
+                    ret[value] = (
+                        np.array(ret[value]) / max_ret * self._max_ydata
+                        + offset / max_ret * self._max_ydata
+                    )
 
             # ret = np.log(ret + 1)
-            return ret + offset
+            return ret
 
         elif isinstance(values_to_fit, list) and len(values_to_fit) == 1:
             for value in values_to_fit:
@@ -474,11 +478,15 @@ class Contini:
                         print("---ERROR---")
                         print(e)
                         print(args, type(t_rho_array_like))
-                        print(ret)
+                        print(ret, IRF)
                         print("---END ERROR---")
                 if normalize:
+                    print(ret, IRF)
                     max_ret = np.max(ret) or 1
-                    ret = np.array(ret) / max_ret
+                    ret = (
+                        np.array(ret) / max_ret * self._max_ydata
+                        + offset / max_ret * self._max_ydata
+                    )
 
                     # except Exception:
                     #     print(free_params, values_to_fit)
@@ -493,7 +501,7 @@ class Contini:
                     #     )
             # ret = np.log(ret + 1)
             # print(ret)
-            return ret + offset
+            return ret
 
         elif isinstance(values_to_fit, str):
             index = available_values.index(values_to_fit)
@@ -503,10 +511,13 @@ class Contini:
                 ret = convolve(ret, IRF, mode="same")
             if normalize:
                 max_ret = np.max(ret) or 1
-                ret = np.array(ret) / max_ret
+                ret = (
+                    np.array(ret) / max_ret * self._max_ydata
+                    + offset / max_ret * self._max_ydata
+                )
 
             # ret = np.log(ret + 1)
-            return ret + offset
+            return ret
 
         else:
             return None
@@ -574,10 +585,13 @@ class Contini:
         #     print(ydata)
         # print(self.normalize, normalize)
         print("---INITIAL FREE PARAMS---\n", initial_free_params)
+        if self.IRF:
+            ydata = convolve(ydata, self.IRF, mode="same")
+
         if self.normalize:
-            ydata = ydata - np.min(ydata)
             max_ydata = np.max(ydata) if np.max(ydata) != 0 else 1
-            ydata = ydata / max_ydata
+            self._max_ydata = max_ydata
+
         self.ydata_info = {"ydata_min": np.min(ydata), "ydata_max": np.max(ydata)}
         try:
             popt, pcov, *_ = curve_fit(
@@ -645,11 +659,6 @@ class Contini:
                     color="r",
                     label=f"fit: mua={mua}, musp={musp}, off={offset}",
                 )  # noqa: F841
-
-                if not self.normalize:
-                    ydata = ydata - np.min(ydata)
-                    ydata_max = np.max(ydata)
-                    ydata = ydata / ydata_max
 
                 raw_data = plt.plot(  # noqa: F841
                     xdata_t,

@@ -5,6 +5,7 @@ import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scipy
 from modules import Contini
 
 if __name__ == "__main__":
@@ -103,7 +104,8 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        contini2 = Contini(s=40, mua=0.05, musp=0.2, n1=1, n2=1)
+        initial_params = {"musp": 0.055, "offset": 1e-17}
+        contini2 = Contini(s=40, mua=0.05, musp=initial_params["musp"], n1=1, n2=1)
 
         df = pd.read_excel(path, engine="openpyxl")
         print(df.head())
@@ -126,8 +128,8 @@ if __name__ == "__main__":
         # ~df['column_name'].isin(some_values)
         print(xdata_column_name)
         print(df_time)
-        df_ydata_raw = df_ydata - np.min(df_ydata)
-        df_ydata_raw = df_ydata_raw / np.max(df_ydata_raw)
+        df_ydata_raw = df_ydata
+        df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
         raw_data = plt.plot(
             df_time,
             df_ydata_raw,
@@ -138,13 +140,14 @@ if __name__ == "__main__":
         )
 
         xdata = [tuple([time, rho]) for time in df_time]
-        contini2.offset = 0.2
+        contini2.offset = initial_params["offset"]
+        contini2._max_ydata = np.max(df_ydata_raw)
         ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
         fit = plt.plot(
             df_time,
             ydata_fit,
             color="r",
-            label=f"fit: mua={contini2.mua}, musp={contini2.musp}, off={contini2.offset}",
+            label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
         )
         plt.legend(loc="upper right")
         plt.xlabel("Time in ps")
@@ -158,7 +161,11 @@ if __name__ == "__main__":
         # print(xdata)
         # print(np.max(df_ydata))
         popt, pcov = contini2.fit(
-            xdata, df_ydata, [0.2, 0.2], IRF=df_irf, normalize=True
+            xdata,
+            df_ydata,
+            [initial_params["musp"], initial_params["offset"]],
+            IRF=df_irf,
+            normalize=True,
         )
         print(popt, pcov)
         contini2.musp = popt[0]
@@ -187,7 +194,7 @@ if __name__ == "__main__":
             df_time,
             ydata_fit,
             color="r",
-            label=f"fit: mua={contini2.mua}, musp={contini2.musp}, off={contini2.offset}",
+            label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
         )
         plt.legend(loc="upper right")
         plt.xlabel("Time in ps")
