@@ -411,10 +411,14 @@ class Contini:
                     param_value = self._mua
                 if param_index == 1:
                     param_value = self._musp
-                if param_index == 3:
+                if param_index == 2:
                     param_value = self._offset
-
-                args_list.insert(param_index, param_value)
+                try:
+                    args_list.insert(param_index, param_value)
+                except UnboundLocalError:
+                    print(UnboundLocalError)
+                    print(param_index)
+                    raise UnboundLocalError
                 # print(args_list)
         # print(args, kwargs, args_list, free_params, available_free_params)
 

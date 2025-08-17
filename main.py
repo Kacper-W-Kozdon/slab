@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        initial_params = {"mua": 0.08, "musp": 0.0800506035, "offset": 20}
+        initial_params = {"mua": 0.08, "musp": 0.0800506035, "offset": 0}
         contini2 = Contini(
             s=40, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
         )
@@ -193,9 +193,9 @@ if __name__ == "__main__":
         popt, pcov = contini2.fit(
             xdata,
             df_ydata,
-            [initial_params["mua"], initial_params["musp"], initial_params["offset"]],
+            [initial_params["mua"], initial_params["musp"]],
             IRF=df_irf,
-            free_params=["mua", "musp", "offset"],
+            free_params=["mua", "musp"],
             normalize=True,
         )
         print(popt, pcov)
