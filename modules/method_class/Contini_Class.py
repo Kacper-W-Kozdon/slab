@@ -585,7 +585,7 @@ class Contini:
         #     print(ydata)
         # print(self.normalize, normalize)
         print("---INITIAL FREE PARAMS---\n", initial_free_params)
-        if self.IRF:
+        if self.IRF is not None:
             ydata = convolve(ydata, self.IRF, mode="same")
 
         if self.normalize:
