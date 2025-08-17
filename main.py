@@ -193,15 +193,15 @@ if __name__ == "__main__":
         popt, pcov = contini2.fit(
             xdata,
             df_ydata,
-            [initial_params["mua"], initial_params["musp"]],
+            [initial_params["mua"], initial_params["musp"], initial_params["offset"]],
             IRF=df_irf,
-            free_params=["mua", "musp"],
+            free_params=["mua", "musp", "offset"],
             normalize=True,
         )
         print(popt, pcov)
         contini2.mua = popt[0]
         contini2.musp = popt[1]
-        # contini2.offset = popt[2]
+        contini2.offset = popt[2]
         # ydata = []
         # for t in df_time:
         #     subresult = contini((t, rho))
