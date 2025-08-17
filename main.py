@@ -155,6 +155,31 @@ if __name__ == "__main__":
         plt.show()
         plt.clf()
 
+        raw_data = plt.plot(
+            df_time,
+            df_ydata_raw,
+            color="b",
+            label="raw data",
+            marker="o",
+            linestyle=" ",
+        )
+
+        xdata = [tuple([time, rho]) for time in df_time]
+        contini2.offset = initial_params["offset"]
+        contini2._max_ydata = np.max(df_ydata_raw)
+        ydata_fit = contini2.forward(xdata, normalize=True)
+        fit = plt.plot(
+            df_time,
+            ydata_fit,
+            color="r",
+            label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
+        )
+        plt.legend(loc="upper right")
+        plt.xlabel("Time in ps")
+        plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
+        plt.show()
+        plt.clf()
+
         print("---TEST DATA FIT---")
         print(df_ydata)
         print(xdata)
