@@ -206,6 +206,7 @@ if __name__ == "__main__":
         ydata_fit = None
         if not contini2.normalize:
             contini2.normalize = True
+        contini2.IRF = None
         ydata_fit = contini2.forward(xdata, normalize=True, IRF=None)
         raw_data = plt.plot(
             df_time,
