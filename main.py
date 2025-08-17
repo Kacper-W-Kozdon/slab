@@ -206,7 +206,7 @@ if __name__ == "__main__":
         ydata_fit = None
         if not contini2.normalize:
             contini2.normalize = True
-        ydata_fit = contini2.forward(xdata, normalize=True)
+        ydata_fit = contini2.forward(xdata, normalize=True, IRF=None)
         raw_data = plt.plot(
             df_time,
             df_ydata_raw,
@@ -226,3 +226,33 @@ if __name__ == "__main__":
         plt.xlabel("Time in ps")
         plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
         plt.show()
+        path = pathlib.Path(__file__).resolve().parent
+        plt.savefig(
+            f"{pathlib.Path(__file__).resolve().parent}\\plots\\not_convolved.pdf"
+        )
+        plt.clf()
+
+        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
+        df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
+        raw_data = plt.plot(
+            df_time,
+            df_ydata_raw,
+            color="b",
+            label="raw data",
+            marker="o",
+            linestyle=" ",
+        )
+
+        fit = plt.plot(
+            df_time,
+            ydata_fit,
+            color="r",
+            label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
+        )
+        plt.legend(loc="upper right")
+        plt.xlabel("Time in ps")
+        plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
+        plt.show()
+        path = pathlib.Path(__file__).resolve().parent
+        plt.savefig(f"{pathlib.Path(__file__).resolve().parent}\\plots\\convolved.pdf")
+        plt.clf()
