@@ -373,7 +373,7 @@ class Contini:
         if kwargs.get("normalize") is not None:
             normalize = kwargs.get("normalize")  # noqa: F841
 
-        IRF = self.IRF or kwargs.get("IRF")
+        IRF = self.IRF if self.IRF is not None else kwargs.get("IRF")
 
         available_values = [
             "R_rho_t",
