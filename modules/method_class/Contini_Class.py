@@ -630,7 +630,7 @@ class Contini:
                 _ydata,
                 initial_free_params,
                 method="trf",
-                bounds=([0.01, 0.01, -0.01], [0.1, 0.1, 40]),
+                bounds=([0.01, 0.01, -0.01], [0.1, 0.1, 50]),
                 *args,
                 **kwargs,
             )
