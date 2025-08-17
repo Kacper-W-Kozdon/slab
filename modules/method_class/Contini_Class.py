@@ -579,7 +579,8 @@ class Contini:
         # print(self.normalize, normalize)
         print("---INITIAL FREE PARAMS---\n", initial_free_params)
         if self.IRF is not None:
-            ydata = convolve(ydata, self.IRF, mode="same")
+            # ydata = convolve(ydata, self.IRF, mode="same")
+            pass
 
         if self.normalize:
             max_ydata = np.max(ydata) if np.max(ydata) != 0 else 1

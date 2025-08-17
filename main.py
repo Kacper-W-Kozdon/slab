@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        initial_params = {"musp": 4.89206035e-02, "offset": 8e-16}
+        initial_params = {"musp": 4.806035e-02, "offset": 0}
         contini2 = Contini(s=40, mua=0.05, musp=initial_params["musp"], n1=1, n2=1)
 
         df = pd.read_excel(path, engine="openpyxl")
@@ -129,7 +129,7 @@ if __name__ == "__main__":
         print(xdata_column_name)
         print(df_time)
         df_ydata_raw = df_ydata
-        df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
+        # df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
         raw_data = plt.plot(
             df_time,
             df_ydata_raw,
@@ -168,7 +168,7 @@ if __name__ == "__main__":
         xdata = [tuple([time, rho]) for time in df_time]
         contini2.offset = initial_params["offset"]
         contini2._max_ydata = np.max(df_ydata_raw)
-        ydata_fit = contini2.forward(xdata, normalize=True)
+        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
         fit = plt.plot(
             df_time,
             ydata_fit,
@@ -203,12 +203,12 @@ if __name__ == "__main__":
         #     ydata.append(subresult[0])
 
         # contini.IRF = None
-        ydata_fit = None
+        # ydata_fit = None
         if not contini2.normalize:
             contini2.normalize = True
         contini2.IRF = None
         contini2._max_ydata = np.max(df_ydata_raw)
-        ydata_fit = contini2.forward(xdata, normalize=True, IRF=None)
+        # ydata_fit = contini2.forward(xdata, normalize=True, IRF=None)
         raw_data = plt.plot(
             df_time,
             df_ydata_raw,
