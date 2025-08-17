@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        initial_params = {"mua": 0.05, "musp": 0.0700506035, "offset": 20}
+        initial_params = {"mua": 0.05, "musp": 0.0500506035, "offset": 20}
         contini2 = Contini(
             s=40, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
         )
@@ -262,7 +262,7 @@ if __name__ == "__main__":
         plt.legend(loc="upper right")
         plt.xlabel("Time in ps")
         plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
-        plt.show()
-        path = pathlib.Path(__file__).resolve().parent
-        plt.savefig(f"{pathlib.Path(__file__).resolve().parent}\\plots\\convolved.pdf")
+        # plt.show()
+        # path = pathlib.Path(__file__).resolve().parent
+        # plt.savefig(f"{pathlib.Path(__file__).resolve().parent}\\plots\\convolved.pdf")
         plt.clf()
