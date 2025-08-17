@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        initial_params = {"musp": 0.053, "offset": 4e-15}
+        initial_params = {"musp": 0.045, "offset": 8e-16}
         contini2 = Contini(s=40, mua=0.05, musp=initial_params["musp"], n1=1, n2=1)
 
         df = pd.read_excel(path, engine="openpyxl")

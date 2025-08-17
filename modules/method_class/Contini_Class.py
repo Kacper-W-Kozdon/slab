@@ -450,8 +450,7 @@ class Contini:
                 if normalize:
                     max_ret = np.max(ret[value]) or 1
                     ret[value] = (
-                        np.array(ret[value]) / max_ret * self._max_ydata
-                        + offset / max_ret * self._max_ydata
+                        np.array(ret[value]) / max_ret * self._max_ydata + offset
                     )
 
             # ret = np.log(ret + 1)
@@ -483,10 +482,7 @@ class Contini:
                 if normalize:
                     # print(ret, IRF)
                     max_ret = np.max(ret) or 1
-                    ret = (
-                        np.array(ret) / max_ret * self._max_ydata
-                        + offset / max_ret * self._max_ydata
-                    )
+                    ret = np.array(ret) / max_ret * self._max_ydata + offset
 
                     # except Exception:
                     #     print(free_params, values_to_fit)
@@ -511,10 +507,7 @@ class Contini:
                 ret = convolve(ret, IRF, mode="same")
             if normalize:
                 max_ret = np.max(ret) or 1
-                ret = (
-                    np.array(ret) / max_ret * self._max_ydata
-                    + offset / max_ret * self._max_ydata
-                )
+                ret = np.array(ret) / max_ret * self._max_ydata + offset
 
             # ret = np.log(ret + 1)
             return ret
