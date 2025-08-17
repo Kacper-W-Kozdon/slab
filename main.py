@@ -233,11 +233,12 @@ if __name__ == "__main__":
         plt.legend(loc="upper right")
         plt.xlabel("Time in ps")
         plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
-        plt.show()
+
         path = pathlib.Path(__file__).resolve().parent
         plt.savefig(
             f"{pathlib.Path(__file__).resolve().parent}\\plots\\fit_convolved.pdf"
         )
+        plt.show()
         plt.clf()
 
         df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
