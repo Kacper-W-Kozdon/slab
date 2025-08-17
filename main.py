@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        initial_params = {"mua": 0.05, "musp": 0.05, "offset": 20}
+        initial_params = {"mua": 0.06, "musp": 0.03, "offset": 0}
         contini2 = Contini(
             s=40, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
         )
@@ -131,8 +131,8 @@ if __name__ == "__main__":
         print(xdata_column_name)
         print(df_time)
         df_ydata_raw = df_ydata
-        df_irf = df_irf_raw.loc[df_irf_raw != 0]
-        # df_irf = df_irf_raw
+        # df_irf = df_irf_raw.loc[df_irf_raw != 0]
+        df_irf = df_irf_raw
         # df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
         raw_data = plt.plot(
             df_time,
@@ -197,7 +197,7 @@ if __name__ == "__main__":
             IRF=df_irf,
             free_params=["mua", "musp", "offset"],
             normalize=True,
-            log_scale=True,
+            log_scale=False,
         )
         print(popt, pcov)
         contini2.mua = popt[0]
