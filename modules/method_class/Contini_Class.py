@@ -592,19 +592,21 @@ class Contini:
 
         self.ydata_info = {"ydata_min": np.min(ydata), "ydata_max": np.max(ydata)}
         try:
+            # t_rho_array_like = np.array(_t_rho_array_like)
             popt, pcov, *_ = curve_fit(
                 self.forward,
                 _t_rho_array_like,
                 ydata,
                 initial_free_params,
                 method="trf",
-                bounds=(0.01, [0.1, 0.1]) * args,
+                bounds=(0.01, [0.1, 0.1]),
+                *args,
                 **kwargs,
             )
-        except ValueError:
+        except TypeError:
             print("\n\n---ERROR---\n")
-            print(initial_free_params)
-            print(self.forward(_t_rho_array_like, initial_free_params[0]))
+            print(type(_t_rho_array_like), _t_rho_array_like)
+            # print(self.forward(_t_rho_array_like, initial_free_params[0]))
             print("---END ERROR---")
         # print(pcov[0][0], math.isinf(pcov[0][0]))
         # if math.isinf(pcov[0][0]):
