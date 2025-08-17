@@ -197,8 +197,9 @@ if __name__ == "__main__":
             normalize=True,
         )
         print(popt, pcov)
-        contini2.musp = popt[0]
-        contini2.offset = popt[1]
+        contini2.mua = popt[0]
+        contini2.musp = popt[1]
+        contini2.offset = popt[2]
         # ydata = []
         # for t in df_time:
         #     subresult = contini((t, rho))
