@@ -597,7 +597,8 @@ class Contini:
                 _t_rho_array_like,
                 ydata,
                 initial_free_params,
-                *args,
+                method="trf",
+                bounds=(0.01, [0.1, 0.1]) * args,
                 **kwargs,
             )
         except ValueError:
