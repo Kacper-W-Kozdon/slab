@@ -31,6 +31,7 @@ class Contini:
         eq: str = "RTE",
         IRF: Union[List[Union[float, int]], None] = None,
         normalize: bool = True,
+        log_scale: Union[bool, None] = None,
         values_to_fit: Union[List[str], Any] = ["R_rho_t"],
         free_params: Union[List[str], Any] = ["musp", "offset"],
     ) -> None:
@@ -63,6 +64,8 @@ class Contini:
         :type values_to_fit: Union[List[str], Any]
         :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
         :type free_params: Union[List[str], Any]
+        :param log_scale: bool that controls whether the outputs are rescaled with log. Default: None.
+        :type log_scale: Union[bool, None]
         """
 
         self._s = s * 1e-3
@@ -82,6 +85,7 @@ class Contini:
         self.ydata_info = {}
         self._offset = 0
         self._max_ydata = 1
+        self.log_scale = log_scale
 
         # print(f"---INIT---\n{self._mua, self._musp, self._offset}")
         self.err = 1e-6  # noqa: F841
@@ -328,6 +332,7 @@ class Contini:
         values_to_fit: Union[List[str], Any] = None,
         free_params: Union[List[str], Any] = None,
         normalize: Union[bool, None] = None,
+        log_scale: Union[bool, None] = None,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -337,10 +342,13 @@ class Contini:
         :type values_to_fit: Union[List[str], Any]
         :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
         :type free_params: Union[List[str], Any]
+        :param log_scale: bool that controls whether the outputs are rescaled with log. Default: None.
+        :type log_scale: Union[bool, None]
         """
         self.values_to_fit = values_to_fit or self.values_to_fit
         self.free_params = free_params or self.free_params
         self.normalize = normalize if normalize is not None else self.normalize
+        self.log_scale = log_scale if log_scale is not None else self.log_scale
 
     def forward(
         self,
@@ -372,6 +380,10 @@ class Contini:
         normalize = self.normalize or False
         if kwargs.get("normalize") is not None:
             normalize = kwargs.get("normalize")  # noqa: F841
+
+        log_scale = self.log_scale or False
+        if kwargs.get("log_scale") is not None:
+            log_scale = kwargs.get("log_scale")
 
         IRF = self.IRF if self.IRF is not None else kwargs.get("IRF")
 
@@ -457,6 +469,9 @@ class Contini:
                         np.array(ret[value]) / max_ret * self._max_ydata + offset
                     )
 
+                if log_scale:
+                    ret = np.log(ret - np.min(ret) + 1)
+
             # ret = np.log(ret + 1)
             return ret
 
@@ -488,6 +503,9 @@ class Contini:
                     max_ret = np.max(ret) or 1
                     ret = np.array(ret) / max_ret * self._max_ydata + offset
 
+                if log_scale:
+                    ret = np.log(ret - np.min(ret) + 1)
+
                     # except Exception:
                     #     print(free_params, values_to_fit)
                     #     print(
@@ -513,6 +531,9 @@ class Contini:
                 max_ret = np.max(ret) or 1
                 ret = np.array(ret) / max_ret * self._max_ydata + offset
 
+            if log_scale:
+                ret = np.log(ret - np.min(ret) + 1)
+
             # ret = np.log(ret + 1)
             return ret
 
@@ -531,6 +552,7 @@ class Contini:
         plot: bool = False,
         show_plot: bool = False,
         save_path: str = "",
+        log_scale: Union[bool, None] = None,
         *args: Any,
         **kwargs: Any,
     ) -> Tuple[List[float], ...]:
@@ -557,6 +579,8 @@ class Contini:
         :type show_plot: bool
         :param save_path: The path where the plots will be saved if provided. Default: "".
         :type save_path: str
+        :param log_scale: bool that controls whether the outputs are rescaled with log. Default: None.
+        :type log_scale: Union[bool, None]
         :param args: A tuple of free parameters for fitting.
         :type args: Any
         :param kwargs: Supports kwargs of the scipy.curve_fit() as well as mode: "approx", "sum" of the G_function().
@@ -571,7 +595,10 @@ class Contini:
         self.IRF = IRF if IRF is not None else self.IRF
         IRF = self.IRF
         self.fit_settings(
-            values_to_fit=values_to_fit, free_params=free_params, normalize=normalize
+            values_to_fit=values_to_fit,
+            free_params=free_params,
+            normalize=normalize,
+            log_scale=log_scale,
         )
         # if IRF:
         #     for entry_index, entry in enumerate(IRF):
@@ -590,13 +617,17 @@ class Contini:
             max_ydata = np.max(ydata) if np.max(ydata) != 0 else 1
             self._max_ydata = max_ydata
 
+        _ydata = ydata
+        if self.log_scale:
+            _ydata = np.log(ydata - np.min(ydata) + 1)
+
         self.ydata_info = {"ydata_min": np.min(ydata), "ydata_max": np.max(ydata)}
         try:
             # t_rho_array_like = np.array(_t_rho_array_like)
             popt, pcov, *_ = curve_fit(
                 self.forward,
                 _t_rho_array_like,
-                ydata,
+                _ydata,
                 initial_free_params,
                 method="trf",
                 bounds=([0.01, 0.01, -0.01], [0.1, 0.1, 40]),
