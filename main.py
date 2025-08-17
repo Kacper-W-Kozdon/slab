@@ -129,10 +129,10 @@ if __name__ == "__main__":
         print(xdata_column_name)
         print(df_time)
         df_ydata_raw = df_ydata
-        df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
+        df_ydata_raw_conv = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
         raw_data = plt.plot(
             df_time,
-            df_ydata_raw,
+            df_ydata_raw_conv,
             color="b",
             label="raw data",
             marker="o",
@@ -180,7 +180,7 @@ if __name__ == "__main__":
         ydata_fit = None
         if not contini2.normalize:
             contini2.normalize = True
-        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
+        ydata_fit = contini2.forward(xdata, normalize=True)
         raw_data = plt.plot(
             df_time,
             df_ydata_raw,
