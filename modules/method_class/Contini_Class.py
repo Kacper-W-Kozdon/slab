@@ -481,7 +481,7 @@ class Contini:
                         print(ret, IRF)
                         print("---END ERROR---")
                 if normalize:
-                    print(ret, IRF)
+                    # print(ret, IRF)
                     max_ret = np.max(ret) or 1
                     ret = (
                         np.array(ret) / max_ret * self._max_ydata
