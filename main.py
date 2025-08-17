@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        initial_params = {"mua": 0.0025, "musp": 10.00506035e-02, "offset": 20}
+        initial_params = {"mua": 0.05, "musp": 0.0800506035, "offset": 0.08}
         contini2 = Contini(
             s=40, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
         )
