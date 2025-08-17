@@ -217,7 +217,7 @@ if __name__ == "__main__":
         contini2._max_ydata = np.max(df_ydata_raw)
         contini2.log_scale = None
 
-        ydata_fit = contini2.forward(xdata, normalize=True, IRF=None)
+        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
         raw_data = plt.plot(
             df_time,
             df_ydata_raw,
