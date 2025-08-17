@@ -207,6 +207,7 @@ if __name__ == "__main__":
         if not contini2.normalize:
             contini2.normalize = True
         contini2.IRF = None
+        contini2._max_ydata = np.max(df_ydata_raw)
         ydata_fit = contini2.forward(xdata, normalize=True, IRF=None)
         raw_data = plt.plot(
             df_time,
@@ -233,8 +234,10 @@ if __name__ == "__main__":
         )
         plt.clf()
 
-        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
         df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
+        contini2._max_ydata = np.max(df_ydata_raw)
+        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
+
         raw_data = plt.plot(
             df_time,
             df_ydata_raw,
