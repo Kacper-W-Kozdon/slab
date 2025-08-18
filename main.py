@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        initial_params = {"mua": 0.055, "musp": 0.055, "offset": 20}
+        initial_params = {"mua": 0.06, "musp": 0.06, "offset": 20}
         contini2 = Contini(
             s=40, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
         )
@@ -263,7 +263,7 @@ if __name__ == "__main__":
         contini2._max_ydata = np.max(df_ydata_raw)
         contini2.log_scale = None
 
-        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
+        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf_raw)
         raw_data = plt.plot(
             df_time_raw,
             df_ydata_raw,
@@ -295,24 +295,24 @@ if __name__ == "__main__":
         contini2.log_scale = None
         ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
 
-        raw_data = plt.plot(
-            df_time,
-            df_ydata_raw,
-            color="b",
-            label="raw data",
-            marker="o",
-            linestyle=" ",
-        )
+        # raw_data = plt.plot(
+        #     df_time_raw,
+        #     df_ydata_raw,
+        #     color="b",
+        #     label="raw data",
+        #     marker="o",
+        #     linestyle=" ",
+        # )
 
-        fit = plt.plot(
-            df_time,
-            ydata_fit,
-            color="r",
-            label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
-        )
-        plt.legend(loc="upper right")
-        plt.xlabel("Time in ps")
-        plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
+        # fit = plt.plot(
+        #     df_time,
+        #     ydata_fit,
+        #     color="r",
+        #     label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
+        # )
+        # plt.legend(loc="upper right")
+        # plt.xlabel("Time in ps")
+        # plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
         # plt.show()
         # path = pathlib.Path(__file__).resolve().parent
         # plt.savefig(f"{pathlib.Path(__file__).resolve().parent}\\plots\\convolved.pdf")
