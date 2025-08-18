@@ -379,7 +379,7 @@ class Contini:
         """
 
         values_to_fit: Union[List[str], Any] = self.values_to_fit or ["R_rho_t"]
-        print(f"---VALUES TO FIT---\n\n{values_to_fit}")
+        # print(f"---VALUES TO FIT---\n\n{values_to_fit}")
         free_params: Union[List[str], Any] = self.free_params or ["musp", "offset"]
         normalize = self.normalize or False
         if kwargs.get("normalize") is not None:
