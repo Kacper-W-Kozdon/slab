@@ -105,7 +105,13 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        initial_params = {"mua": 0.08, "musp": 0.08, "offset": 40}
+        initial_params = {
+            "mua": 0.08,
+            "musp": 0.08,
+            "offset": 20,
+            "lower_bounds": [0.01, 0.01],
+            "upper_bounds": [0.1, 0.1],
+        }
         contini2 = Contini(
             s=40, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
         )
@@ -243,7 +249,7 @@ if __name__ == "__main__":
             [initial_params["mua"], initial_params["musp"]],
             IRF=df_irf_raw,
             free_params=["mua", "musp"],
-            bounds=[[0.01, 0.01], [0.1, 0.1]],
+            bounds=[initial_params["lower_bounds"], initial_params["upper_bounds"]],
             normalize=True,
             log_scale=False,
         )
