@@ -548,7 +548,7 @@ class Contini:
         t_rho_array_like: Union[List[Tuple[float, float]], pd.DataFrame],
         ydata: Union[List[float], pd.DataFrame],
         initial_free_params: List[Union[float, int]],
-        IRF: Union[List[Union[float, int]], None] = None,
+        IRF: Union[List[Union[float, int]], None, pd.DataFrame] = None,
         normalize: bool = True,
         values_to_fit: Union[List[str], Any] = ["R_rho_t"],
         free_params: Union[List[str], Any] = ["musp", "offset"],
@@ -621,9 +621,16 @@ class Contini:
         _y_max_head = np.max(_ydata_raw.head(10))
         _y_min = np.min(_ydata_raw)
 
-        _t_rho_array_like_raw: Union[pd.DataFrame, Any] = copy.copy(t_rho_array_like)
+        if not isinstance(t_rho_array_like, pd.DataFrame):
+            _t_rho_array_like_raw: Union[pd.DataFrame, Any] = pd.DataFrame(
+                t_rho_array_like, columns=["t", "rho"]
+            )
+        else:
+            _t_rho_array_like_raw: Union[pd.DataFrame, Any] = copy.copy(
+                t_rho_array_like
+            )
 
-        _IRF_raw = Union[pd.DataFrame, Any] = copy.copy(IRF)
+        _IRF_raw: Union[pd.DataFrame, Any] = copy.copy(IRF)
         _IRF_max = np.max(_IRF_raw)
         _IRF_max_head = np.max(_IRF_raw.head(10))
 
@@ -635,10 +642,18 @@ class Contini:
             (_ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max)
             | (_IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max)
         ]
-        _t_rho_array_like = _t_rho_array_like_raw.loc[
-            (_ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max)
-            | (_IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max)
-        ]
+        try:
+            _t_rho_array_like = _t_rho_array_like_raw.loc[
+                (_ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max)
+                | (_IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max)
+            ]
+        except pd.errors.IndexingError:
+            print("---DETAILS---\n\n")
+            print(len(_t_rho_array_like_raw), len(_ydata_raw), len(_IRF_raw))
+            print(t_rho_array_like)
+            print()
+            print()
+            raise pd.errors.IndexingError
 
         self.IRF = _IRF if _IRF is not None else self.IRF
         IRF = self.IRF
