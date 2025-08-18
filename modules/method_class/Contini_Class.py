@@ -623,18 +623,21 @@ class Contini:
 
         _t_rho_array_like_raw: Union[pd.DataFrame, Any] = copy.copy(t_rho_array_like)
 
-        _t_rho_array_like = _t_rho_array_like_raw.loc[
-            _ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max
-        ]
-        _ydata = _ydata_raw.loc[
-            _ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max
-        ]
-
         _IRF_raw = Union[pd.DataFrame, Any] = copy.copy(IRF)
         _IRF_max = np.max(_IRF_raw)
         _IRF_max_head = np.max(_IRF_raw.head(10))
+
         _IRF = _IRF_raw.loc[
-            _IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max
+            _ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max
+            or _IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max
+        ]
+        _ydata = _ydata_raw.loc[
+            _ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max
+            or _IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max
+        ]
+        _t_rho_array_like = _t_rho_array_like_raw.loc[
+            _ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max
+            or _IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max
         ]
 
         self.IRF = _IRF if _IRF is not None else self.IRF
