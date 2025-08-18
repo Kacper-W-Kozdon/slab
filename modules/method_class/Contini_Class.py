@@ -565,6 +565,7 @@ class Contini:
         show_plot: bool = False,
         save_path: str = "",
         log_scale: Union[bool, None] = None,
+        bounds: Union[List[Any], None] = None,
         *args: Any,
         **kwargs: Any,
     ) -> Tuple[List[float], ...]:
@@ -593,6 +594,8 @@ class Contini:
         :type save_path: str
         :param log_scale: bool that controls whether the outputs are rescaled with log. Default: None.
         :type log_scale: Union[bool, None]
+        :param bounds: Bounds for the parameters in the form of [List(lower bounds), List(upper bounds)],
+        :type bounds: Union[List[Any], None]
         :param args: A tuple of free parameters for fitting.
         :type args: Any
         :param kwargs: Supports kwargs of the scipy.curve_fit() as well as mode: "approx", "sum" of the G_function().
@@ -689,7 +692,7 @@ class Contini:
                 outputs,
                 initial_free_params,
                 # method="trf",
-                bounds=([0.01, 0.01, -0.01], [0.1, 0.1, 50]),
+                bounds=(bounds[0], bounds[1]),
                 *args,
                 **kwargs,
             )

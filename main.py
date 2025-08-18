@@ -243,6 +243,7 @@ if __name__ == "__main__":
             [initial_params["mua"], initial_params["musp"]],
             IRF=df_irf_raw,
             free_params=["mua", "musp"],
+            bounds=[[0.01, 0.01], [0.1, 0.1]],
             normalize=True,
             log_scale=False,
         )
