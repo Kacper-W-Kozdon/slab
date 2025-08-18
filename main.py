@@ -168,7 +168,7 @@ if __name__ == "__main__":
             df_time_raw,
             df_irf_raw,
             color="g",
-            label="raw data",
+            label="irf",
         )
 
         plt.show()
