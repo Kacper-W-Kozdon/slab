@@ -52,7 +52,7 @@ class Contini:
         :type n2: Union[int, float]
         :param anisothropy_coeff: The anisothropy coefficient g. musp = (1 - g) * mus. Default: 0.85
         :type anisothropy_coeff: Union[int, float, None]
-        :param DD: Flag parameter to switch between mu = musp + mua for DD == "Dmuas" and mu = musp for DD == "Dmus" (Default).
+        :param DD: Flag parameter to switch between mu = musp + mua for DD == "Dmuas" (Default) and mu = musp for DD == "Dmus".
         :type DD: str
         :param m: Number of mirror images (delta sources) in the lattice. Default: 100
         :type m: int
