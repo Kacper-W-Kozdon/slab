@@ -170,7 +170,9 @@ if __name__ == "__main__":
             color="g",
             label="irf",
         )
-
+        plt.legend(loc="upper right")
+        plt.xlabel("Time in ps")
+        plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
         plt.show()
         plt.clf()
 
