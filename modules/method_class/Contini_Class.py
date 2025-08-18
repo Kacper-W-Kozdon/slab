@@ -497,7 +497,7 @@ class Contini:
                     IRF = (
                         IRF
                         if (not isinstance(IRF, pd.DataFrame))
-                        else [float(value) for index, value in IRF.values]
+                        else [float(value) for value in IRF.values]
                     )
 
                     try:
