@@ -105,10 +105,11 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        initial_params = {"mua": 0.08, "musp": 0.08, "offset": 20}
+        initial_params = {"mua": 0.08, "musp": 0.08, "offset": 40}
         contini2 = Contini(
             s=40, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
         )
+        contini2.offset = initial_params["offset"]
 
         df = pd.read_excel(path, engine="openpyxl")
         print(df.head())
@@ -239,16 +240,16 @@ if __name__ == "__main__":
         popt, pcov = contini2.fit(
             xdata,
             df_ydata_raw,
-            [initial_params["mua"], initial_params["musp"], initial_params["offset"]],
+            [initial_params["mua"], initial_params["musp"]],
             IRF=df_irf_raw,
-            free_params=["mua", "musp", "offset"],
+            free_params=["mua", "musp"],
             normalize=True,
             log_scale=False,
         )
         print(popt, pcov)
         contini2.mua = popt[0]
         contini2.musp = popt[1]
-        contini2.offset = popt[2]
+        # contini2.offset = popt[2]
         # ydata = []
         # for t in df_time:
         #     subresult = contini((t, rho))
