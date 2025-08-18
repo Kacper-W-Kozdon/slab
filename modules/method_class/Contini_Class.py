@@ -688,7 +688,7 @@ class Contini:
                 inputs,
                 outputs,
                 initial_free_params,
-                method="trf",
+                # method="trf",
                 bounds=([0.01, 0.01, -0.01], [0.1, 0.1, 50]),
                 *args,
                 **kwargs,
