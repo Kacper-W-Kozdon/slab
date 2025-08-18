@@ -1,11 +1,11 @@
 # placeholder
 
+import copy
 import pathlib
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy
 from modules import Contini
 
 if __name__ == "__main__":
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
-        initial_params = {"mua": 0.06, "musp": 0.03, "offset": 0}
+        initial_params = {"mua": 0.09, "musp": 0.08, "offset": 0}
         contini2 = Contini(
             s=40, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
         )
@@ -119,155 +119,179 @@ if __name__ == "__main__":
         df_clean = df.loc[df[xdata_column_name] != 0.0]
         # df_clean = df
 
-        print(df_clean)
+        # print(df_clean)
         # df_time = df.iloc[:, 0].fillna(0)
         # df_ydata = df.iloc[:, 1].fillna(0)
-        df_time = df_clean.iloc[:, 0]
-        df_ydata = df_clean.iloc[:, 3]
+        df_time_raw = df_clean.iloc[:, 0]
+        df_ydata_raw = df_clean.iloc[:, 3]
         df_irf_raw = df_clean.iloc[:, 1]
         # df_time = df_time.loc[(df[xdata_column_name] != 0.0)]
         # df_ydata = df_ydata.loc[(df[xdata_column_name] != 0.0)]
         # ~df['column_name'].isin(some_values)
         print(xdata_column_name)
-        print(df_time)
-        df_ydata_raw = df_ydata
-        # df_irf = df_irf_raw.loc[df_irf_raw != 0]
-        df_irf = df_irf_raw
-        # df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
+        # print(df_time)
+
+        df_time_ = copy.copy(df_time_raw)
+        df_ydata_ = copy.copy(df_ydata_raw)
+        df_irf_ = copy.copy(df_irf_raw)
+
+        irf_max = np.max(df_irf_raw)
+        irf_max_head = np.max(
+            df_irf_raw.head(10)
+        )  # if np.max(df_irf_raw.head(10)) < 0.1 * irf_max else 0.1 * irf_max
+
+        df_irf = df_irf_.loc[df_irf_ >= irf_max_head + 0.01 * irf_max]
+        print(irf_max_head, irf_max)
+        y_max = np.max(df_ydata_raw)
+        y_max_head = np.max(
+            df_ydata_raw.head(10)
+        )  # if np.max(df_ydata_raw.head(10)) < 0.1 * y_max else 0.1 * y_max
+
+        df_time = df_time_.loc[df_ydata_ >= y_max_head + 0.01 * y_max]
+        df_ydata = df_ydata_.loc[df_ydata_ >= y_max_head + 0.01 * y_max]
+        print(len(df_time), len(df_ydata), len(df_irf))
+
+        # # df_irf = df_irf_raw.loc[df_irf_raw != 0]
+        # df_irf = copy.copy(df_irf_raw)
+        # # df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
+
         raw_data = plt.plot(
             df_time,
-            df_ydata_raw,
-            color="b",
-            label="raw data",
-            marker="o",
-            linestyle=" ",
-        )
-
-        xdata = [tuple([time, rho]) for time in df_time]
-        contini2.offset = initial_params["offset"]
-        contini2._max_ydata = np.max(df_ydata_raw)
-        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
-        fit = plt.plot(
-            df_time,
-            ydata_fit,
-            color="r",
-            label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
-        )
-        plt.legend(loc="upper right")
-        plt.xlabel("Time in ps")
-        plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
-        # plt.show()
-        plt.clf()
-
-        df_ydata_raw = df_ydata
-        raw_data = plt.plot(
-            df_time,
-            df_ydata_raw,
-            color="b",
-            label="raw data",
-            marker="o",
-            linestyle=" ",
-        )
-
-        xdata = [tuple([time, rho]) for time in df_time]
-        contini2.offset = initial_params["offset"]
-        contini2._max_ydata = np.max(df_ydata_raw)
-        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
-        fit = plt.plot(
-            df_time,
-            ydata_fit,
-            color="r",
-            label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
-        )
-        plt.legend(loc="upper right")
-        plt.xlabel("Time in ps")
-        plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
-        # plt.show()
-        plt.clf()
-
-        print("---TEST DATA FIT---")
-        print(df_ydata)
-        print(xdata)
-        # print(xdata)
-        # print(np.max(df_ydata))
-        popt, pcov = contini2.fit(
-            xdata,
             df_ydata,
-            [initial_params["mua"], initial_params["musp"], initial_params["offset"]],
-            IRF=df_irf,
-            free_params=["mua", "musp", "offset"],
-            normalize=True,
-            log_scale=False,
-        )
-        print(popt, pcov)
-        contini2.mua = popt[0]
-        contini2.musp = popt[1]
-        contini2.offset = popt[2]
-        # ydata = []
-        # for t in df_time:
-        #     subresult = contini((t, rho))
-
-        #     ydata.append(subresult[0])
-
-        # contini.IRF = None
-        # ydata_fit = None
-        if not contini2.normalize:
-            contini2.normalize = True
-        contini2.IRF = None
-        contini2._max_ydata = np.max(df_ydata_raw)
-        contini2.log_scale = None
-
-        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
-        raw_data = plt.plot(
-            df_time,
-            df_ydata_raw,
             color="b",
             label="raw data",
             marker="o",
             linestyle=" ",
         )
 
-        fit = plt.plot(
-            df_time,
-            ydata_fit,
-            color="r",
-            label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
-        )
-        plt.legend(loc="upper right")
-        plt.xlabel("Time in ps")
-        plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
-
-        path = pathlib.Path(__file__).resolve().parent
-        plt.savefig(
-            f"{pathlib.Path(__file__).resolve().parent}\\plots\\fit_convolved.pdf"
-        )
         plt.show()
         plt.clf()
 
-        df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
-        contini2._max_ydata = np.max(df_ydata_raw)
-        contini2.log_scale = None
-        ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
+        # xdata = [tuple([time, rho]) for time in df_time]
+        # contini2.offset = initial_params["offset"]
+        # contini2._max_ydata = np.max(df_ydata_raw)
+        # ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
+        # fit = plt.plot(
+        #     df_time,
+        #     ydata_fit,
+        #     color="r",
+        #     label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
+        # )
+        # plt.legend(loc="upper right")
+        # plt.xlabel("Time in ps")
+        # plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
+        # # plt.show()
+        # plt.clf()
 
-        raw_data = plt.plot(
-            df_time,
-            df_ydata_raw,
-            color="b",
-            label="raw data",
-            marker="o",
-            linestyle=" ",
-        )
+        # df_ydata_raw = df_ydata
+        # raw_data = plt.plot(
+        #     df_time,
+        #     df_ydata_raw,
+        #     color="b",
+        #     label="raw data",
+        #     marker="o",
+        #     linestyle=" ",
+        # )
 
-        fit = plt.plot(
-            df_time,
-            ydata_fit,
-            color="r",
-            label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
-        )
-        plt.legend(loc="upper right")
-        plt.xlabel("Time in ps")
-        plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
+        # xdata = [tuple([time, rho]) for time in df_time]
+        # contini2.offset = initial_params["offset"]
+        # contini2._max_ydata = np.max(df_ydata_raw)
+        # ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
+        # fit = plt.plot(
+        #     df_time,
+        #     ydata_fit,
+        #     color="r",
+        #     label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
+        # )
+        # plt.legend(loc="upper right")
+        # plt.xlabel("Time in ps")
+        # plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
         # plt.show()
+        # plt.clf()
+
+        # print("---TEST DATA FIT---")
+        # print(df_ydata)
+        # print(xdata)
+        # # print(xdata)
+        # # print(np.max(df_ydata))
+        # popt, pcov = contini2.fit(
+        #     xdata,
+        #     df_ydata,
+        #     [initial_params["mua"], initial_params["musp"], initial_params["offset"]],
+        #     IRF=df_irf,
+        #     free_params=["mua", "musp", "offset"],
+        #     normalize=True,
+        #     log_scale=False,
+        # )
+        # print(popt, pcov)
+        # contini2.mua = popt[0]
+        # contini2.musp = popt[1]
+        # contini2.offset = popt[2]
+        # # ydata = []
+        # # for t in df_time:
+        # #     subresult = contini((t, rho))
+
+        # #     ydata.append(subresult[0])
+
+        # # contini.IRF = None
+        # # ydata_fit = None
+        # if not contini2.normalize:
+        #     contini2.normalize = True
+        # contini2.IRF = None
+        # contini2._max_ydata = np.max(df_ydata_raw)
+        # contini2.log_scale = None
+
+        # ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
+        # raw_data = plt.plot(
+        #     df_time,
+        #     df_ydata_raw,
+        #     color="b",
+        #     label="raw data",
+        #     marker="o",
+        #     linestyle=" ",
+        # )
+
+        # fit = plt.plot(
+        #     df_time,
+        #     ydata_fit,
+        #     color="r",
+        #     label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
+        # )
+        # plt.legend(loc="upper right")
+        # plt.xlabel("Time in ps")
+        # plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
+
         # path = pathlib.Path(__file__).resolve().parent
-        # plt.savefig(f"{pathlib.Path(__file__).resolve().parent}\\plots\\convolved.pdf")
-        plt.clf()
+        # plt.savefig(
+        #     f"{pathlib.Path(__file__).resolve().parent}\\plots\\fit_convolved.pdf"
+        # )
+        # plt.show()
+        # plt.clf()
+
+        # df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
+        # contini2._max_ydata = np.max(df_ydata_raw)
+        # contini2.log_scale = None
+        # ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf)
+
+        # raw_data = plt.plot(
+        #     df_time,
+        #     df_ydata_raw,
+        #     color="b",
+        #     label="raw data",
+        #     marker="o",
+        #     linestyle=" ",
+        # )
+
+        # fit = plt.plot(
+        #     df_time,
+        #     ydata_fit,
+        #     color="r",
+        #     label=f"fit: mua={contini2.mua * 1e-3}, musp={contini2.musp * 1e-3}, off={contini2.offset}",
+        # )
+        # plt.legend(loc="upper right")
+        # plt.xlabel("Time in ps")
+        # plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
+        # # plt.show()
+        # # path = pathlib.Path(__file__).resolve().parent
+        # # plt.savefig(f"{pathlib.Path(__file__).resolve().parent}\\plots\\convolved.pdf")
+        # plt.clf()

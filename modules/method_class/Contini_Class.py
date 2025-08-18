@@ -1,9 +1,11 @@
+import copy
 import datetime
 import pathlib
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from scipy.optimize import curve_fit
 from scipy.signal import convolve
 
@@ -268,7 +270,8 @@ class Contini:
                 musp = 1e3 * musp
             anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
 
-            for value in t_rho:
+            t_rho_ = t_rho if not isinstance(t_rho, pd.DataFrame) else t_rho.values
+            for value in t_rho_:
                 t = value[0] * 1e-12
                 rho = value[1] * 1e-3
                 s = self._s
@@ -542,8 +545,8 @@ class Contini:
 
     def fit(
         self,
-        _t_rho_array_like: List[Tuple[float, float]],
-        ydata: List[float],
+        t_rho_array_like: Union[List[Tuple[float, float]], pd.DataFrame],
+        ydata: Union[List[float], pd.DataFrame],
         initial_free_params: List[Union[float, int]],
         IRF: Union[List[Union[float, int]], None] = None,
         normalize: bool = True,
@@ -592,14 +595,6 @@ class Contini:
 
         """
 
-        self.IRF = IRF if IRF is not None else self.IRF
-        IRF = self.IRF
-        self.fit_settings(
-            values_to_fit=values_to_fit,
-            free_params=free_params,
-            normalize=normalize,
-            log_scale=log_scale,
-        )
         # if IRF:
         #     for entry_index, entry in enumerate(IRF):
         #         IRF[entry_index] = entry if entry else entry + 1e-5
@@ -608,20 +603,47 @@ class Contini:
         #     _, ydata = deconvolve(ydata, IRF)
         #     print(ydata)
         # print(self.normalize, normalize)
-        print("---INITIAL FREE PARAMS---\n", initial_free_params)
-        if self.IRF is not None:
-            # ydata = convolve(ydata, self.IRF, mode="same")
-            pass
+        # print("---INITIAL FREE PARAMS---\n", initial_free_params)
+
+        self.fit_settings(
+            values_to_fit=values_to_fit,
+            free_params=free_params,
+            normalize=normalize,
+            log_scale=log_scale,
+        )
 
         if self.normalize:
             max_ydata = np.max(ydata) if np.max(ydata) != 0 else 1
             self._max_ydata = max_ydata
 
-        _ydata = ydata
+        _ydata_raw: Union[pd.DataFrame, Any] = copy.copy(ydata)
+        _y_max = np.max(_ydata_raw)
+        _y_max_head = np.max(_ydata_raw.head(10))
+        _y_min = np.min(_ydata_raw)
+
+        _t_rho_array_like_raw: Union[pd.DataFrame, Any] = copy.copy(t_rho_array_like)
+
+        _t_rho_array_like = _t_rho_array_like_raw.loc[
+            _ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max
+        ]
+        _ydata = _ydata_raw.loc[
+            _ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max
+        ]
+
+        _IRF_raw = Union[pd.DataFrame, Any] = copy.copy(IRF)
+        _IRF_max = np.max(_IRF_raw)
+        _IRF_max_head = np.max(_IRF_raw.head(10))
+        _IRF = _IRF_raw.loc[
+            _IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max
+        ]
+
+        self.IRF = _IRF if _IRF is not None else self.IRF
+        IRF = self.IRF
+
         if self.log_scale:
             _ydata = np.log(ydata - np.min(ydata) + 1)
 
-        self.ydata_info = {"ydata_min": np.min(ydata), "ydata_max": np.max(ydata)}
+        self.ydata_info = {"ydata_min": np.min(_ydata), "ydata_max": np.max(_ydata)}
         try:
             # t_rho_array_like = np.array(_t_rho_array_like)
             popt, pcov, *_ = curve_fit(
