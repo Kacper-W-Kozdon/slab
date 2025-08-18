@@ -494,13 +494,21 @@ class Contini:
                 # print()
 
                 if IRF is not None:
+                    IRF = (
+                        IRF
+                        if (not isinstance(IRF, pd.DataFrame))
+                        else [value for index, value in IRF.values]
+                    )
+
                     try:
                         ret = convolve(ret, IRF, mode="same")
                     except Exception as e:
                         print("---ERROR---")
                         print(e)
                         # print(args, type(t_rho_array_like))
-                        print(IRF)
+                        irf = [value for value in IRF.values]
+                        print(type(IRF))
+                        print(irf)
                         print("---END ERROR---")
                 if normalize:
                     # print(ret, IRF)
