@@ -189,7 +189,7 @@ if __name__ == "__main__":
         # plt.show()
         plt.clf()
 
-        xdata = [tuple([float(time), rho]) for time in df_time_raw.values]
+        xdata = pd.DataFrame([tuple([float(time), rho]) for time in df_time_raw.values])
         contini2.offset = initial_params["offset"]
         contini2._max_ydata = np.max(df_ydata_raw)
         # ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf_raw)

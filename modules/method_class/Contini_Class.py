@@ -379,6 +379,7 @@ class Contini:
         """
 
         values_to_fit: Union[List[str], Any] = self.values_to_fit or ["R_rho_t"]
+        print(f"---VALUES TO FIT---\n\n{values_to_fit}")
         free_params: Union[List[str], Any] = self.free_params or ["musp", "offset"]
         normalize = self.normalize or False
         if kwargs.get("normalize") is not None:
@@ -498,8 +499,8 @@ class Contini:
                     except Exception as e:
                         print("---ERROR---")
                         print(e)
-                        print(args, type(t_rho_array_like))
-                        print(ret, IRF)
+                        # print(args, type(t_rho_array_like))
+                        print(IRF)
                         print("---END ERROR---")
                 if normalize:
                     # print(ret, IRF)
@@ -633,23 +634,26 @@ class Contini:
         _IRF_raw: Union[pd.DataFrame, Any] = copy.copy(IRF)
         _IRF_max = np.max(_IRF_raw)
         _IRF_max_head = np.max(_IRF_raw.head(10))
-        try:
-            _t_rho_array_like = _t_rho_array_like_raw.loc[
-                (_ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max)
-                | (_IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max)
-            ]
-        except pd.errors.IndexingError:
-            print("---DETAILS---\n\n")
-            print(len(_t_rho_array_like_raw), len(_ydata_raw), len(_IRF_raw))
-            print(type(_t_rho_array_like_raw))
-            print(
-                (_ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max),
-                (_IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max),
-            )
-            print(_IRF_raw)
-            print()
-            print()
-            raise pd.errors.IndexingError
+
+        _IRF_raw.reset_index(inplace=True)
+        # try:
+        _t_rho_array_like = _t_rho_array_like_raw.loc[
+            (_ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max)
+            | (_IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max)
+        ]
+        # except pd.errors.IndexingError:
+        #     print("---DETAILS---\n\n")
+        #     print(len(_t_rho_array_like_raw), len(_ydata_raw), len(_IRF_raw))
+        #     print(type(_t_rho_array_like_raw))
+        #     print(
+        #         (_ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max),
+        #         (_IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max),
+        #     )
+        #     print(_IRF_raw)
+        #     print()
+        #     print()
+        #     raise pd.errors.IndexingError
+
         _IRF = _IRF_raw.loc[
             (_ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max)
             | (_IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max)
@@ -659,30 +663,33 @@ class Contini:
             | (_IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max)
         ]
 
-        self.IRF = _IRF if _IRF is not None else self.IRF
         IRF = self.IRF
 
         if self.log_scale:
             _ydata = np.log(ydata - np.min(ydata) + 1)
 
         self.ydata_info = {"ydata_min": np.min(_ydata), "ydata_max": np.max(_ydata)}
+        inputs = [tuple(coordinate) for coordinate in _t_rho_array_like.values]
+        outputs = [float(output) for output in _ydata.values]
+        irf = [value for index, value in _IRF.values]
+        self.IRF = irf if irf is not None else self.IRF
         try:
             # t_rho_array_like = np.array(_t_rho_array_like)
             popt, pcov, *_ = curve_fit(
                 self.forward,
-                _t_rho_array_like,
-                _ydata,
+                inputs,
+                outputs,
                 initial_free_params,
                 method="trf",
                 bounds=([0.01, 0.01, -0.01], [0.1, 0.1, 50]),
                 *args,
                 **kwargs,
             )
-        except TypeError:
+        except Exception:
             print("\n\n---ERROR---\n")
-            print(type(_t_rho_array_like), _t_rho_array_like)
-            # print(self.forward(_t_rho_array_like, initial_free_params[0]))
+            print(outputs)
             print("---END ERROR---")
+
         # print(pcov[0][0], math.isinf(pcov[0][0]))
         # if math.isinf(pcov[0][0]):
         #     xdata = torch.tensor(_t_rho_array_like, requires_grad=True)
