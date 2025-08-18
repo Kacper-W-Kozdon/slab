@@ -28,7 +28,7 @@ class Contini:
         n2: Union[int, float] = 0,
         anisothropy_coeff: Union[int, float, None] = 0.85,
         phantom: Optional[str] = "",
-        DD: Optional[str] = "Dmus",
+        DD: Optional[str] = "Dmuas",
         m: int = 100,
         eq: str = "RTE",
         IRF: Union[List[Union[float, int]], None] = None,
