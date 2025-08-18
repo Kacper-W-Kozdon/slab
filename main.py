@@ -156,12 +156,19 @@ if __name__ == "__main__":
         # # df_ydata_raw = scipy.signal.convolve(df_ydata_raw, df_irf, mode="same")
 
         raw_data = plt.plot(
-            df_time,
-            df_ydata,
+            df_time_raw,
+            df_ydata_raw,
             color="b",
             label="raw data",
             marker="o",
             linestyle=" ",
+        )
+
+        raw_irf = plt.plot(
+            df_time_raw,
+            df_irf_raw,
+            color="g",
+            label="raw data",
         )
 
         plt.show()
