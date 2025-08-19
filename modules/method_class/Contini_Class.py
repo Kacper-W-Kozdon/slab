@@ -34,7 +34,7 @@ class Contini:
         IRF: Union[List[Union[float, int]], None] = None,
         normalize: bool = True,
         log_scale: Union[bool, None] = None,
-        values_to_fit: Union[List[str], Any] = ["R_rho_t"],
+        values_to_fit: Union[List[str], Any] = ["T_rho_t"],
         free_params: Union[List[str], Any] = ["musp", "offset"],
     ) -> None:
         """
@@ -378,7 +378,7 @@ class Contini:
 
         """
 
-        values_to_fit: Union[List[str], Any] = self.values_to_fit or ["R_rho_t"]
+        values_to_fit: Union[List[str], Any] = self.values_to_fit or ["T_rho_t"]
         # print(f"---VALUES TO FIT---\n\n{values_to_fit}")
         free_params: Union[List[str], Any] = self.free_params or ["musp", "offset"]
         normalize = self.normalize or False
@@ -559,7 +559,7 @@ class Contini:
         initial_free_params: List[Union[float, int]],
         IRF: Union[List[Union[float, int]], None, pd.DataFrame] = None,
         normalize: bool = True,
-        values_to_fit: Union[List[str], Any] = ["R_rho_t"],
+        values_to_fit: Union[List[str], Any] = ["T_rho_t"],
         free_params: Union[List[str], Any] = ["musp", "offset"],
         plot: bool = False,
         show_plot: bool = False,
