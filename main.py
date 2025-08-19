@@ -108,7 +108,7 @@ if __name__ == "__main__":
         initial_params = {
             "mua": 0.65,
             "musp": 0.05,
-            "offset": 50,
+            "offset": 40,
             "lower_bounds": [0.01, 0.01, 0.0],
             "upper_bounds": [0.55, 0.55, 50],
         }
