@@ -106,9 +106,9 @@ if __name__ == "__main__":
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
         initial_params = {
-            "mua": 0.05,
+            "mua": 0.65,
             "musp": 0.05,
-            "offset": 0,
+            "offset": 50,
             "lower_bounds": [0.01, 0.01, 0.0],
             "upper_bounds": [0.55, 0.55, 50],
         }
@@ -256,7 +256,7 @@ if __name__ == "__main__":
         print(popt, pcov)
         contini2.mua = popt[0]
         contini2.musp = popt[1]
-        # contini2.offset = popt[2]
+        contini2.offset = popt[2]
         # ydata = []
         # for t in df_time:
         #     subresult = contini((t, rho))
