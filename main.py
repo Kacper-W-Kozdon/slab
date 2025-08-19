@@ -10,9 +10,9 @@ import scipy
 from modules import Contini
 
 if __name__ == "__main__":
-    contini = Contini(s=40, mua=0.05, musp=0.3, n1=1, n2=1)
+    contini = Contini(s=40, mua=0.05, musp=0.5, n1=1, n2=1)
 
-    rho = 4
+    rho = 40
 
     ydata = []
     xdata = []
@@ -289,7 +289,7 @@ if __name__ == "__main__":
         )
         plt.legend(loc="upper right")
         plt.xlabel("Time in ps")
-        plt.ylabel("R(t, rho=40[mm])/max(R(t, rho=40[mm]))")
+        plt.ylabel("T(t, rho=40[mm])/max(R(t, rho=40[mm]))")
 
         path = pathlib.Path(__file__).resolve().parent
         plt.savefig(
