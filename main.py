@@ -10,7 +10,7 @@ import scipy
 from modules import Contini
 
 if __name__ == "__main__":
-    contini = Contini(s=5, mua=0.05, musp=0.05, n1=1, n2=1)
+    # contini = Contini(s=5, mua=0.05, musp=0.05, n1=1, n2=1)
 
     rho = 5
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
             "upper_bounds": [0.7, 0.7, 50],
         }
         contini2 = Contini(
-            s=40, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
+            s=4, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
         )
         contini2.offset = initial_params["offset"]
 
