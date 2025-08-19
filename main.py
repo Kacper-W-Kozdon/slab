@@ -110,7 +110,7 @@ if __name__ == "__main__":
             "musp": 0.05,
             "offset": 40,
             "lower_bounds": [0.01, 0.01, 0.0],
-            "upper_bounds": [0.55, 0.55, 50],
+            "upper_bounds": [0.7, 0.7, 50],
         }
         contini2 = Contini(
             s=40, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
