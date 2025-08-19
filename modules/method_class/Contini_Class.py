@@ -729,10 +729,13 @@ class Contini:
                 *args,
                 **kwargs,
             )
-        except Exception:
+        except Exception as e:
             print("\n\n---ERROR---\n")
+            print(inputs)
             print(outputs)
+            print(e)
             print("---END ERROR---")
+            raise e
 
         # print(pcov[0][0], math.isinf(pcov[0][0]))
         # if math.isinf(pcov[0][0]):

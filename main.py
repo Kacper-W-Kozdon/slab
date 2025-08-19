@@ -248,7 +248,7 @@ if __name__ == "__main__":
             df_ydata_raw,
             [initial_params["mua"], initial_params["musp"]],
             IRF=df_irf_raw,
-            free_params=["mua", "musp"],
+            free_params=["mua", "musp", "offset"],
             bounds=[initial_params["lower_bounds"], initial_params["upper_bounds"]],
             normalize=True,
             log_scale=False,
