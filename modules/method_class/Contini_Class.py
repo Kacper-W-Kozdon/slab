@@ -566,6 +566,7 @@ class Contini:
         save_path: str = "",
         log_scale: Union[bool, None] = None,
         bounds: Union[List[Any], None] = None,
+        filter_param: Union[float, None] = None,
         *args: Any,
         **kwargs: Any,
     ) -> Tuple[List[float], ...]:
@@ -596,6 +597,8 @@ class Contini:
         :type log_scale: Union[bool, None]
         :param bounds: Bounds for the parameters in the form of [List(lower bounds), List(upper bounds)],
         :type bounds: Union[List[Any], None]
+        :param filter_param: The parameter for filtering the output values below the threshold of filter_param * max_output + min_output. Default: None.
+        :type filter_param: Union[float, None]
         :param args: A tuple of free parameters for fitting.
         :type args: Any
         :param kwargs: Supports kwargs of the scipy.curve_fit() as well as mode: "approx", "sum" of the G_function().
@@ -648,10 +651,20 @@ class Contini:
 
         _IRF_raw.reset_index(inplace=True)
         # try:
-        _t_rho_array_like = _t_rho_array_like_raw.loc[
-            (_ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max)
-            | (_IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max)
-        ]
+        _t_rho_array_like = (
+            _t_rho_array_like_raw.loc[
+                (
+                    _ydata_raw[_ydata_raw.columns[0]]
+                    >= _y_max_head + filter_param * _y_max
+                )
+                | (
+                    _IRF_raw[_IRF_raw.columns[0]]
+                    >= _IRF_max_head + filter_param * _IRF_max
+                )
+            ]
+            if filter_param is not None
+            else _t_rho_array_like_raw
+        )
         # except pd.errors.IndexingError:
         #     print("---DETAILS---\n\n")
         #     print(len(_t_rho_array_like_raw), len(_ydata_raw), len(_IRF_raw))
@@ -665,14 +678,34 @@ class Contini:
         #     print()
         #     raise pd.errors.IndexingError
 
-        _IRF = _IRF_raw.loc[
-            (_ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max)
-            | (_IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max)
-        ]
-        _ydata = _ydata_raw.loc[
-            (_ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max)
-            | (_IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max)
-        ]
+        _IRF = (
+            _IRF_raw.loc[
+                (
+                    _ydata_raw[_ydata_raw.columns[0]]
+                    >= _y_max_head + filter_param * _y_max
+                )
+                | (
+                    _IRF_raw[_IRF_raw.columns[0]]
+                    >= _IRF_max_head + filter_param * _IRF_max
+                )
+            ]
+            if filter_param is not None
+            else _IRF_raw
+        )
+        _ydata = (
+            _ydata_raw.loc[
+                (
+                    _ydata_raw[_ydata_raw.columns[0]]
+                    >= _y_max_head + filter_param * _y_max
+                )
+                | (
+                    _IRF_raw[_IRF_raw.columns[0]]
+                    >= _IRF_max_head + filter_param * _IRF_max
+                )
+            ]
+            if filter_param is not None
+            else _ydata_raw
+        )
 
         IRF = self.IRF
 
