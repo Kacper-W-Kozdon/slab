@@ -246,7 +246,7 @@ if __name__ == "__main__":
         popt, pcov = contini2.fit(
             xdata,
             df_ydata_raw,
-            [initial_params["mua"], initial_params["musp"]],
+            [initial_params["mua"], initial_params["musp"], initial_params["offset"]],
             IRF=df_irf_raw,
             free_params=["mua", "musp", "offset"],
             bounds=[initial_params["lower_bounds"], initial_params["upper_bounds"]],
