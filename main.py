@@ -296,7 +296,7 @@ if __name__ == "__main__":
         )
         plt.legend(loc="upper right")
         plt.xlabel("Time in ps")
-        plt.ylabel("T(t, rho=40[mm])/max(R(t, rho=40[mm]))")
+        plt.ylabel("T(t, rho=5[mm])/max(R(t, rho=5[mm])), s=3[mm]")
 
         path = pathlib.Path(__file__).resolve().parent
         plt.savefig(
