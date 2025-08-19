@@ -106,7 +106,7 @@ if __name__ == "__main__":
     path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
         initial_params = {
-            "mua": 0.65,
+            "mua": 0.065,
             "musp": 0.05,
             "offset": 40,
             "lower_bounds": [0.01, 0.01, 0.0],
