@@ -103,7 +103,7 @@ if __name__ == "__main__":
     # plt.show()
     # plt.clf()
 
-    path = f"{pathlib.Path(__file__).parent.resolve()}\\test_data\\all_raw_data_combined.xlsx"
+    path = f"{pathlib.Path(__file__).parent.resolve()}\\dataset\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
         initial_params = {
             "mua": 0.065,
