@@ -10,9 +10,9 @@ import scipy
 from modules import Contini
 
 if __name__ == "__main__":
-    contini = Contini(s=40, mua=0.05, musp=0.5, n1=1, n2=1)
+    contini = Contini(s=5, mua=0.05, musp=0.5, n1=1, n2=1)
 
-    rho = 40
+    rho = 0
 
     ydata = []
     xdata = []
