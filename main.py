@@ -110,10 +110,17 @@ if __name__ == "__main__":
             "musp": 0.05,
             "offset": 40,
             "lower_bounds": [0.01, 0.01, 0.0],
-            "upper_bounds": [0.7, 0.7, 50],
+            "upper_bounds": [0.1, 0.1, 50],
         }
+
+        rho = 5
+
+        ydata = []
+        xdata = []
+        ydata_conv_noisy = []
+
         contini2 = Contini(
-            s=4, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
+            s=3, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
         )
         contini2.offset = initial_params["offset"]
 
