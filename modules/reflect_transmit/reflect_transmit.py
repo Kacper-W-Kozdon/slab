@@ -19,7 +19,7 @@ def Reflectance_Transmittance_rho_t(
     D = D_parameter(DD, mua, musp, eq)
     A = A_parameter(n1, n2)
     ze = 2 * A * D  # noqa: F841
-
+    # print(D, A, rho, t, mua, musp)
     R_rho_t = 0.0
     T_rho_t = 0.0
 
@@ -53,6 +53,7 @@ def Reflectance_Transmittance_rho_t(
     if eq == "RTE":
         mus = musp / (1 - anisothropy_coeff)  # noqa: F841
         mean_free_path = 1 / (mua + musp)
+        # print(mean_free_path, mua, musp)
         if type(rho) is torch.Tensor:
             rho = rho.detach().numpy()
 
@@ -171,12 +172,19 @@ def Reflectance_Transmittance_rho_t(
 
         R_rho_t = 1 / (2 * A) * R_rho_t_source_sum
         T_rho_t = 1 / (2 * A) * T_rho_t_source_sum
+        # if T_rho_t < 0:
+        #     print(t, r_plus, r_minus, T_rho_t)
+        # print(R_rho_t)
 
-    # R_rho_t *= 1e-6 * 1e-12
-    # T_rho_t *= 1e-6 * 1e-12
+    # print(R_rho_t)
+    R_rho_t *= 1e-6 * 1e-12
+    T_rho_t *= 1e-6 * 1e-12
 
     R_rho_t = R_rho_t if t > 0 else 0
     T_rho_t = T_rho_t if t > 0 else 0
+
+    R_rho_t = R_rho_t if R_rho_t > 0 else -R_rho_t
+    T_rho_t = T_rho_t if T_rho_t > 0 else -T_rho_t
 
     return R_rho_t, T_rho_t
 

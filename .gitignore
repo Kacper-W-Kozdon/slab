@@ -2,3 +2,6 @@
 *.m
 */__pycache__
 */*/__pycache__
+!plots/*.pdf
+dataset/*
+dataset
