@@ -106,11 +106,11 @@ if __name__ == "__main__":
     path = f"{pathlib.Path(__file__).parent.resolve()}\\dataset\\all_raw_data_combined.xlsx"
     if pathlib.Path(path).exists():
         initial_params = {
-            "mua": 0.05,
-            "musp": 0.05,
+            "mua": 0.01,
+            "musp": 0.01,
             "offset": 40,
             "lower_bounds": [0, 0, 20],
-            "upper_bounds": [0.1, 0.1, 80],
+            "upper_bounds": [0.09, 0.09, 80],
         }
 
         rho = 5
