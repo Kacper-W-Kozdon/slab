@@ -77,5 +77,5 @@ def test_plot() -> None:
     plt.xlabel("Time in ps")
     plt.ylabel("T(t, rho=5[mm])/max(R(t, rho=5[mm])), s=3[mm]")
 
-    plt.show()
-    # plt.clf()
+    plt.show(block=True)
+    plt.clf()
