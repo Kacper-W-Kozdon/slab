@@ -64,20 +64,35 @@ def test_plot() -> None:
 
     contini.values_to_fit = ["R_rho_t"]
 
-    outputs = contini.forward(xdata)
+    outputs_R = contini.forward(xdata)
+    assert outputs_R is not None
 
-    plot = plt.plot(  # noqa: F841
+    plt.plot(  # noqa: F841
         inputs,
-        outputs,
+        outputs_R,
         color="b",
-        label="test data",
+        label="test data R",
+        # marker="o",
+        # linestyle=" ",
+    )
+
+    contini.values_to_fit = ["T_rho_t"]
+
+    outputs_T = contini.forward(xdata)
+    assert outputs_T is not None
+
+    plt.plot(  # noqa: F841
+        inputs,
+        outputs_T,
+        color="b",
+        label="test data T",
         # marker="o",
         # linestyle=" ",
     )
 
     plt.legend(loc="upper right")
     plt.xlabel("Time in ps")
-    plt.ylabel("T(t, rho=5[mm])/max(R(t, rho=5[mm])), s=3[mm]")
+    plt.ylabel("Intensity(t, rho=5[mm])/max(R(t, rho=5[mm])), s=3[mm]")
 
     plt.show(block=True)
     plt.clf()
