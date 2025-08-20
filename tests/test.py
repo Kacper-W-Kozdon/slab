@@ -35,41 +35,47 @@ from ..modules import Contini
 print("\n\n")
 print(pathlib.Path(__file__).resolve(), pathlib.Path(__file__).resolve().parent)
 
-rho = 5
-s = 3
 
-xdata = []
-for t_index, t in enumerate(range(1, 311, 2)):
-    xdata.append((t, rho))
+def test_plot() -> None:
+    """
+    Test plots.
+    """
 
-inputs = pd.DataFrame(xdata, columns=["t", "rho"])
+    rho = 5
+    s = 3
 
-initial_params = {
-    "mua": 0.05,
-    "musp": 0.05,
-    "offset": 40,
-    "lower_bounds": [0, 0, 20],
-    "upper_bounds": [1, 1, 80],
-}
+    xdata = []
+    for t_index, t in enumerate(range(1, 311, 2)):
+        xdata.append((t, rho))
 
-contini = Contini(
-    s=s, mua=initial_params["mua"], musp=initial_params["musp"], n2=1, n1=1
-)
+    inputs = pd.DataFrame(xdata, columns=["t", "rho"])
 
-outputs = contini.forward(xdata)
+    initial_params = {
+        "mua": 0.05,
+        "musp": 0.05,
+        "offset": 40,
+        "lower_bounds": [0, 0, 20],
+        "upper_bounds": [1, 1, 80],
+    }
 
-plot = plt.plot(
-    inputs,
-    outputs,
-    color="b",
-    label="test data",
-    marker="o",
-    linestyle=" ",
-)
+    contini = Contini(
+        s=s, mua=initial_params["mua"], musp=initial_params["musp"], n2=1, n1=1
+    )
 
-plt.legend(loc="upper right")
-plt.xlabel("Time in ps")
-plt.ylabel("T(t, rho=5[mm])/max(R(t, rho=5[mm])), s=3[mm]")
+    outputs = contini.forward(xdata)
 
-plt.show()
-plt.clf()
+    plot = plt.plot(  # noqa: F841
+        inputs,
+        outputs,
+        color="b",
+        label="test data",
+        marker="o",
+        linestyle=" ",
+    )
+
+    plt.legend(loc="upper right")
+    plt.xlabel("Time in ps")
+    plt.ylabel("T(t, rho=5[mm])/max(R(t, rho=5[mm])), s=3[mm]")
+
+    plt.show()
+    plt.clf()
