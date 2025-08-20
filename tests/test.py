@@ -62,6 +62,8 @@ def test_plot() -> None:
         s=s, mua=initial_params["mua"], musp=initial_params["musp"], n2=1, n1=1
     )
 
+    contini.values_to_fit = ["R_rho_t"]
+
     outputs = contini.forward(xdata)
 
     plot = plt.plot(  # noqa: F841
