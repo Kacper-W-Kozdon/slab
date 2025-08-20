@@ -84,10 +84,10 @@ def test_plot() -> None:
     plt.plot(  # noqa: F841
         inputs,
         outputs_T,
-        color="b",
+        color="g",
         label="test data T",
         # marker="o",
-        # linestyle=" ",
+        linestyle="--",
     )
 
     plt.legend(loc="upper right")
