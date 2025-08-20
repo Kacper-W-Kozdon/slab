@@ -2,8 +2,7 @@ import pathlib
 
 import matplotlib.pyplot as plt
 import pandas as pd
-
-from ..modules import Contini
+from modules import Contini
 
 # def func(x, k, s, u):
 #     x=np.array(x)
@@ -34,6 +33,7 @@ from ..modules import Contini
 
 print("\n\n")
 print(pathlib.Path(__file__).resolve(), pathlib.Path(__file__).resolve().parent)
+plt.ion()
 
 
 def test_plot() -> None:
@@ -69,8 +69,8 @@ def test_plot() -> None:
         outputs,
         color="b",
         label="test data",
-        marker="o",
-        linestyle=" ",
+        # marker="o",
+        # linestyle=" ",
     )
 
     plt.legend(loc="upper right")
