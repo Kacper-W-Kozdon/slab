@@ -109,8 +109,9 @@ if __name__ == "__main__":
             "mua": 0.01,
             "musp": 0.01,
             "offset": 40,
-            "lower_bounds": [0, 0, 20],
-            "upper_bounds": [0.09, 0.09, 80],
+            "scaling": 0.9,
+            "lower_bounds": [0, 0, 20, 0],
+            "upper_bounds": [0.09, 0.09, 80, 10000],
         }
 
         rho = 5
@@ -123,6 +124,7 @@ if __name__ == "__main__":
             s=3, mua=initial_params["mua"], musp=initial_params["musp"], n1=1, n2=1
         )
         contini2.offset = initial_params["offset"]
+        contini2.scaling = initial_params["scaling"]
 
         df = pd.read_excel(path, engine="openpyxl")
         print(df.head())
@@ -205,6 +207,7 @@ if __name__ == "__main__":
 
         xdata = pd.DataFrame([tuple([float(time), rho]) for time in df_time_raw.values])
         contini2.offset = initial_params["offset"]
+        contini2.scaling = initial_params["scaling"]
         contini2._max_ydata = np.max(df_ydata_raw)
         # ydata_fit = contini2.forward(xdata, normalize=True, IRF=df_irf_raw)
         # fit = plt.plot(
@@ -253,9 +256,14 @@ if __name__ == "__main__":
         popt, pcov = contini2.fit(
             xdata,
             df_ydata_raw,
-            [initial_params["mua"], initial_params["musp"], initial_params["offset"]],
+            [
+                initial_params["mua"],
+                initial_params["musp"],
+                initial_params["offset"],
+                initial_params["scaling"],
+            ],
             IRF=df_irf_raw,
-            free_params=["mua", "musp", "offset"],
+            free_params=["mua", "musp", "offset", "scaling"],
             bounds=[initial_params["lower_bounds"], initial_params["upper_bounds"]],
             normalize=True,
             log_scale=False,
@@ -264,6 +272,7 @@ if __name__ == "__main__":
         contini2.mua = popt[0]
         contini2.musp = popt[1]
         contini2.offset = popt[2]
+        contini2.scaling = popt[3]
         # ydata = []
         # for t in df_time:
         #     subresult = contini((t, rho))

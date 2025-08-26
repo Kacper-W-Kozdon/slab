@@ -54,6 +54,7 @@ def test_plot() -> None:
         "mua": 0.05,
         "musp": 0.05,
         "offset": 40,
+        "scaling": 0.9,
         "lower_bounds": [0, 0, 20],
         "upper_bounds": [1, 1, 80],
     }

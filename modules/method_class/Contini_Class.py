@@ -35,7 +35,7 @@ class Contini:
         normalize: bool = True,
         log_scale: Union[bool, None] = None,
         values_to_fit: Union[List[str], Any] = ["T_rho_t"],
-        free_params: Union[List[str], Any] = ["musp", "offset"],
+        free_params: Union[List[str], Any] = ["musp", "offset", "scaling"],
     ) -> None:
         """
         The class initiating the slab model with the RTE and DE Green's functions. Source- Contini.
@@ -66,7 +66,7 @@ class Contini:
         :type values_to_fit: Union[List[str], Any]
         :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
         :type free_params: Union[List[str], Any]
-        :param log_scale: bool that controls whether the outputs are rescaled with log. Default: None.
+        :param log_scale: bool that controls whether the outputs are rescaled with log. Default: ["mua", "offset", "scaling"].
         :type log_scale: Union[bool, None]
         """
 
@@ -86,11 +86,25 @@ class Contini:
         self.free_params = free_params
         self.ydata_info = {}
         self._offset = 0
+        self._scaling = 0
         self._max_ydata = 1
         self.log_scale = log_scale
 
         # print(f"---INIT---\n{self._mua, self._musp, self._offset}")
         self.err = 1e-6  # noqa: F841
+
+    @property
+    def scaling(self) -> Union[None, float]:
+        return self._scaling
+
+    @scaling.setter
+    def scaling(self, value: float) -> None:
+        if value is not None:
+            self._scaling = value
+
+    @scaling.deleter
+    def scaling(self) -> None:
+        self._scaling = 0
 
     @property
     def mua(self) -> Union[None, float]:
@@ -380,7 +394,11 @@ class Contini:
 
         values_to_fit: Union[List[str], Any] = self.values_to_fit or ["T_rho_t"]
         # print(f"---VALUES TO FIT---\n\n{values_to_fit}")
-        free_params: Union[List[str], Any] = self.free_params or ["musp", "offset"]
+        free_params: Union[List[str], Any] = self.free_params or [
+            "musp",
+            "offset",
+            "scaling",
+        ]
         normalize = self.normalize or False
         if kwargs.get("normalize") is not None:
             normalize = kwargs.get("normalize")  # noqa: F841
@@ -401,7 +419,7 @@ class Contini:
             "l_rho_R",
             "l_rho_T",
         ]
-        available_free_params = ["mua", "musp", "offset"]
+        available_free_params = ["mua", "musp", "offset", "scaling"]
 
         if not all([param in available_free_params for param in free_params]):
             raise ValueError(
@@ -417,7 +435,7 @@ class Contini:
         args_list = list(args)
 
         if not args:
-            args_list = [self._mua, self._musp, self._offset]
+            args_list = [self._mua, self._musp, self._offset, self._scaling]
 
         for param_index, param in enumerate(available_free_params):
             # print((param not in free_params) and args, args_list, param, param_index)
@@ -429,6 +447,8 @@ class Contini:
                     param_value = self._musp
                 if param_index == 2:
                     param_value = self._offset
+                if param_index == 3:
+                    param_value = self._scaling
                 try:
                     args_list.insert(param_index, param_value)
                 except UnboundLocalError:
@@ -438,18 +458,20 @@ class Contini:
                 # print(args_list)
         # print(args, kwargs, args_list, free_params, available_free_params)
 
-        for param_index, param in enumerate(available_free_params):
-            if (param in free_params) and args:
-                # try:
-                args_list[param_index] = 1e3 * args_list[param_index]
-                # except:
-                #     print("---ERROR---")
-                #     print(args_list, param_index, args)
+        # for param_index, param in enumerate(available_free_params):
+        #     if (param in free_params) and args:
+        #         # try:
+        #         args_list[param_index] = 1e3 * args_list[param_index] if param_index in [0, 1] else args_list[param_index]
+        #         # except:
+        #         #     print("---ERROR---")
+        #         #     print(args_list, param_index, args)
 
-        index = available_free_params.index("offset")
-        offset = args_list[index] or self._offset
+        index_offset = available_free_params.index("offset")
+        index_scaling = available_free_params.index("scaling")
+        offset = args_list[index_offset] or self._offset
+        scaling = args_list[index_scaling] or self._scaling
         for arg_index, arg in enumerate(args_list):
-            if arg_index == available_free_params.index("offset"):
+            if arg_index in [index_offset, index_scaling]:
                 continue
             args_list[arg_index] = 1e-3 * arg
         args = tuple(args_list)
@@ -461,6 +483,7 @@ class Contini:
 
         if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
             ret = {}
+
             for value in values_to_fit:
                 index = int(values_to_fit.index(str(value)))
                 ret[value] = self(t_rho_array_like, *args, **kwargs)[index]
@@ -469,9 +492,8 @@ class Contini:
                     ret[value] = convolve(ret[value], IRF, mode="same")
                 if normalize:
                     max_ret = np.max(ret[value]) or 1
-                    ret[value] = (
-                        np.array(ret[value]) / max_ret * self._max_ydata + offset
-                    )
+                    scaling = scaling or np.array(ret[value]) / max_ret
+                    ret[value] = scaling * self._max_ydata + offset
 
                 if log_scale:
                     ret = np.log(ret - np.min(ret) + 1)
@@ -513,7 +535,8 @@ class Contini:
                 if normalize:
                     # print(ret, IRF)
                     max_ret = np.max(ret) or 1
-                    ret = np.array(ret) / max_ret * self._max_ydata + offset
+                    scaling = scaling or np.array(ret) / max_ret
+                    ret = scaling * self._max_ydata + offset
 
                 if log_scale:
                     ret = np.log(ret - np.min(ret) + 1)
@@ -541,7 +564,8 @@ class Contini:
                 ret = convolve(ret, IRF, mode="same")
             if normalize:
                 max_ret = np.max(ret) or 1
-                ret = np.array(ret) / max_ret * self._max_ydata + offset
+                scaling = scaling or np.array(ret) / max_ret
+                ret = scaling * self._max_ydata + offset
 
             if log_scale:
                 ret = np.log(ret - np.min(ret) + 1)
@@ -560,12 +584,12 @@ class Contini:
         IRF: Union[List[Union[float, int]], None, pd.DataFrame] = None,
         normalize: bool = True,
         values_to_fit: Union[List[str], Any] = ["T_rho_t"],
-        free_params: Union[List[str], Any] = ["musp", "offset"],
+        free_params: Union[List[str], Any] = ["musp", "offset", "scaling"],
         plot: bool = False,
         show_plot: bool = False,
         save_path: str = "",
         log_scale: Union[bool, None] = None,
-        bounds: Union[List[Any], None] = None,
+        bounds: Union[List[Any], None] = [None, None],
         filter_param: Union[float, None] = None,
         *args: Any,
         **kwargs: Any,
