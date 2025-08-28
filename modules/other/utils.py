@@ -1,5 +1,6 @@
 import warnings
 from collections import OrderedDict
+from decimal import localcontext
 
 import numpy as np
 from numpy import exp, log, sqrt
@@ -207,16 +208,24 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
 def G_func(x, N_scatter=200, mode: str = "correction", **kwargs):
     G = 0
     if mode == "sum":
-        factor = 8 * (3 * x) ** (-3 / 2)
+        with localcontext() as ctx:
+            ctx.prec = 100
+            factor = 8 * (3 * x) ** (-3 / 2)
 
-        for N in range(1, N_scatter + 1):
-            G += (
-                factor
-                * gamma(3 / 4 * N + 3 / 2)
-                / gamma(3 / 4 * N)
-                * x**N
-                / factorial(N)
-            )
+            for N in range(1, N_scatter + 1):
+                try:
+                    G += (
+                        factor
+                        * gamma(3 / 4 * N + 3 / 2)
+                        / gamma(3 / 4 * N)
+                        * x**N
+                        / factorial(N)
+                    )
+                except OverflowError:
+                    print(
+                        f"OverflowError warning. Stopping the computation of G_func at N = {N}."
+                    )
+                    break
 
         return G
     if mode == "approx":
