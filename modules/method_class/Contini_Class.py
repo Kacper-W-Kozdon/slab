@@ -369,7 +369,13 @@ class Contini:
 
     def forward(
         self,
-        t_rho_array_like: List[Tuple[float, float]],
+        t_rho_array_like: Union[
+            List[Tuple[float, float]],
+            List[Tuple[int, int]],
+            List[Tuple[int, float]],
+            List[Tuple[float, int]],
+            pd.DataFrame,
+        ],
         *args: Any,
         **kwargs: Any,
     ) -> Union[float, int, None, List[float], Dict[Any, Any]]:
@@ -377,7 +383,7 @@ class Contini:
         The call method returning the function used for scipy.curve_fit().
 
         :param t_rho_array_like: Variables of the model in the form List[(time, radial_coordinate), ...], passed as xdata to scipy.curve_fit(f, ydata, xdata, params).
-        :type t_rho_array_like: List[Tuple[float, float]]
+        :type t_rho_array_like: Union[List[Tuple[float, float]], List[Tuple[int, int]], List[Tuple[int, float]], List[Tuple[float, int]], pd.DataFrame]
         :param normalize: Controls whether normalization is applied to the output.
         :type normalize: bool
         :param args: An iterable of the free_parameters for fitting in the order (mua, musp). The parameters have to match the free_params param. Anisothropy_coeff to be added.
@@ -578,7 +584,13 @@ class Contini:
 
     def fit(
         self,
-        t_rho_array_like: Union[List[Tuple[float, float]], pd.DataFrame],
+        t_rho_array_like: Union[
+            List[Tuple[float, float]],
+            List[Tuple[int, int]],
+            List[Tuple[int, float]],
+            List[Tuple[float, int]],
+            pd.DataFrame,
+        ],
         ydata: Union[List[float], pd.DataFrame],
         initial_free_params: List[Union[float, int]],
         IRF: Union[List[Union[float, int]], None, pd.DataFrame] = None,
@@ -598,7 +610,7 @@ class Contini:
         Method used to fit the model by Contini to existing data.
 
         :param _t_rho_array_like: An array-like input with tuples of the form (time, radial_coordinate), xdata.
-        :type _t_rho_array_like: List[Tuple[float, float]]
+        :type _t_rho_array_like: Union[List[Tuple[float, float]], List[Tuple[int, int]], List[Tuple[int, float]], List[Tuple[float, int]], pd.DataFrame]
         :param ydata: The data the model's function gets fit to.
         :type ydata: List[float]
         :param initial_free_params: The initial values for the free parameters to fit.

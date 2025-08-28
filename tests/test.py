@@ -83,8 +83,10 @@ def test_plot() -> None:
     contini.values_to_fit = ["T_rho_t"]
 
     outputs_T_RTE = contini.forward(xdata, eq="RTE")
+    contini.eq = "DE"
     outputs_T_DE = contini.forward(xdata, eq="DE")
-    assert outputs_T_RTE is not None
+    assert outputs_T_RTE is not None, "forward function returned None for eq='RTE'"
+    assert outputs_T_DE is not None, "forward function returned None for eq='DE'"
 
     plt.plot(  # noqa: F841
         inputs,
@@ -104,14 +106,6 @@ def test_plot() -> None:
         linestyle="-.",
     )
 
-    for output_index, output in enumerate(zip(outputs_T_RTE, outputs_T_DE)):
-        try:
-            assertions.assertAlmostEqual(output[0], output[1])
-        except Exception as exc:
-            raise ValueError(
-                f"Mismatch in outputs for index {output_index}. T_RTE = {output[0]}, T_DE = {output[1]}"
-            ) from exc
-
     plt.legend(loc="upper right")
     plt.xlabel("Time in ps")
     plt.ylabel("Intensity(t, rho=5[mm])/max(R(t, rho=5[mm])), s=3[mm]")
@@ -120,3 +114,11 @@ def test_plot() -> None:
     path = f"{pathlib.Path(__file__).resolve().parent.parent}\\plots\\pytestplot.pdf"
     plt.savefig(path)
     plt.clf()
+
+    for output_index, output in enumerate(zip(outputs_T_RTE, outputs_T_DE)):
+        try:
+            assertions.assertAlmostEqual(output[0], output[1])
+        except Exception as exc:
+            raise ValueError(
+                f"Mismatch in outputs for index {output_index}. T_RTE = {output[0]}, T_DE = {output[1]}"
+            ) from exc
