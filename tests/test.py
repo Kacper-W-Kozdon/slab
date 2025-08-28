@@ -79,16 +79,26 @@ def test_plot() -> None:
 
     contini.values_to_fit = ["T_rho_t"]
 
-    outputs_T = contini.forward(xdata)
-    assert outputs_T is not None
+    outputs_T_RTE = contini.forward(xdata, eq="RTE")
+    outputs_T_DE = contini.forward(xdata, eq="DE")
+    assert outputs_T_RTE is not None
 
     plt.plot(  # noqa: F841
         inputs,
-        outputs_T,
+        outputs_T_RTE,
         color="g",
         label="test data T",
         # marker="o",
         linestyle="--",
+    )
+
+    plt.plot(  # noqa: F841
+        inputs,
+        outputs_T_DE,
+        color="r",
+        label="test data T",
+        # marker="o",
+        # linestyle="--",
     )
 
     plt.legend(loc="upper right")

@@ -50,6 +50,9 @@ def Reflectance_Transmittance_rho_t(
             * T_rho_t_source_sum
         )
 
+        R_rho_t /= 2 * A
+        T_rho_t /= 2 * A
+
     if eq == "RTE":
         mus = musp / (1 - anisothropy_coeff)  # noqa: F841
         mean_free_path = 1 / (mua + musp)
