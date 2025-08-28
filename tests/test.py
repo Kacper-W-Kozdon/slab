@@ -1,4 +1,5 @@
 import pathlib
+import unittest
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -40,6 +41,8 @@ def test_plot() -> None:
     """
     Test plots.
     """
+
+    assertions = unittest.TestCase("__init__")
 
     rho = 5
     s = 3
@@ -100,6 +103,14 @@ def test_plot() -> None:
         # marker="o",
         linestyle="-.",
     )
+
+    for output_index, output in enumerate(zip(outputs_T_RTE, outputs_T_DE)):
+        try:
+            assertions.assertAlmostEqual(output[0], output[1])
+        except Exception as exc:
+            raise ValueError(
+                f"Mismatch in outputs for index {output_index}. T_RTE = {output[0]}, T_DE = {output[1]}"
+            ) from exc
 
     plt.legend(loc="upper right")
     plt.xlabel("Time in ps")
