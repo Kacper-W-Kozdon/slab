@@ -39,12 +39,12 @@ def Reflectance_Transmittance_rho_t(
             )
 
         R_rho_t = (
-            -exp(-(mua * v * t - rho**2) / (4 * D * v * t))
+            -exp(-mua * v * t - (rho**2) / (4 * D * v * t))
             / (2 * ((4 * pi * D * v) ** (3 / 2)) * t ** (5 / 2))
             * R_rho_t_source_sum
         )
         T_rho_t = (
-            exp(-(mua * v * t - rho**2) / (4 * D * v * t))
+            exp(-mua * v * t - (rho**2) / (4 * D * v * t))
             / (2 * ((4 * pi * D * v) ** (3 / 2)) * t ** (5 / 2))
             * T_rho_t_source_sum
         )
