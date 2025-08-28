@@ -476,9 +476,11 @@ class Contini:
         index_scaling = available_free_params.index("scaling")
         offset = args_list[index_offset] or self._offset
         scaling = args_list[index_scaling] or self._scaling
+        # print(f"args_list: {args_list}")
         for arg_index, arg in enumerate(args_list):
             if arg_index in [index_offset, index_scaling]:
                 continue
+            arg = 0 if arg is None else arg
             args_list[arg_index] = 1e-3 * arg
         args = tuple(args_list)
 
