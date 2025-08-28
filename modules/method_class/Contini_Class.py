@@ -498,8 +498,8 @@ class Contini:
                     ret[value] = convolve(ret[value], IRF, mode="same")
                 if normalize:
                     max_ret = np.max(ret[value]) or 1
-                    scaling = scaling or np.array(ret[value]) / max_ret
-                    ret[value] = scaling * self._max_ydata + offset
+                    scaling = scaling or self._max_ydata / max_ret
+                    ret[value] = scaling * np.array(ret[value]) + offset
 
                 if log_scale:
                     ret = np.log(ret - np.min(ret) + 1)
@@ -541,8 +541,9 @@ class Contini:
                 if normalize:
                     # print(ret, IRF)
                     max_ret = np.max(ret) or 1
-                    scaling = scaling or np.array(ret) / max_ret
-                    ret = scaling * self._max_ydata + offset
+                    scaling = scaling or self._max_ydata / max_ret
+                    print(f"scaling: {scaling}")
+                    ret = scaling * np.array(ret) + offset
 
                 if log_scale:
                     ret = np.log(ret - np.min(ret) + 1)
@@ -570,8 +571,8 @@ class Contini:
                 ret = convolve(ret, IRF, mode="same")
             if normalize:
                 max_ret = np.max(ret) or 1
-                scaling = scaling or np.array(ret) / max_ret
-                ret = scaling * self._max_ydata + offset
+                scaling = scaling or self._max_ydata / max_ret
+                ret = scaling * np.array(ret) + offset
 
             if log_scale:
                 ret = np.log(ret - np.min(ret) + 1)
