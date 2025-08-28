@@ -175,6 +175,8 @@ def Reflectance_Transmittance_rho_t(
 
         R_rho_t = 1 / (2 * A) * R_rho_t_source_sum
         T_rho_t = 1 / (2 * A) * T_rho_t_source_sum
+        R_rho_t = R_rho_t if R_rho_t > 0 else -R_rho_t
+        T_rho_t = T_rho_t if T_rho_t > 0 else -T_rho_t
         # if T_rho_t < 0:
         #     print(t, r_plus, r_minus, T_rho_t)
         # print(R_rho_t)
@@ -185,9 +187,6 @@ def Reflectance_Transmittance_rho_t(
 
     R_rho_t = R_rho_t if t > 0 else 0
     T_rho_t = T_rho_t if t > 0 else 0
-
-    R_rho_t = R_rho_t if R_rho_t > 0 else -R_rho_t
-    T_rho_t = T_rho_t if T_rho_t > 0 else -T_rho_t
 
     return R_rho_t, T_rho_t
 

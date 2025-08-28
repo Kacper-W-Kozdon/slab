@@ -72,7 +72,7 @@ def test_plot() -> None:
         inputs,
         outputs_R,
         color="b",
-        label="test data R",
+        label="test data R_RTE",
         # marker="o",
         # linestyle=" ",
     )
@@ -87,7 +87,7 @@ def test_plot() -> None:
         inputs,
         outputs_T_RTE,
         color="g",
-        label="test data T",
+        label="test data T_RTE",
         # marker="o",
         linestyle="--",
     )
@@ -96,14 +96,16 @@ def test_plot() -> None:
         inputs,
         outputs_T_DE,
         color="r",
-        label="test data T",
+        label="test data T_DE",
         # marker="o",
-        # linestyle="--",
+        linestyle="-.",
     )
 
     plt.legend(loc="upper right")
     plt.xlabel("Time in ps")
     plt.ylabel("Intensity(t, rho=5[mm])/max(R(t, rho=5[mm])), s=3[mm]")
 
-    plt.show(block=True)
+    plt.show(block=False)
+    path = f"{pathlib.Path(__file__).resolve().parent.parent}\\plots\\pytestplot.pdf"
+    plt.savefig(path)
     plt.clf()
