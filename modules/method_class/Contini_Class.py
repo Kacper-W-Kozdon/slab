@@ -216,13 +216,13 @@ class Contini:
 
             t = t_rho[0] * 1e-12
             rho = t_rho[1] * 1e-3
-            s = self._s
-            n1 = self.n1
-            n2 = self.n2
-            phantom = self.phantom  # noqa: F841
-            DD = self.DD
-            m = self.m
-            eq = self.eq
+            s = kwargs.get("s") or self._s
+            n1 = kwargs.get("n1") or self.n1
+            n2 = kwargs.get("n2") or self.n2
+            phantom = kwargs.get("phantom") or self.phantom  # noqa: F841
+            DD = kwargs.get("DD") or self.DD
+            m = kwargs.get("m") or self.m
+            eq = kwargs.get("eq") or self.eq
             # print(mua, musp)
 
             R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(

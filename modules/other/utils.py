@@ -188,8 +188,8 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
 
     if eq == "DE":
         for index in range(-m, m + 1):
-            z1 = s * (1 - 2 * index) - 4 * m * ze - z0
-            z2 = s * (1 - 2 * index) - (4 * m - 2) * ze + z0
+            z1 = s * (1 - 2 * index) - 4 * index * ze - z0
+            z2 = s * (1 - 2 * index) - (4 * index - 2) * ze + z0
             z3 = -2 * index * s - 4 * index * ze - z0
             z4 = -2 * index * s - (4 * index - 2) * ze + z0
 

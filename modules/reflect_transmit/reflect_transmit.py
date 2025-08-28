@@ -25,7 +25,6 @@ def Reflectance_Transmittance_rho_t(
 
     R_rho_t_source_sum = 0.0
     T_rho_t_source_sum = 0.0
-
     Z = Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq)
     if eq == "DE":
         for index in range(-m, m + 1):
