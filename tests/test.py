@@ -53,9 +53,18 @@ def test_plot() -> None:
 
     inputs = pd.DataFrame(xdata, columns=["t", "rho"])
 
+    # initial_params = {
+    #     "mua": 0.05,
+    #     "musp": 0.05,
+    #     "offset": 40,
+    #     "scaling": 0.9,
+    #     "lower_bounds": [0, 0, 20],
+    #     "upper_bounds": [1, 1, 80],
+    # }
+
     initial_params = {
-        "mua": 0.05,
-        "musp": 0.05,
+        "mua": 0.0,
+        "musp": 0.5,
         "offset": 40,
         "scaling": 0.9,
         "lower_bounds": [0, 0, 20],
