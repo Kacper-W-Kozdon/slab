@@ -1,6 +1,7 @@
 import copy
 import datetime
 import pathlib
+from collections.abc import Iterable
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -16,9 +17,10 @@ from ..reflect_transmit.reflect_transmit import (
     Reflectance_Transmittance_rho_t,
     Reflectance_Transmittance_t,
 )
+from .base_class import BaseClass
 
 
-class Contini:
+class Contini(BaseClass):
     def __init__(
         self,
         s: Union[int, float] = 0,
@@ -34,8 +36,8 @@ class Contini:
         IRF: Union[List[Union[float, int]], None] = None,
         normalize: bool = True,
         log_scale: Union[bool, None] = None,
-        values_to_fit: Union[List[str], Any] = ["T_rho_t"],
-        free_params: Union[List[str], Any] = ["musp", "offset", "scaling"],
+        values_to_fit: Union[List[str], Any] = None,
+        free_params: Union[List[str], Any] = None,
     ) -> None:
         """
         The class initiating the slab model with the RTE and DE Green's functions. Source- Contini.
@@ -82,12 +84,12 @@ class Contini:
         self.anisothropy_coeff = anisothropy_coeff
         self.IRF = IRF
         self.normalize = normalize
-        self.values_to_fit = values_to_fit
-        self.free_params = free_params
-        self.ydata_info = {}
-        self._offset = 0
-        self._scaling = 0
-        self._max_ydata = 1
+        self.values_to_fit = values_to_fit or ["T_rho_t"]
+        self.free_params = free_params or ["musp", "offset", "scaling"]
+        self.ydata_info: Dict[Any, Any] = {}
+        self._offset = 0.0
+        self._scaling = 0.0
+        self._max_ydata = 1.0
         self.log_scale = log_scale
 
         # print(f"---INIT---\n{self._mua, self._musp, self._offset}")
@@ -160,17 +162,24 @@ class Contini:
     def offset(self) -> None:
         self._offset = 0
 
-    def __call__(
+    def evaluate(
         self,
-        t_rho: Union[Tuple[float, float], List[Tuple[float, float],]],
+        t_rho: Union[
+            Tuple[Any, Any],
+            List[Tuple[float, float]],
+            List[Tuple[int, int]],
+            List[Tuple[int, float]],
+            List[Tuple[float, int]],
+            pd.DataFrame,
+        ],
         mua: Union[int, float, None] = None,
         musp: Union[int, float, None] = None,
-        offset: Union[int, float] = 0,
+        # offset: Union[int, float] = 0,
         anisothropy_coeff: Union[int, float, None] = None,
         **kwargs: Any,
     ) -> Union[Tuple[Any, ...], Tuple[List[Any], ...]]:
         """
-        The call method evaluating parameters of the Contini model.
+        The method evaluating parameters of the Contini model.
 
         :param t_rho: Variables of the model in the form (time, radial_coordinate).
         :type t_rho: Union[Tuple[float, float], List[Tuple[float, float]]]
@@ -346,11 +355,11 @@ class Contini:
 
     def fit_settings(
         self,
+        *args: Any,
         values_to_fit: Union[List[str], Any] = None,
         free_params: Union[List[str], Any] = None,
         normalize: Union[bool, None] = None,
         log_scale: Union[bool, None] = None,
-        *args: Any,
         **kwargs: Any,
     ) -> None:
         """
@@ -369,7 +378,8 @@ class Contini:
 
     def forward(
         self,
-        t_rho_array_like: Union[
+        inputs: Union[
+            Tuple[Any, Any],
             List[Tuple[float, float]],
             List[Tuple[int, int]],
             List[Tuple[int, float]],
@@ -378,7 +388,7 @@ class Contini:
         ],
         *args: Any,
         **kwargs: Any,
-    ) -> Union[float, int, None, List[float], Dict[Any, Any]]:
+    ) -> Union[List[float], Dict[Any, Any], float, int, None]:
         """
         The call method returning the function used for scipy.curve_fit().
 
@@ -398,6 +408,8 @@ class Contini:
 
         """
 
+        t_rho_array_like = inputs
+
         values_to_fit: Union[List[str], Any] = self.values_to_fit or ["T_rho_t"]
         # print(f"---VALUES TO FIT---\n\n{values_to_fit}")
         free_params: Union[List[str], Any] = self.free_params or [
@@ -405,15 +417,15 @@ class Contini:
             "offset",
             "scaling",
         ]
-        normalize = self.normalize or False
+        normalize: Union[Any, bool] = self.normalize or False
         if kwargs.get("normalize") is not None:
             normalize = kwargs.get("normalize")  # noqa: F841
 
-        log_scale = self.log_scale or False
+        log_scale: Union[Any, bool] = self.log_scale or False
         if kwargs.get("log_scale") is not None:
             log_scale = kwargs.get("log_scale")
 
-        IRF = self.IRF if self.IRF is not None else kwargs.get("IRF")
+        IRF: pd.DataFrame = self.IRF if self.IRF is not None else kwargs.get("IRF")
 
         available_values = [
             "R_rho_t",
@@ -447,6 +459,7 @@ class Contini:
             # print((param not in free_params) and args, args_list, param, param_index)
             if (param not in free_params) and args:
                 # param_value = self._mua if param_index == 0 else self._musp
+                param_value: Any = None
                 if param_index == 0:
                     param_value = self._mua
                 if param_index == 1:
@@ -494,7 +507,7 @@ class Contini:
 
             for value in values_to_fit:
                 index = int(values_to_fit.index(str(value)))
-                ret[value] = self(t_rho_array_like, *args, **kwargs)[index]
+                ret[value] = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
 
                 if IRF is not None:
                     ret[value] = convolve(ret[value], IRF, mode="same")
@@ -504,7 +517,7 @@ class Contini:
                     ret[value] = scaling * np.array(ret[value]) + offset
 
                 if log_scale:
-                    ret = np.log(ret - np.min(ret) + 1)
+                    ret = np.log(ret - np.min(ret[value]) + 1)
 
             # ret = np.log(ret + 1)
             return ret
@@ -514,8 +527,8 @@ class Contini:
                 index = int(available_values.index(str(value)))
                 ret = []
                 # for elem in t_rho_array_like:
-                #     ret.append(self(elem, *args, **kwargs)[index])
-                ret = self(t_rho_array_like, *args, **kwargs)[index]
+                #     ret.append(self.evaluate(elem, *args, **kwargs)[index])
+                ret = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
                 ret = np.array([float(ret_elem) for ret_elem in ret])
                 # print(ret)
                 # print("---TEST RETURN---")
@@ -558,8 +571,8 @@ class Contini:
                     #         t_rho_array_like[2][0],
                     #     )
                     #     print(
-                    #         self(t_rho_array_like, *args, **kwargs)[0],
-                    #         self(t_rho_array_like, *args, **kwargs)[1],
+                    #         self.evaluate(t_rho_array_like, *args, **kwargs)[0],
+                    #         self.evaluate(t_rho_array_like, *args, **kwargs)[1],
                     #     )
             # ret = np.log(ret + 1)
             # print(ret)
@@ -567,7 +580,7 @@ class Contini:
 
         elif isinstance(values_to_fit, str):
             index = available_values.index(values_to_fit)
-            ret = self(t_rho_array_like, *args, **kwargs)[index]
+            ret = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
 
             if IRF is not None:
                 ret = convolve(ret, IRF, mode="same")
@@ -673,7 +686,7 @@ class Contini:
         _ydata_raw: Union[pd.DataFrame, Any] = copy.copy(ydata)
         _y_max = np.max(_ydata_raw)
         _y_max_head = np.max(_ydata_raw.head(10))
-        _y_min = np.min(_ydata_raw)
+        # _y_min = np.min(_ydata_raw)
 
         if not isinstance(t_rho_array_like, pd.DataFrame):
             _t_rho_array_like_raw: Union[pd.DataFrame, Any] = pd.DataFrame(
@@ -814,14 +827,22 @@ class Contini:
                 musp = self._musp if ("musp" not in free_params) else params.pop()
                 mua = self._mua if ("mua" not in free_params) else params.pop()
 
-                ydata_fit = self.forward(
+                ydata_fit_ = self.forward(
                     _t_rho_array_like,
                     mua=mua,
                     musp=musp,
                     offset=offset,
                     normalize=True,
                     IRF=IRF,
-                )[index]
+                )
+
+                if hasattr(ydata_fit_, "__getitem__") or isinstance(
+                    ydata_fit_, Iterable
+                ):
+                    ydata_fit = ydata_fit_[index]
+                else:
+                    ydata_fit = ydata_fit_
+
                 fit = plt.plot(  # noqa: F841
                     xdata_t,
                     ydata_fit,
