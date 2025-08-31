@@ -598,6 +598,30 @@ class Contini(BaseClass):
         else:
             return None
 
+    def __fit(
+        self,
+        inputs: Union[
+            pd.DataFrame, List[float], List[int], List[Tuple[Union[float, int], ...]]
+        ],
+        outputs: Iterable,
+        initial_free_params: Iterable,
+        bounds: Union[List[Union[float, int]], Tuple[Union[float, int], ...]],
+        *args: Any,
+        **kwargs: Any,
+    ) -> Tuple[Any, ...]:
+        popt, pcov, *_ = curve_fit(
+            self.forward,
+            inputs,
+            outputs,
+            initial_free_params,
+            # method="trf",
+            bounds=(bounds[0], bounds[1]),
+            *args,
+            **kwargs,
+        )
+
+        return popt, pcov, *_
+
     def fit(
         self,
         t_rho_array_like: Union[
@@ -609,17 +633,8 @@ class Contini(BaseClass):
         ],
         ydata: Union[List[float], pd.DataFrame],
         initial_free_params: List[Union[float, int]],
-        IRF: Union[List[Union[float, int]], None, pd.DataFrame] = None,
-        normalize: bool = True,
-        values_to_fit: Union[List[str], Any] = ["T_rho_t"],
-        free_params: Union[List[str], Any] = ["musp", "offset", "scaling"],
-        plot: bool = False,
-        show_plot: bool = False,
-        save_path: str = "",
-        log_scale: Union[bool, None] = None,
-        bounds: Union[List[Any], None] = [None, None],
-        filter_param: Union[float, None] = None,
         *args: Any,
+        IRF: Union[List[Union[float, int]], None, pd.DataFrame] = None,
         **kwargs: Any,
     ) -> Tuple[List[float], ...]:
         """
@@ -671,6 +686,22 @@ class Contini(BaseClass):
         #     print(ydata)
         # print(self.normalize, normalize)
         # print("---INITIAL FREE PARAMS---\n", initial_free_params)
+
+        normalize: bool = kwargs.get("normalize") or True
+        values_to_fit: Union[List[str], Any] = kwargs.get("values_to_fit") or [
+            "T_rho_t"
+        ]
+        free_params: Union[List[str], Any] = kwargs.get("free_params") or [
+            "musp",
+            "offset",
+            "scaling",
+        ]
+        plot: bool = kwargs.get("plot") or False
+        show_plot: bool = kwargs.get("show_plot") or False
+        save_path: str = kwargs.get("save_path") or ""
+        log_scale: Union[bool, None] = kwargs.get("log_scale")
+        bounds: Union[List[Any], None] = kwargs.get("bounds") or [None, None]
+        filter_param: Union[float, None] = kwargs.get("filter_param")
 
         self.fit_settings(
             values_to_fit=values_to_fit,
@@ -771,13 +802,13 @@ class Contini(BaseClass):
         self.IRF = irf if irf is not None else self.IRF
         try:
             # t_rho_array_like = np.array(_t_rho_array_like)
-            popt, pcov, *_ = curve_fit(
+            popt, pcov, *_ = self.__fit(
                 self.forward,
                 inputs,
                 outputs,
                 initial_free_params,
                 # method="trf",
-                bounds=(bounds[0], bounds[1]),
+                bounds,
                 *args,
                 **kwargs,
             )
@@ -843,14 +874,16 @@ class Contini(BaseClass):
                 else:
                     ydata_fit = ydata_fit_
 
-                fit = plt.plot(  # noqa: F841
+                # Fit plot.
+                plt.plot(  # noqa: F841
                     xdata_t,
                     ydata_fit,
                     color="r",
                     label=f"fit: mua={mua}, musp={musp}, off={offset}",
                 )  # noqa: F841
 
-                raw_data = plt.plot(  # noqa: F841
+                # Raw data plot.
+                plt.plot(  # noqa: F841
                     xdata_t,
                     ydata,
                     color="b",
