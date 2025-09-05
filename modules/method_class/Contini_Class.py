@@ -463,10 +463,10 @@ class Contini(BaseClass):
                     param_value = self._scaling
                 try:
                     args_list.insert(param_index, param_value)
-                except UnboundLocalError:
+                except UnboundLocalError as exc:
                     print(UnboundLocalError)
                     print(param_index)
-                    raise UnboundLocalError
+                    raise UnboundLocalError from exc
 
         index_offset = available_free_params.index("offset")
         index_scaling = available_free_params.index("scaling")
