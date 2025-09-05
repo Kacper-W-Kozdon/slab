@@ -31,6 +31,9 @@ description = "The package to compute the scattering of a pencil beam in a mediu
 scipy = "*"
 numpy = "*"
 typing = "*"
+matplotlib = "*"
+pandas = "*"
+torch = "*"
 
 [tool.poetry.group.dev.dependencies]
 types-requests = "*"

@@ -25,7 +25,6 @@ def Reflectance_Transmittance_rho_t(
 
     R_rho_t_source_sum = 0.0
     T_rho_t_source_sum = 0.0
-
     Z = Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq)
     if eq == "DE":
         for index in range(-m, m + 1):
@@ -38,17 +37,19 @@ def Reflectance_Transmittance_rho_t(
             T_rho_t_source_sum += z1 * exp(-(z1**2) / (4 * D * v * t)) - z2 * exp(
                 -(z2**2) / (4 * D * v * t)
             )
-
         R_rho_t = (
-            -exp(-(mua * v * t - rho**2) / (4 * D * v * t))
+            -exp(-mua * v * t - (rho**2) / (4 * D * v * t))
             / (2 * ((4 * pi * D * v) ** (3 / 2)) * t ** (5 / 2))
             * R_rho_t_source_sum
         )
         T_rho_t = (
-            exp(-(mua * v * t - rho**2) / (4 * D * v * t))
+            exp(-mua * v * t - (rho**2) / (4 * D * v * t))
             / (2 * ((4 * pi * D * v) ** (3 / 2)) * t ** (5 / 2))
             * T_rho_t_source_sum
         )
+
+        R_rho_t /= 2 * A
+        T_rho_t /= 2 * A
 
     if eq == "RTE":
         mus = musp / (1 - anisothropy_coeff)  # noqa: F841
@@ -172,11 +173,18 @@ def Reflectance_Transmittance_rho_t(
 
         R_rho_t = 1 / (2 * A) * R_rho_t_source_sum
         T_rho_t = 1 / (2 * A) * T_rho_t_source_sum
+        # R_rho_t = R_rho_t if R_rho_t > 0 else -R_rho_t
+        # T_rho_t = T_rho_t if T_rho_t > 0 else -T_rho_t
+
+        # if T_rho_t < 0:
+        #     print(t, r_plus, r_minus, T_rho_t)
         # print(R_rho_t)
 
     # print(R_rho_t)
     R_rho_t *= 1e-6 * 1e-12
     T_rho_t *= 1e-6 * 1e-12
+    R_rho_t = R_rho_t if R_rho_t > 0 else 0
+    T_rho_t = T_rho_t if T_rho_t > 0 else 0
 
     R_rho_t = R_rho_t if t > 0 else 0
     T_rho_t = T_rho_t if t > 0 else 0
