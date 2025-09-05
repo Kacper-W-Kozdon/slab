@@ -92,7 +92,6 @@ class Contini(BaseClass):
         self._max_ydata = 1.0
         self.log_scale = log_scale
 
-        # print(f"---INIT---\n{self._mua, self._musp, self._offset}")
         self.err = 1e-6  # noqa: F841
 
     @property
@@ -232,12 +231,10 @@ class Contini(BaseClass):
             DD = kwargs.get("DD") or self.DD
             m = kwargs.get("m") or self.m
             eq = kwargs.get("eq") or self.eq
-            # print(mua, musp)
 
             R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
                 rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff, **kwargs
             )
-            # print(rho, t, mua, musp, R_rho_t)
 
             R_rho, T_rho = Reflectance_Transmittance_rho(
                 rho, mua, musp, s, m, n1, n2, DD, eq
@@ -411,7 +408,6 @@ class Contini(BaseClass):
         t_rho_array_like = inputs
 
         values_to_fit: Union[List[str], Any] = self.values_to_fit or ["T_rho_t"]
-        # print(f"---VALUES TO FIT---\n\n{values_to_fit}")
         free_params: Union[List[str], Any] = self.free_params or [
             "musp",
             "offset",
@@ -456,9 +452,7 @@ class Contini(BaseClass):
             args_list = [self._mua, self._musp, self._offset, self._scaling]
 
         for param_index, param in enumerate(available_free_params):
-            # print((param not in free_params) and args, args_list, param, param_index)
             if (param not in free_params) and args:
-                # param_value = self._mua if param_index == 0 else self._musp
                 param_value: Any = None
                 if param_index == 0:
                     param_value = self._mua
@@ -474,22 +468,11 @@ class Contini(BaseClass):
                     print(UnboundLocalError)
                     print(param_index)
                     raise UnboundLocalError
-                # print(args_list)
-        # print(args, kwargs, args_list, free_params, available_free_params)
-
-        # for param_index, param in enumerate(available_free_params):
-        #     if (param in free_params) and args:
-        #         # try:
-        #         args_list[param_index] = 1e3 * args_list[param_index] if param_index in [0, 1] else args_list[param_index]
-        #         # except:
-        #         #     print("---ERROR---")
-        #         #     print(args_list, param_index, args)
 
         index_offset = available_free_params.index("offset")
         index_scaling = available_free_params.index("scaling")
         offset = args_list[index_offset] or self._offset
         scaling = args_list[index_scaling] or self._scaling
-        # print(f"args_list: {args_list}")
         for arg_index, arg in enumerate(args_list):
             if arg_index in [index_offset, index_scaling]:
                 continue
@@ -497,10 +480,7 @@ class Contini(BaseClass):
             args_list[arg_index] = 1e-3 * arg
         args = tuple(args_list)
 
-        # print(args)
-
         value: Any
-        # print(values_to_fit, isinstance(values_to_fit, list) and len(values_to_fit) == 1, t_rho_array_like)
 
         if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
             ret = {}
@@ -519,22 +499,14 @@ class Contini(BaseClass):
                 if log_scale:
                     ret = np.log(ret - np.min(ret[value]) + 1)
 
-            # ret = np.log(ret + 1)
             return ret
 
         elif isinstance(values_to_fit, list) and len(values_to_fit) == 1:
             for value in values_to_fit:
                 index = int(available_values.index(str(value)))
                 ret = []
-                # for elem in t_rho_array_like:
-                #     ret.append(self.evaluate(elem, *args, **kwargs)[index])
                 ret = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
                 ret = np.array([float(ret_elem) for ret_elem in ret])
-                # print(ret)
-                # print("---TEST RETURN---")
-                # print(index, ret, args)
-                # print(t_rho_array_like)
-                # print()
 
                 if IRF is not None:
                     IRF = (
@@ -548,13 +520,11 @@ class Contini(BaseClass):
                     except Exception as e:
                         print("---ERROR---")
                         print(e)
-                        # print(args, type(t_rho_array_like))
                         irf = [value for value in IRF.values]
                         print(type(IRF))
                         print(irf)
                         print("---END ERROR---")
                 if normalize:
-                    # print(ret, IRF)
                     max_ret = np.max(ret) or 1
                     scaling = scaling or self._max_ydata / max_ret
                     print(f"scaling: {scaling}")
@@ -563,19 +533,6 @@ class Contini(BaseClass):
                 if log_scale:
                     ret = np.log(ret - np.min(ret) + 1)
 
-                    # except Exception:
-                    #     print(free_params, values_to_fit)
-                    #     print(
-                    #         t_rho_array_like[0][0],
-                    #         t_rho_array_like[1][0],
-                    #         t_rho_array_like[2][0],
-                    #     )
-                    #     print(
-                    #         self.evaluate(t_rho_array_like, *args, **kwargs)[0],
-                    #         self.evaluate(t_rho_array_like, *args, **kwargs)[1],
-                    #     )
-            # ret = np.log(ret + 1)
-            # print(ret)
             return ret
 
         elif isinstance(values_to_fit, str):
@@ -592,7 +549,6 @@ class Contini(BaseClass):
             if log_scale:
                 ret = np.log(ret - np.min(ret) + 1)
 
-            # ret = np.log(ret + 1)
             return ret
 
         else:
@@ -677,16 +633,6 @@ class Contini(BaseClass):
 
         """
 
-        # if IRF:
-        #     for entry_index, entry in enumerate(IRF):
-        #         IRF[entry_index] = entry if entry else entry + 1e-5
-        # ydata = np.array(ydata)
-        # if IRF is not None:
-        #     _, ydata = deconvolve(ydata, IRF)
-        #     print(ydata)
-        # print(self.normalize, normalize)
-        # print("---INITIAL FREE PARAMS---\n", initial_free_params)
-
         normalize: bool = kwargs.get("normalize") or True
         values_to_fit: Union[List[str], Any] = kwargs.get("values_to_fit") or [
             "T_rho_t"
@@ -717,7 +663,6 @@ class Contini(BaseClass):
         _ydata_raw: Union[pd.DataFrame, Any] = copy.copy(ydata)
         _y_max = np.max(_ydata_raw)
         _y_max_head = np.max(_ydata_raw.head(10))
-        # _y_min = np.min(_ydata_raw)
 
         if not isinstance(t_rho_array_like, pd.DataFrame):
             _t_rho_array_like_raw: Union[pd.DataFrame, Any] = pd.DataFrame(
@@ -733,7 +678,7 @@ class Contini(BaseClass):
         _IRF_max_head = np.max(_IRF_raw.head(10))
 
         _IRF_raw.reset_index(inplace=True)
-        # try:
+
         _t_rho_array_like = (
             _t_rho_array_like_raw.loc[
                 (
@@ -748,18 +693,6 @@ class Contini(BaseClass):
             if filter_param is not None
             else _t_rho_array_like_raw
         )
-        # except pd.errors.IndexingError:
-        #     print("---DETAILS---\n\n")
-        #     print(len(_t_rho_array_like_raw), len(_ydata_raw), len(_IRF_raw))
-        #     print(type(_t_rho_array_like_raw))
-        #     print(
-        #         (_ydata_raw[_ydata_raw.columns[0]] >= _y_max_head + 0.01 * _y_max),
-        #         (_IRF_raw[_IRF_raw.columns[0]] >= _IRF_max_head + 0.01 * _IRF_max),
-        #     )
-        #     print(_IRF_raw)
-        #     print()
-        #     print()
-        #     raise pd.errors.IndexingError
 
         _IRF = (
             _IRF_raw.loc[
@@ -801,7 +734,6 @@ class Contini(BaseClass):
         irf = [value for index, value in _IRF.values]
         self.IRF = irf if irf is not None else self.IRF
         try:
-            # t_rho_array_like = np.array(_t_rho_array_like)
             popt, pcov, *_ = self.__fit(
                 self.forward,
                 inputs,
@@ -819,34 +751,6 @@ class Contini(BaseClass):
             print(e)
             print("---END ERROR---")
             raise e
-
-        # print(pcov[0][0], math.isinf(pcov[0][0]))
-        # if math.isinf(pcov[0][0]):
-        #     xdata = torch.tensor(_t_rho_array_like, requires_grad=True)
-        #     func = self.forward
-        #     target = torch.tensor(ydata, dtype=torch.float64)
-
-        #     guess = initial_free_params
-        #     weights_LBFGS = torch.tensor(guess, requires_grad=True)
-        #     weights = weights_LBFGS
-
-        #     optimizer = torch.optim.Adam([{"params": weights_LBFGS}], lr=0.3)
-        #     guesses = []
-        #     losses = []
-
-        #     for epoch in range(5):
-        #         print(f"---EPOCH {epoch}---\n")
-        #         optimizer.zero_grad()
-        #         output = func(xdata, weights)
-        #         input = torch.tensor(output, requires_grad=True, dtype=torch.float64)
-        #         loss = F.mse_loss(input, target)
-        #         loss.backward()
-        #         optimizer.step()
-        #         guesses.append(weights.clone())
-        #         losses.append(loss.clone())
-        #         print(weights, loss, guesses)
-
-        #     popt = weights
 
         if plot:
             rho = _t_rho_array_like[0][1]
