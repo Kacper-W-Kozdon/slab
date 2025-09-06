@@ -26,6 +26,23 @@ def Reflectance_Transmittance_rho_t(
     R_rho_t_source_sum = 0.0
     T_rho_t_source_sum = 0.0
     Z = Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq)
+
+    if not isinstance(t, torch.Tensor):
+        try:
+            t = torch.tensor(t)
+            if t[0] == 0:
+                t = t[1:]
+        except Exception as exc:
+            print(f"Failed to convert t = {t}, {type(t)} to torch.Tensor")
+            raise exc
+
+    if not isinstance(rho, torch.Tensor):
+        try:
+            rho = torch.full_like(t, rho)
+        except Exception as exc:
+            print(f"Failed to convert rho = {rho}, {type(rho)} to torch.Tensor")
+            raise exc
+
     if eq == "DE":
         for index in range(-m, m + 1):
             z1, z2, z3, z4 = Z[f"Z_{index}"]
@@ -55,54 +72,30 @@ def Reflectance_Transmittance_rho_t(
         mus = musp / (1 - anisothropy_coeff)  # noqa: F841
         mean_free_path = 1 / (mua + musp)
         # print(mean_free_path, mua, musp)
-        if type(rho) is torch.Tensor:
-            rho = rho.detach().numpy()
+        # if type(rho) is torch.Tensor:
+        # rho = rho.detach().numpy()
 
         for index in range(-m, m + 1):
             z_plus, z_minus = Z[f"Z_{index}"]
-            z_plus = float(z_plus)
-            z_minus = float(z_minus)
 
-            r_plus = float(sqrt(rho**2 + (z_plus) ** 2))
-            r_minus = float(sqrt(rho**2 + (z_minus) ** 2))
-            t = float(t)
-            if t == 0:
-                continue
+            r_plus = sqrt(rho**2 + (z_plus) ** 2)
+            r_minus = sqrt(rho**2 + (z_minus) ** 2)
 
-            Delta_plus = 1 if r_plus == c * t else 0
-            Delta_minus = 1 if r_minus == c * t else 0
-            Theta_plus = 1 if r_plus < c * t else 0
-            Theta_minus = 1 if r_minus < c * t else 0
-            G_plus = (
-                0
-                if not Theta_plus
-                else G_func(
-                    c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
-                    **kwargs,
-                )
+            Delta_plus = 1.0 * torch.tensor(r_plus == c * t)
+            Delta_minus = 1.0 * torch.tensor(r_minus == c * t)
+            Theta_plus = 1.0 * torch.tensor(r_plus < c * t)
+            Theta_minus = 1 * torch.tensor(r_minus < c * t)
+            G_plus = Theta_plus * G_func(
+                c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
+                **kwargs,
             )
-            G_minus = (
-                0
-                if not Theta_minus
-                else G_func(
-                    c
-                    * t
-                    / mean_free_path
-                    * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4),
-                    **kwargs,
-                )
+            G_minus = Theta_minus * G_func(
+                c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4),
+                **kwargs,
             )
-            if Theta_plus:
-                factor_plus = (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
-            else:
-                factor_plus = 0
+            factor_plus = Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
 
-            if Theta_minus:
-                factor_minus = (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
-            else:
-                factor_minus = 0
-
-            # print(r_plus, r_minus, type(r_plus), type(r_minus))
+            factor_minus = Theta_minus * (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
 
             R_rho_t_source_sum += exp(-c * t / mean_free_path) * (
                 1 / (4 * pi * r_plus**2) * Delta_plus
@@ -116,50 +109,27 @@ def Reflectance_Transmittance_rho_t(
 
         for index in range(-m, m + 1):
             z_plus, z_minus = Z[f"Z_{index}"]
-            z_plus = float(z_plus)
-            z_minus = float(z_minus)
 
-            r_plus = float(sqrt(rho**2 + (s - z_plus) ** 2))
-            r_minus = float(sqrt(rho**2 + (s - z_minus) ** 2))
-            t = float(t)
+            r_plus = sqrt(rho**2 + (s - z_plus) ** 2)
+            r_minus = sqrt(rho**2 + (s - z_minus) ** 2)
 
-            if t == 0:
-                continue
+            Delta_plus = 1.0 * torch.tensor(r_plus == c * t)
+            Delta_minus = 1.0 * torch.tensor(r_minus == c * t)
+            Theta_plus = 1.0 * torch.tensor(r_plus < c * t)
+            Theta_minus = 1 * torch.tensor(r_minus < c * t)
 
-            Delta_plus = 1 if r_plus == c * t else 0
-            Delta_minus = 1 if r_minus == c * t else 0
-            Theta_plus = 1 if r_plus < c * t else 0
-            Theta_minus = 1 if r_minus < c * t else 0
-
-            G_plus = (
-                0
-                if not Theta_plus
-                else G_func(
-                    c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
-                    **kwargs,
-                )
+            G_plus = Theta_plus * G_func(
+                c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
+                **kwargs,
             )
-            G_minus = (
-                0
-                if not Theta_minus
-                else G_func(
-                    c
-                    * t
-                    / mean_free_path
-                    * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4),
-                    **kwargs,
-                )
+            G_minus = Theta_minus * G_func(
+                c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4),
+                **kwargs,
             )
 
-            if Theta_plus:
-                factor_plus = (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
-            else:
-                factor_plus = 0
+            factor_plus = Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
 
-            if Theta_minus:
-                factor_minus = (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
-            else:
-                factor_minus = 0
+            factor_minus = Theta_minus * (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
 
             T_rho_t_source_sum += exp(-c * t / mean_free_path) * (
                 1 / (4 * pi * r_plus**2) * Delta_plus
@@ -183,11 +153,11 @@ def Reflectance_Transmittance_rho_t(
     # print(R_rho_t)
     R_rho_t *= 1e-6 * 1e-12
     T_rho_t *= 1e-6 * 1e-12
-    R_rho_t = R_rho_t if R_rho_t > 0 else 0
-    T_rho_t = T_rho_t if T_rho_t > 0 else 0
+    R_rho_t = R_rho_t * (R_rho_t > 0)
+    T_rho_t = T_rho_t * (T_rho_t > 0)
 
-    R_rho_t = R_rho_t if t > 0 else 0
-    T_rho_t = T_rho_t if t > 0 else 0
+    R_rho_t = R_rho_t * (t > 0)
+    T_rho_t = T_rho_t * (t > 0)
 
     return R_rho_t, T_rho_t
 
