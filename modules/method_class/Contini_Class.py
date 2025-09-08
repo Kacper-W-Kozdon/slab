@@ -553,6 +553,9 @@ class Contini(BaseClass):
         else:
             return None
 
+    def __call__(self, *args, **kwargs):
+        return self.forward(*args, **kwargs)
+
     def __fit(
         self,
         inputs: Union[
