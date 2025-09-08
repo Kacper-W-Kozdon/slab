@@ -7,7 +7,6 @@ class BaseClass(ABC):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         ...
 
-    @abstractmethod
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self.forward(*args, **kwargs)
 
