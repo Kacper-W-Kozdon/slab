@@ -1,7 +1,9 @@
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 import torch
+from scipy.signal import convolve
 from torch.nn import Module
 
 from ..other.utils import A_parameter, Image_Sources_Positions, Mean_Path_T_R
@@ -46,6 +48,7 @@ class tContini(Module):
         values_to_fit: Optional[Union[List[str], Any]] = None,
         free_params: Optional[Union[List[str], Any]] = None,
         offset: Optional[float] = None,
+        scaling: Optional[float] = None,
         controls: Union[Dict[Any, Any], None] = None,
     ) -> None:
         """
@@ -79,12 +82,17 @@ class tContini(Module):
         :type free_params: Union[List[str], Any]
         :param log_scale: bool that controls whether the outputs are rescaled with log. Default: None.
         :type log_scale: Union[bool, None]
+        :param controls: A dict collecting all the parameters controlling the forward pass and the fit.
+        :type controls: Union[Dict[Any, Any], None]
+        :param scaling: Linear scaling in the fit.
+        :type scaling: Optional[float]
         """
         super().__init__()
 
         self._mua = None if not mua else mua * 1e3
         self._musp = None if not musp else musp * 1e3
-        self._offset = offset or 0
+        self._offset = offset or 0.0
+        self._scaling = scaling or 0.0
         if controls:
             self.controls = controls
         else:
@@ -107,6 +115,19 @@ class tContini(Module):
             }
 
         # print(f"---INIT---\n{self._mua, self._musp, self._offset}")
+
+    @property
+    def scaling(self) -> Union[None, float]:
+        return self._scaling
+
+    @scaling.setter
+    def scaling(self, value: float) -> None:
+        if value is not None:
+            self._scaling = value
+
+    @scaling.deleter
+    def scaling(self) -> None:
+        self._scaling = 0.0
 
     @property
     def mua(self) -> Union[None, float]:
@@ -148,7 +169,7 @@ class tContini(Module):
 
     @offset.deleter
     def offset(self) -> None:
-        self._offset = 0
+        self._offset = 0.0
 
     def evaluate(
         self,
@@ -268,8 +289,192 @@ class tContini(Module):
         """
         self.forward()
 
-    def forward(self) -> Any:
-        pass
+    def forward(
+        self,
+        inputs: Union[
+            Tuple[Any, Any],
+            List[Tuple[float, float]],
+            List[Tuple[int, int]],
+            List[Tuple[int, float]],
+            List[Tuple[float, int]],
+            pd.DataFrame,
+        ],
+        *args: Any,
+        **kwargs: Any,
+    ) -> Union[List[float], Dict[Any, Any], float, int, None]:
+        """
+        The call method returning the function used for scipy.curve_fit().
+
+        :param t_rho_array_like: Variables of the model in the form List[(time, radial_coordinate), ...], passed as xdata to scipy.curve_fit(f, ydata, xdata, params).
+        :type t_rho_array_like: Union[List[Tuple[float, float]], List[Tuple[int, int]], List[Tuple[int, float]], List[Tuple[float, int]], pd.DataFrame]
+        :param normalize: Controls whether normalization is applied to the output.
+        :type normalize: bool
+        :param args: An iterable of the free_parameters for fitting in the order (mua, musp). The parameters have to match the free_params param. Anisothropy_coeff to be added.
+        :type args: Any
+        :param kwargs: Optional kwargs:
+                       mode: available values: "approx", "sum", "correction", "mixed"- controls G_function's computation method.
+                       kwargs supported by the scipy.curve_fit() method
+        :type kwargs: Any
+
+        Returns:
+        A dictionary with keys as passed in the values_to_fit param or a Union[float, List[float]] if a single value was provided.
+
+        """
+
+        t_rho_array_like = inputs
+
+        values_to_fit: Union[List[str], Any] = self.controls.get("values_to_fit") or [
+            "T_rho_t"
+        ]
+        free_params: Union[List[str], Any] = self.controls.get("free_params") or [
+            "musp",
+            "offset",
+            "scaling",
+        ]
+        normalize: Union[Any, bool] = self.contorls.get("normalize") or False
+        if kwargs.get("normalize") is not None:
+            normalize = kwargs.get("normalize")  # noqa: F841
+
+        log_scale: Union[Any, bool] = self.log_scale or False
+        if kwargs.get("log_scale") is not None:
+            log_scale = kwargs.get("log_scale")
+
+        IRF: pd.DataFrame = (
+            self.controls.get("IRF")
+            if self.controls.get("IRF") is not None
+            else kwargs.get("IRF")
+        )
+
+        available_values = [
+            "R_rho_t",
+            "T_rho_t",
+            "R_rho",
+            "T_rho",
+            "R_t",
+            "T_t",
+            "l_rho_R",
+            "l_rho_T",
+        ]
+        available_free_params = ["mua", "musp", "offset", "scaling"]
+
+        if not all([param in available_free_params for param in free_params]):
+            raise ValueError(
+                f"Obtained params: {free_params} not in the list of params available for fitting."
+            )
+
+        if not all([value in available_values for value in values_to_fit]):
+            raise ValueError(
+                f"Obtained values: {values_to_fit} not in the list of values available for fitting."
+            )
+
+        ret: Union[Dict[Any, Any], Any] = None
+        args_list = list(args)
+
+        if not args:
+            args_list = [self._mua, self._musp, self._offset, self._scaling]
+
+        for param_index, param in enumerate(available_free_params):
+            if (param not in free_params) and args:
+                param_value: Any = None
+                if param_index == 0:
+                    param_value = self._mua
+                if param_index == 1:
+                    param_value = self._musp
+                if param_index == 2:
+                    param_value = self._offset
+                if param_index == 3:
+                    param_value = self._scaling
+                try:
+                    args_list.insert(param_index, param_value)
+                except UnboundLocalError as exc:
+                    print(UnboundLocalError)
+                    print(param_index)
+                    raise UnboundLocalError from exc
+
+        index_offset = available_free_params.index("offset")
+        index_scaling = available_free_params.index("scaling")
+        offset = args_list[index_offset] or self._offset
+        scaling = args_list[index_scaling] or self._scaling
+        for arg_index, arg in enumerate(args_list):
+            if arg_index in [index_offset, index_scaling]:
+                continue
+            arg = 0 if arg is None else arg
+            args_list[arg_index] = 1e-3 * arg
+        args = tuple(args_list)
+
+        value: Any
+
+        if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
+            ret = {}
+
+            for value in values_to_fit:
+                index = int(values_to_fit.index(str(value)))
+                ret[value] = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
+
+                if IRF is not None:
+                    ret[value] = convolve(ret[value], IRF, mode="same")
+                if normalize:
+                    max_ret = np.max(ret[value]) or 1
+                    scaling = scaling or self._max_ydata / max_ret
+                    ret[value] = scaling * np.array(ret[value]) + offset
+
+                if log_scale:
+                    ret = np.log(ret - np.min(ret[value]) + 1)
+
+            return ret
+
+        elif isinstance(values_to_fit, list) and len(values_to_fit) == 1:
+            for value in values_to_fit:
+                index = int(available_values.index(str(value)))
+                ret = []
+                ret = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
+                ret = np.array([float(ret_elem) for ret_elem in ret])
+
+                if IRF is not None:
+                    IRF = (
+                        IRF
+                        if (not isinstance(IRF, pd.DataFrame))
+                        else [float(value) for value in IRF.values]
+                    )
+
+                    try:
+                        ret = convolve(ret, IRF, mode="same")
+                    except Exception as e:
+                        print("---ERROR---")
+                        print(e)
+                        irf = [value for value in IRF.values]
+                        print(type(IRF))
+                        print(irf)
+                        print("---END ERROR---")
+                if normalize:
+                    max_ret = np.max(ret) or 1
+                    scaling = scaling or self._max_ydata / max_ret
+                    print(f"scaling: {scaling}")
+                    ret = scaling * np.array(ret) + offset
+
+                if log_scale:
+                    ret = np.log(ret - np.min(ret) + 1)
+
+            return ret
+
+        elif isinstance(values_to_fit, str):
+            index = available_values.index(values_to_fit)
+            ret = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
+
+            if IRF is not None:
+                ret = convolve(ret, IRF, mode="same")
+            if normalize:
+                max_ret = np.max(ret) or 1
+                scaling = scaling or self._max_ydata / max_ret
+                ret = scaling * np.array(ret) + offset
+
+            if log_scale:
+                ret = np.log(ret - np.min(ret) + 1)
+
+            return ret
+
+        else:
+            return None
 
     # def __call__(
     #     self,
