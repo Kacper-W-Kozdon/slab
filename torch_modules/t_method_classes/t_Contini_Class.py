@@ -298,6 +298,7 @@ class tContini(Module):
             List[Tuple[int, float]],
             List[Tuple[float, int]],
             pd.DataFrame,
+            torch.Tensor,
         ],
         *args: Any,
         **kwargs: Any,
@@ -331,11 +332,11 @@ class tContini(Module):
             "offset",
             "scaling",
         ]
-        normalize: Union[Any, bool] = self.contorls.get("normalize") or False
+        normalize: Union[Any, bool] = self.controls.get("normalize") or False
         if kwargs.get("normalize") is not None:
             normalize = kwargs.get("normalize")  # noqa: F841
 
-        log_scale: Union[Any, bool] = self.log_scale or False
+        log_scale: Union[Any, bool] = self.controls.get("log_scale") or False
         if kwargs.get("log_scale") is not None:
             log_scale = kwargs.get("log_scale")
 
@@ -403,6 +404,7 @@ class tContini(Module):
         args = tuple(args_list)
 
         value: Any
+        max_ydata = self.controls.get("ydata_info").get("max_ydata")
 
         if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
             ret = {}
@@ -415,7 +417,7 @@ class tContini(Module):
                     ret[value] = convolve(ret[value], IRF, mode="same")
                 if normalize:
                     max_ret = np.max(ret[value]) or 1
-                    scaling = scaling or self._max_ydata / max_ret
+                    scaling = scaling or max_ydata / max_ret
                     ret[value] = scaling * np.array(ret[value]) + offset
 
                 if log_scale:
@@ -448,7 +450,7 @@ class tContini(Module):
                         print("---END ERROR---")
                 if normalize:
                     max_ret = np.max(ret) or 1
-                    scaling = scaling or self._max_ydata / max_ret
+                    scaling = scaling or max_ydata / max_ret
                     print(f"scaling: {scaling}")
                     ret = scaling * np.array(ret) + offset
 
@@ -465,7 +467,7 @@ class tContini(Module):
                 ret = convolve(ret, IRF, mode="same")
             if normalize:
                 max_ret = np.max(ret) or 1
-                scaling = scaling or self._max_ydata / max_ret
+                scaling = scaling or max_ydata / max_ret
                 ret = scaling * np.array(ret) + offset
 
             if log_scale:
@@ -476,401 +478,34 @@ class tContini(Module):
         else:
             return None
 
-    # def __call__(
-    #     self,
-    #     t_rho: Union[Tuple[float, float], List[Tuple[float, float],]],
-    #     mua: Union[int, float, None] = None,
-    #     musp: Union[int, float, None] = None,
-    #     offset: Union[int, float] = 0,
-    #     anisothropy_coeff: Union[int, float, None] = None,
-    #     **kwargs: Any,
-    # ) -> Union[Tuple[Any, ...], Tuple[List[Any], ...]]:
-    #     """
-    #     The call method evaluating parameters of the Contini model.
-
-    #     :param t_rho: Variables of the model in the form (time, radial_coordinate).
-    #     :type t_rho: Union[Tuple[float, float], List[Tuple[float, float]]]
-    #     :param mua: Absorption coefficient of the slab in [mm^-1]. Default: None.
-    #     :type mua: Union[int, float]
-    #     :param musp: Reduced scattering coefficient of the slab in [mm^-1]. Default: None.
-    #     :type musp: Union[int, float]
-    #     :param anisothropy_coeff: The anisothropy coefficient g. musp = (1 - g) * mus. Default: 0.85
-    #     :type anisothropy_coeff: Union[int, float, None]
-    #     :param kwargs: Optional kwargs:
-    #                    mode: available values: "approx", "sum"- controls G_function's computation method.
-    #     :type kwargs: Any
-
-    #     Returns:
-    #     R_rho_t: time resolved reflectance mm^(-2) ps^(-1)
-    #     T_rho_t: time resolved transmittance mm^(-2) ps^(-1)
-    #     R_rho: reflectance mm^(-2)
-    #     T_rho: transmittance mm^(-2)
-    #     R_t: ps^(-1)
-    #     T_t: ps^(-1)
-    #     l_rho_R: mean free path (reflected) mm
-    #     l_rho_T: mean free path (transmitted) mm
-    #     R: to be added
-    #     T: to be added
-    #     A: A parameter
-    #     Z: Positions of the source images
-
-    #     """
-    #     if isinstance(t_rho, tuple):
-    #         # mua = mua * 1e3 if self._mua is None else self._mua
-    #         # musp = musp * 1e3 if self._musp is None else self._musp
-
-    #         if mua is None:
-    #             mua = self._mua
-    #         else:
-    #             mua = 1e3 * mua
-    #         if musp is None:
-    #             musp = self._musp
-    #         else:
-    #             musp = 1e3 * musp
-
-    #         anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
-
-    #         t = t_rho[0] * 1e-12
-    #         rho = t_rho[1] * 1e-3
-    #         s = self._s
-    #         n1 = self.n1
-    #         n2 = self.n2
-    #         phantom = self.phantom  # noqa: F841
-    #         DD = self.DD
-    #         m = self.m
-    #         eq = self.eq
-    #         # print(mua, musp)
-
-    #         R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
-    #             rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff, **kwargs
-    #         )
-    #         # print(rho, t, mua, musp, R_rho_t)
-
-    #         R_rho, T_rho = Reflectance_Transmittance_rho(
-    #             rho, mua, musp, s, m, n1, n2, DD, eq
-    #         )
-
-    #         R_t, T_t = Reflectance_Transmittance_t(t, mua, musp, s, m, n1, n2, DD, eq)
-
-    #         l_rho_R, l_rho_T = Mean_Path_T_R(rho, mua, musp, s, m, n1, n2, DD, eq)
-
-    #         R, T = Reflectance_Transmittance(mua, musp, s, m, n1, n2, DD, eq)
-
-    #         A = A_parameter(n1, n2)
-
-    #         Z = Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq)
-
-    #         return (
-    #             R_rho_t,
-    #             T_rho_t,
-    #             R_rho,
-    #             T_rho,
-    #             R_t,
-    #             T_t,
-    #             l_rho_R,
-    #             l_rho_T,
-    #             R,
-    #             T,
-    #             A,
-    #             Z,
-    #         )
-
-    #     else:
-    #         R_rho_t = []
-    #         T_rho_t = []
-    #         R_rho = []
-    #         T_rho = []
-    #         R_t = []
-    #         T_t = []
-    #         l_rho_R = []
-    #         l_rho_T = []
-    #         R = []
-    #         T = []
-    #         A = []
-    #         Z = []
-    #         # mua = mua * 1e3 if self._mua is None else self._mua
-    #         # musp = musp * 1e3 if self._musp is None else self._musp
-    #         if mua is None:
-    #             mua = self._mua
-    #         else:
-    #             mua = 1e3 * mua
-    #         if musp is None:
-    #             musp = self._musp
-    #         else:
-    #             musp = 1e3 * musp
-    #         anisothropy_coeff = anisothropy_coeff or self.anisothropy_coeff
-
-    #         for value in t_rho:
-    #             t = value[0] * 1e-12
-    #             rho = value[1] * 1e-3
-    #             s = self._s
-    #             n1 = self.n1
-    #             n2 = self.n2
-    #             phantom = self.phantom  # noqa: F841
-    #             DD = self.DD
-    #             m = self.m
-    #             eq = self.eq
-
-    #             R_rho_t_, T_rho_t_ = Reflectance_Transmittance_rho_t(
-    #                 rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff
-    #             )
-    #             # print(R_rho_t)
-    #             R_rho_t.append(R_rho_t_)
-    #             T_rho_t.append(T_rho_t_)
-
-    #             R_rho_, T_rho_ = Reflectance_Transmittance_rho(
-    #                 rho, mua, musp, s, m, n1, n2, DD, eq
-    #             )
-    #             R_rho.append(R_rho_)
-    #             T_rho.append(T_rho_)
-
-    #             R_t_, T_t_ = Reflectance_Transmittance_t(
-    #                 t, mua, musp, s, m, n1, n2, DD, eq
-    #             )
-    #             R_t.append(R_t_)
-    #             T_t.append(T_t_)
-
-    #             l_rho_R_, l_rho_T_ = Mean_Path_T_R(rho, mua, musp, s, m, n1, n2, DD, eq)
-    #             l_rho_R.append(l_rho_R_)
-    #             l_rho_T.append(l_rho_T_)
-
-    #             R_, T_ = Reflectance_Transmittance(mua, musp, s, m, n1, n2, DD, eq)
-    #             R.append(R_)
-    #             T.append(T_)
-
-    #             A_ = A_parameter(n1, n2)
-    #             A.append(A_)
-
-    #             Z_ = Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq)
-    #             Z.append(Z_)
-
-    #         return (
-    #             R_rho_t,
-    #             T_rho_t,
-    #             R_rho,
-    #             T_rho,
-    #             R_t,
-    #             T_t,
-    #             l_rho_R,
-    #             l_rho_T,
-    #             R,
-    #             T,
-    #             A,
-    #             Z,
-    #         )
-
-    # def fit_settings(
-    #     self,
-    #     values_to_fit: Union[List[str], Any] = None,
-    #     free_params: Union[List[str], Any] = None,
-    #     normalize: Union[bool, None] = None,
-    #     log_scale: Union[bool, None] = None,
-    #     *args: Any,
-    #     **kwargs: Any,
-    # ) -> None:
-    #     """
-    #     Updates fit settings.
-    #     :param values_to_fit: Values passed to scipy.curve_fit(f, ydata, xdata, params) as ydata.
-    #     :type values_to_fit: Union[List[str], Any]
-    #     :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
-    #     :type free_params: Union[List[str], Any]
-    #     :param log_scale: bool that controls whether the outputs are rescaled with log. Default: None.
-    #     :type log_scale: Union[bool, None]
-    #     """
-    #     self.values_to_fit = values_to_fit or self.values_to_fit
-    #     self.free_params = free_params or self.free_params
-    #     self.normalize = normalize if normalize is not None else self.normalize
-    #     self.log_scale = log_scale if log_scale is not None else self.log_scale
-
-    # def forward(
-    #     self,
-    #     t_rho_array_like: List[Tuple[float, float]],
-    #     *args: Any,
-    #     **kwargs: Any,
-    # ) -> Union[float, int, None, List[float], Dict[Any, Any]]:
-    #     """
-    #     The call method returning the function used for scipy.curve_fit().
-
-    #     :param t_rho_array_like: Variables of the model in the form List[(time, radial_coordinate), ...], passed as xdata to scipy.curve_fit(f, ydata, xdata, params).
-    #     :type t_rho_array_like: List[Tuple[float, float]]
-    #     :param normalize: Controls whether normalization is applied to the output.
-    #     :type normalize: bool
-    #     :param args: An iterable of the free_parameters for fitting in the order (mua, musp). The parameters have to match the free_params param. Anisothropy_coeff to be added.
-    #     :type args: Any
-    #     :param kwargs: Optional kwargs:
-    #                    mode: available values: "approx", "sum", "correction", "mixed"- controls G_function's computation method.
-    #                    kwargs supported by the scipy.curve_fit() method
-    #     :type kwargs: Any
-
-    #     Returns:
-    #     A dictionary with keys as passed in the values_to_fit param or a Union[float, List[float]] if a single value was provided.
-
-    #     """
-
-    #     values_to_fit: Union[List[str], Any] = self.values_to_fit or ["R_rho_t"]
-    #     free_params: Union[List[str], Any] = self.free_params or ["musp", "offset"]
-    #     normalize = self.normalize or False
-    #     if kwargs.get("normalize") is not None:
-    #         normalize = kwargs.get("normalize")  # noqa: F841
-
-    #     log_scale = self.log_scale or False
-    #     if kwargs.get("log_scale") is not None:
-    #         log_scale = kwargs.get("log_scale")
-
-    #     IRF = self.IRF if self.IRF is not None else kwargs.get("IRF")
-
-    #     available_values = [
-    #         "R_rho_t",
-    #         "T_rho_t",
-    #         "R_rho",
-    #         "T_rho",
-    #         "R_t",
-    #         "T_t",
-    #         "l_rho_R",
-    #         "l_rho_T",
-    #     ]
-    #     available_free_params = ["mua", "musp", "offset"]
-
-    #     if not all([param in available_free_params for param in free_params]):
-    #         raise ValueError(
-    #             f"Obtained params: {free_params} not in the list of params available for fitting."
-    #         )
-
-    #     if not all([value in available_values for value in values_to_fit]):
-    #         raise ValueError(
-    #             f"Obtained values: {values_to_fit} not in the list of values available for fitting."
-    #         )
-
-    #     ret: Union[Dict[Any, Any], Any] = None
-    #     args_list = list(args)
-
-    #     if not args:
-    #         args_list = [self._mua, self._musp, self._offset]
-
-    #     for param_index, param in enumerate(available_free_params):
-    #         # print((param not in free_params) and args, args_list, param, param_index)
-    #         if (param not in free_params) and args:
-    #             # param_value = self._mua if param_index == 0 else self._musp
-    #             if param_index == 0:
-    #                 param_value = self._mua
-    #             if param_index == 1:
-    #                 param_value = self._musp
-    #             if param_index == 2:
-    #                 param_value = self._offset
-    #             try:
-    #                 args_list.insert(param_index, param_value)
-    #             except UnboundLocalError:
-    #                 print(UnboundLocalError)
-    #                 print(param_index)
-    #                 raise UnboundLocalError
-    #             # print(args_list)
-    #     # print(args, kwargs, args_list, free_params, available_free_params)
-
-    #     for param_index, param in enumerate(available_free_params):
-    #         if (param in free_params) and args:
-    #             # try:
-    #             args_list[param_index] = 1e3 * args_list[param_index]
-    #             # except:
-    #             #     print("---ERROR---")
-    #             #     print(args_list, param_index, args)
-
-    #     index = available_free_params.index("offset")
-    #     offset = args_list[index] or self._offset
-    #     for arg_index, arg in enumerate(args_list):
-    #         if arg_index == available_free_params.index("offset"):
-    #             continue
-    #         args_list[arg_index] = 1e-3 * arg
-    #     args = tuple(args_list)
-
-    #     # print(args)
-
-    #     value: Any
-    #     # print(values_to_fit, isinstance(values_to_fit, list) and len(values_to_fit) == 1, t_rho_array_like)
-
-    #     if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
-    #         ret = {}
-    #         for value in values_to_fit:
-    #             index = int(values_to_fit.index(str(value)))
-    #             ret[value] = self(t_rho_array_like, *args, **kwargs)[index]
-
-    #             if IRF is not None:
-    #                 ret[value] = convolve(ret[value], IRF, mode="same")
-    #             if normalize:
-    #                 max_ret = np.max(ret[value]) or 1
-    #                 ret[value] = (
-    #                     np.array(ret[value]) / max_ret * self._max_ydata + offset
-    #                 )
-
-    #             if log_scale:
-    #                 ret = np.log(ret - np.min(ret) + 1)
-
-    #         # ret = np.log(ret + 1)
-    #         return ret
-
-    #     elif isinstance(values_to_fit, list) and len(values_to_fit) == 1:
-    #         for value in values_to_fit:
-    #             index = int(available_values.index(str(value)))
-    #             ret = []
-    #             # for elem in t_rho_array_like:
-    #             #     ret.append(self(elem, *args, **kwargs)[index])
-    #             ret = self(t_rho_array_like, *args, **kwargs)[index]
-    #             ret = np.array([float(ret_elem) for ret_elem in ret])
-    #             # print(ret)
-    #             # print("---TEST RETURN---")
-    #             # print(index, ret, args)
-    #             # print(t_rho_array_like)
-    #             # print()
-
-    #             if IRF is not None:
-    #                 try:
-    #                     ret = convolve(ret, IRF, mode="same")
-    #                 except Exception as e:
-    #                     print("---ERROR---")
-    #                     print(e)
-    #                     print(args, type(t_rho_array_like))
-    #                     print(ret, IRF)
-    #                     print("---END ERROR---")
-    #             if normalize:
-    #                 # print(ret, IRF)
-    #                 max_ret = np.max(ret) or 1
-    #                 ret = np.array(ret) / max_ret * self._max_ydata + offset
-
-    #             if log_scale:
-    #                 ret = np.log(ret - np.min(ret) + 1)
-
-    #                 # except Exception:
-    #                 #     print(free_params, values_to_fit)
-    #                 #     print(
-    #                 #         t_rho_array_like[0][0],
-    #                 #         t_rho_array_like[1][0],
-    #                 #         t_rho_array_like[2][0],
-    #                 #     )
-    #                 #     print(
-    #                 #         self(t_rho_array_like, *args, **kwargs)[0],
-    #                 #         self(t_rho_array_like, *args, **kwargs)[1],
-    #                 #     )
-    #         # ret = np.log(ret + 1)
-    #         # print(ret)
-    #         return ret
-
-    #     elif isinstance(values_to_fit, str):
-    #         index = available_values.index(values_to_fit)
-    #         ret = self(t_rho_array_like, *args, **kwargs)[index]
-
-    #         if IRF is not None:
-    #             ret = convolve(ret, IRF, mode="same")
-    #         if normalize:
-    #             max_ret = np.max(ret) or 1
-    #             ret = np.array(ret) / max_ret * self._max_ydata + offset
-
-    #         if log_scale:
-    #             ret = np.log(ret - np.min(ret) + 1)
-
-    #         # ret = np.log(ret + 1)
-    #         return ret
-
-    #     else:
-    #         return None
+    def fit_settings(
+        self,
+        values_to_fit: Union[List[str], Any] = None,
+        free_params: Union[List[str], Any] = None,
+        normalize: Union[bool, None] = None,
+        log_scale: Union[bool, None] = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Updates fit settings.
+        :param values_to_fit: Values passed to scipy.curve_fit(f, ydata, xdata, params) as ydata.
+        :type values_to_fit: Union[List[str], Any]
+        :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
+        :type free_params: Union[List[str], Any]
+        :param log_scale: bool that controls whether the outputs are rescaled with log. Default: None.
+        :type log_scale: Union[bool, None]
+        """
+        self.controls["values_to_fit"] = values_to_fit or self.controls.get(
+            "values_to_fit"
+        )
+        self.controls["free_params"] = free_params or self.controls.get("free_params")
+        self.controls["normalize"] = (
+            normalize if normalize is not None else self.controls.get("normalize")
+        )
+        self.controls["log_scale"] = (
+            log_scale if log_scale is not None else self.controls.get("log_scale")
+        )
 
     # def fit(
     #     self,
