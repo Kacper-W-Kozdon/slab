@@ -13,6 +13,7 @@ from ..reflect_transmit.reflect_transmit import (
     Reflectance_Transmittance_rho_t,
     Reflectance_Transmittance_t,
 )
+from .base_class import BaseClass
 
 # import datetime
 # import pathlib
@@ -29,7 +30,7 @@ from ..reflect_transmit.reflect_transmit import (
 # )
 
 
-class tContini(Module):
+class tContini(Module, BaseClass):
     def __init__(
         self,
         s: Union[int, float] = 0,
@@ -111,7 +112,7 @@ class tContini(Module):
                 "free_params": free_params or ["mua", "musp", "offset"],
                 "log_scale": log_scale or None,
                 "err": 1 * 1e-6,
-                "ydata_info": {"max_ydata": 1, "min_ydata": 0},
+                "ydata_info": {"_max_ydata": 1, "min_ydata": 0},
             }
 
         # print(f"---INIT---\n{self._mua, self._musp, self._offset}")
@@ -404,7 +405,7 @@ class tContini(Module):
         args = tuple(args_list)
 
         value: Any
-        max_ydata = self.controls.get("ydata_info").get("max_ydata")
+        max_ydata = self.controls.get("ydata_info").get("_max_ydata")
 
         if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
             ret = {}

@@ -22,6 +22,17 @@ if __name__ == "__main__":
 
     old_todo_text = ""
 
+    TODO_md_file = pathlib.Path(f"{proj_path}\\TODO.md")
+
+    if not TODO_md_file.is_file():
+        file = open(f"{proj_path}\\TODO.md", "w")
+        file.close()
+
+    TODO_txt_file = pathlib.Path(f"{proj_path}\\TODO.txt")
+    if not TODO_txt_file.is_file():
+        file = open(f"{proj_path}\\TODO.md", "w")
+        file.close()
+
     with open(f"{proj_path}\\TODO.txt", "r") as old_todo:
         for line in old_todo:
             old_todo_text += f"{str(line)}"
@@ -41,7 +52,7 @@ if __name__ == "__main__":
     readmemd_text = "# SLAB Project \n ## TODO list: \n"
     readmemd_text_old = ""
 
-    with open(f"{proj_path}\\README.md", "r") as READMEmd_old:
+    with open(f"{proj_path}\\TODO.md", "r") as READMEmd_old:
         finished_marker = "  - [x] "
 
         for line_readme_old in READMEmd_old:
@@ -55,7 +66,7 @@ if __name__ == "__main__":
                 print(exc)
                 pass
 
-    with open(f"{proj_path}\\README.md", "w+") as READMEmd_out:
+    with open(f"{proj_path}\\TODO.md", "w+") as READMEmd_out:
         starting_index = len("  - [x] ") + 1
 
         for line_readme in old_todo_text.split("\n"):
@@ -71,7 +82,7 @@ if __name__ == "__main__":
                 print(exc)
                 pass
 
-        with open(f"{proj_path}\\TODO.md", "r") as READMEmd_in:
+        with open(f"{proj_path}\\TODO.txt", "r") as READMEmd_in:
             for line_todo in READMEmd_in:
                 if "# SLAB Project" in line_todo or "## TODO list:" in line_todo:
                     continue

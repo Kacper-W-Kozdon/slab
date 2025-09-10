@@ -11,6 +11,36 @@ print(pathlib.Path(__file__).resolve(), pathlib.Path(__file__).resolve().parent)
 plt.ion()
 
 
+def test_init() -> None:
+    """
+    Test __init__ for regular and torch variant.
+    """
+    contini = Contini()
+    torch_contini = tContini()
+    methods = set(
+        [
+            attr if not (callable(getattr(contini, attr))) else None
+            for attr in dir(contini)
+        ]
+    )
+    torch_methods = set(
+        [
+            attr if not (callable(getattr(torch_contini, attr))) else None
+            for attr in dir(torch_contini)
+        ]
+    )
+
+    test = [
+        (
+            str(attr) in str(torch_methods)
+            or str(attr) in str(list(torch_contini.controls.keys()))
+            or str(attr) in str(list(torch_contini.controls.get("ydata_info").keys()))
+        )
+        for attr in methods
+    ]
+    assert all(test), "Attributes mismatch between tContini and Contini in test_init()."
+
+
 def test_plot() -> None:
     """
     Test plots.
