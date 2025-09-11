@@ -33,11 +33,11 @@ from .base_class import BaseClass
 class tContini(Module, BaseClass):
     def __init__(
         self,
-        s: Union[int, float] = 0,
+        s: Union[int, float, None] = None,
         mua: Union[int, float, None] = None,
         musp: Union[int, float, None] = None,
-        n1: Union[int, float] = 0,
-        n2: Union[int, float] = 0,
+        n1: Union[int, float, None] = None,
+        n2: Union[int, float, None] = None,
         anisothropy_coeff: Union[int, float, None] = None,
         phantom: Optional[str] = "",
         DD: Optional[str] = "",
@@ -98,18 +98,18 @@ class tContini(Module, BaseClass):
             self.controls = controls
         else:
             self.controls = {
-                "s": s * 1e-3 or 40 * 1e-3,
-                "n1": n1 or 1,
-                "n2": n2 or 1,
+                "_s": s * 1e-3 if s is not None else 0,  # 40 * 1e-3,
+                "n1": n1 if n1 is not None else 0,
+                "n2": n2 if n2 is not None else 0,
                 "phantom": phantom or "",
                 "anisothropy_coeff": anisothropy_coeff or 0.85,
-                "DD": DD or "Dmus",
+                "DD": DD or "Dmuas",
                 "m": m or 100,
                 "eq": eq or "RTE",
                 "IRF": IRF or None,
                 "normalize": normalize or True,
-                "values_to_fit": values_to_fit or ["R_rho_t"],
-                "free_params": free_params or ["mua", "musp", "offset"],
+                "values_to_fit": values_to_fit or ["T_rho_t"],
+                "free_params": free_params or ["mua", "musp", "offset", "scaling"],
                 "log_scale": log_scale or None,
                 "err": 1 * 1e-6,
                 "ydata_info": {"_max_ydata": 1, "min_ydata": 0},
@@ -243,7 +243,7 @@ class tContini(Module, BaseClass):
 
         t = t_rho[0] * 1e-12
         rho = t_rho[1] * 1e-3
-        s = kwargs.get("s") or self.controls.get("s")
+        s = kwargs.get("s") or self.controls.get("_s")
         n1 = kwargs.get("n1") or self.controls.get("n1")
         n2 = kwargs.get("n2") or self.controls.get("n2")
         phantom = kwargs.get("phantom") or self.controls.get("phantom")  # noqa: F841
