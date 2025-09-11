@@ -85,8 +85,8 @@ class Contini(BaseClass):
         self.IRF = IRF
         self.normalize = normalize
         self.values_to_fit = values_to_fit or ["T_rho_t"]
-        self.free_params = free_params or ["musp", "offset", "scaling"]
-        self.ydata_info: Dict[Any, Any] = {}
+        self.free_params = free_params or ["mua", "musp", "offset", "scaling"]
+        self.ydata_info: Dict[Any, Any] = {"_max_ydata": 1, "min_ydata": 0}
         self._offset = 0.0
         self._scaling = 0.0
         self._max_ydata = 1.0
