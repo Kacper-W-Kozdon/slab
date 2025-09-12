@@ -3,6 +3,7 @@ import unittest
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import pytest
 from modules import Contini
 from torch_modules import tContini
 
@@ -11,45 +12,87 @@ print(pathlib.Path(__file__).resolve(), pathlib.Path(__file__).resolve().parent)
 plt.ion()
 
 
-def test_init_methods() -> None:
+@pytest.fixture
+def initial_params():
+    initial_params = {
+        "mua": 0.0,
+        "musp": 0.5,
+        "offset": 40,
+        "scaling": 0.9,
+        "lower_bounds": [0, 0, 20],
+        "upper_bounds": [1, 1, 80],
+    }
+    return initial_params
+
+
+@pytest.fixture
+def default_contini():
+    return Contini()
+
+
+@pytest.fixture
+def default_torch_contini():
+    return tContini()
+
+
+@pytest.fixture
+def contini(initial_params):
+    s = 3
+    contini = Contini(
+        s=s, mua=initial_params["mua"], musp=initial_params["musp"], n2=1, n1=1
+    )
+    return contini
+
+
+@pytest.fixture
+def torch_contini(initial_params):
+    s = 3
+    torch_contini = tContini(
+        s=s, mua=initial_params["mua"], musp=initial_params["musp"], n2=1, n1=1
+    )
+    return torch_contini
+
+
+def test_init_methods(default_contini, default_torch_contini) -> None:
     """
     Test __init__ for regular and torch variant.
     """
-    contini = Contini()
-    torch_contini = tContini()
+    # contini = Contini()
+    # torch_contini = tContini()
     methods = set(
         [
-            attr if not (callable(getattr(contini, attr))) else None
-            for attr in dir(contini)
+            attr if not (callable(getattr(default_contini, attr))) else None
+            for attr in dir(default_contini)
         ]
     )
     torch_methods = set(
         [
-            attr if not (callable(getattr(torch_contini, attr))) else None
-            for attr in dir(torch_contini)
+            attr if not (callable(getattr(default_torch_contini, attr))) else None
+            for attr in dir(default_torch_contini)
         ]
     )
 
     test = [
         (
             str(attr) in str(torch_methods)
-            or str(attr) in str(list(torch_contini.controls.keys()))
-            or str(attr) in str(list(torch_contini.controls.get("ydata_info").keys()))
+            or str(attr) in str(list(default_torch_contini.controls.keys()))
+            or str(attr)
+            in str(list(default_torch_contini.controls.get("ydata_info").keys()))
         )
         for attr in methods
     ]
     assert all(test), "Attributes mismatch between tContini and Contini in test_init()."
 
 
-def test_init_defaults() -> None:
+def test_init_defaults(default_contini, default_torch_contini) -> None:
     """
     Tests default values for tContini and Contini.
     """
 
-    contini = Contini()
-    torch_contini = tContini()
-    torch_contini_dict = torch_contini.__dict__
-    contini_dict = contini.__dict__
+    # contini = Contini()
+    # torch_contini = tContini()
+    torch_contini_dict = default_torch_contini.__dict__
+    contini_dict = default_contini.__dict__
 
     test_dict = [
         (
@@ -65,7 +108,7 @@ def test_init_defaults() -> None:
     ), "Mismatch in default __init__ attributes in test_init_defaults()."
 
 
-def test_plot() -> None:
+def test_plot(contini, torch_contini) -> None:
     """
     Test plots.
     """
@@ -73,7 +116,6 @@ def test_plot() -> None:
     assertions = unittest.TestCase("__init__")
 
     rho = 5
-    s = 3
 
     xdata = []
     for t_index, t in enumerate(range(1, 311, 2)):
@@ -89,23 +131,6 @@ def test_plot() -> None:
     #     "lower_bounds": [0, 0, 20],
     #     "upper_bounds": [1, 1, 80],
     # }
-
-    initial_params = {
-        "mua": 0.0,
-        "musp": 0.5,
-        "offset": 40,
-        "scaling": 0.9,
-        "lower_bounds": [0, 0, 20],
-        "upper_bounds": [1, 1, 80],
-    }
-
-    contini = Contini(
-        s=s, mua=initial_params["mua"], musp=initial_params["musp"], n2=1, n1=1
-    )
-
-    torch_contini = tContini(
-        s=s, mua=initial_params["mua"], musp=initial_params["musp"], n2=1, n1=1
-    )
 
     contini.values_to_fit = ["R_rho_t"]
     torch_contini.controls["values_to_fit"] = ["R_rho_t"]
