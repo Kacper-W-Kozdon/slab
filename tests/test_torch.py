@@ -1,5 +1,6 @@
 import pathlib
 import unittest
+from typing import Any, NewType
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -11,10 +12,13 @@ print("\n\n")
 print(pathlib.Path(__file__).resolve(), pathlib.Path(__file__).resolve().parent)
 plt.ion()
 
+FixtureType = NewType("FixtureType", type)
+
 
 @pytest.fixture
-def initial_params():
-    initial_params = {
+def initial_params() -> dict[str, Any]:
+    """Initial params fixture."""
+    ret = {
         "mua": 0.0,
         "musp": 0.5,
         "offset": 40,
@@ -22,38 +26,44 @@ def initial_params():
         "lower_bounds": [0, 0, 20],
         "upper_bounds": [1, 1, 80],
     }
-    return initial_params
+    return ret
 
 
 @pytest.fixture
-def default_contini():
+def default_contini() -> Contini:
+    """Default Contini fixture."""
     return Contini()
 
 
 @pytest.fixture
-def default_torch_contini():
+def default_torch_contini() -> tContini:
+    """Default tContini fixture."""
     return tContini()
 
 
 @pytest.fixture
-def contini(initial_params):
+def contini(initial_params: FixtureType) -> Contini:
+    """Contini fixture."""
     s = 3
-    contini = Contini(
+    ret = Contini(
         s=s, mua=initial_params["mua"], musp=initial_params["musp"], n2=1, n1=1
     )
-    return contini
+    return ret
 
 
 @pytest.fixture
-def torch_contini(initial_params):
+def torch_contini(initial_params: FixtureType) -> tContini:
+    """tContini fixture."""
     s = 3
-    torch_contini = tContini(
+    ret = tContini(
         s=s, mua=initial_params["mua"], musp=initial_params["musp"], n2=1, n1=1
     )
-    return torch_contini
+    return ret
 
 
-def test_init_methods(default_contini, default_torch_contini) -> None:
+def test_init_methods(
+    default_contini: FixtureType, default_torch_contini: FixtureType
+) -> None:
     """
     Test __init__ for regular and torch variant.
     """
@@ -84,7 +94,9 @@ def test_init_methods(default_contini, default_torch_contini) -> None:
     assert all(test), "Attributes mismatch between tContini and Contini in test_init()."
 
 
-def test_init_defaults(default_contini, default_torch_contini) -> None:
+def test_init_defaults(
+    default_contini: FixtureType, default_torch_contini: FixtureType
+) -> None:
     """
     Tests default values for tContini and Contini.
     """
@@ -108,7 +120,7 @@ def test_init_defaults(default_contini, default_torch_contini) -> None:
     ), "Mismatch in default __init__ attributes in test_init_defaults()."
 
 
-def test_plot(contini, torch_contini) -> None:
+def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
     """
     Test plots.
     """
