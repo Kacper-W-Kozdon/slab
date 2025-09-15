@@ -1,3 +1,6 @@
 # SLAB Project
  ## TODO list:
+ Clean up type hints in methods in Contini.
  Try to move more methods and attributes into BaseClass and put it in a separate module.
+ Clean up type hints in methods in tContini.
+ Add a webhook to automatically update the list of issues on GitHub.

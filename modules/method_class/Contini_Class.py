@@ -2,7 +2,7 @@ import copy
 import datetime
 import pathlib
 from collections.abc import Iterable
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -553,22 +553,46 @@ class Contini(BaseClass):
         else:
             return None
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        """
+        Invokes the forward method.
+        """
         return self.forward(*args, **kwargs)
 
     def __fit(
         self,
+        fun: Callable[..., Any],
         inputs: Union[
             pd.DataFrame, List[float], List[int], List[Tuple[Union[float, int], ...]]
         ],
-        outputs: Iterable,
-        initial_free_params: Iterable,
+        outputs: Iterable[Any],
+        initial_free_params: Iterable[Any],
         bounds: Union[List[Union[float, int]], Tuple[Union[float, int], ...]],
         *args: Any,
         **kwargs: Any,
     ) -> Tuple[Any, ...]:
+        """
+        The method to obtain the fit parameters. To be updated with control flow for fitting methods other than curve_fit().
+
+        :param fun: Forward function for callback.
+        :type fun: Callable[Any].
+        :param inputs: Input data for the fitting function.
+        :type inputs: Union[
+            pd.DataFrame, List[float], List[int], List[Tuple[Union[float, int], ...]]
+        ].
+        :param outputs: Labels or expected outputs for the fitting function.
+        :type outputs: Iterable[Any].
+        :param initial_free_params: Free parameters for the fitting function.
+        :type initial_free_params: Iterably[Any].
+        :param bounds: Bounds on the initial_free_params.
+        :type bounds: Union[List[Union[float, int]], Tuple[Union[float, int], ...]].
+        :param args: Optional args for the fitting function.
+        :type args: Any.
+        :param kwargs: Optional kwargs for the fitting function.
+        :type kwargs: Any.
+        """
         popt, pcov, *_ = curve_fit(
-            self.forward,
+            fun,
             inputs,
             outputs,
             initial_free_params,
@@ -825,3 +849,7 @@ class Contini(BaseClass):
 
     def _convolve(self, *args: Any, **kwargs: Any) -> None:
         return NotImplemented
+
+    # TODO: Clean up type hints in methods in Contini.
+
+    # TODO: Add a webhook to automatically update the list of issues on GitHub.
