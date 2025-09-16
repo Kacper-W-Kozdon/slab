@@ -839,16 +839,16 @@ class Contini(BaseClass):
         return popt, pcov
 
     def load_data(self, *args: Any, **kwargs: Any) -> None:
-        return NotImplemented
+        raise NotImplementedError
 
     def _load_IRF(self, *args: Any, **kwargs: Any) -> None:
-        return NotImplemented
+        raise NotImplementedError
 
     def load_xdata(self, *args: Any, **kwargs: Any) -> None:
-        return NotImplemented
+        raise NotImplementedError
 
     def _convolve(self, *args: Any, **kwargs: Any) -> None:
-        return NotImplemented
+        raise NotImplementedError
 
     # TODO: Clean up type hints in methods in Contini.
 
