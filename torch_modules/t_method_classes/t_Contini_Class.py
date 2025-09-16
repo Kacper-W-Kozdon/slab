@@ -1,7 +1,7 @@
 import copy
 import datetime
 import pathlib
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, OrderedDict, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -119,7 +119,8 @@ class tContini(Module, BaseClass):
                 "err": 1 * 1e-6,
                 "ydata_info": {"_max_ydata": 1, "min_ydata": 0},
             }
-        self.model: type(nn.Sequential) = None
+        self.model: Union[nn.Sequential, None] = None
+        self.model_controls: dict[str, Union[int, float, torch.Tensor]] = {}
 
         # print(f"---INIT---\n{self._mua, self._musp, self._offset}")
 
@@ -514,18 +515,46 @@ class tContini(Module, BaseClass):
             log_scale if log_scale is not None else self.controls.get("log_scale")
         )
 
-    def set_up_model(self, *args: Any, **kwargs: Any) -> None:
+    def set_up_model(
+        self,
+        initial_free_params: List[str],
+        inputs_dim: Union[int],
+        *args: Any,
+        model: Any = None,
+        **kwargs: Any,
+    ) -> None:
         """Sets up self.model with nn.Sequential."""
+
+        num_neurons = 10
+        num_free_params = len(initial_free_params)
+
+        self.model = (
+            model
+            if model
+            else nn.Sequential(
+                OrderedDict(
+                    [
+                        ("linear1", nn.Linear(inputs_dim, num_neurons)),
+                        ("norm1", nn.LayerNorm(num_neurons)),
+                        ("relu1", nn.ReLU()),
+                        ("layer2", nn.Linear(num_neurons, num_neurons)),
+                        ("norm2", nn.LayerNorm(num_neurons)),
+                        ("relu2", nn.ReLU()),
+                        ("out_params", nn.Linear(num_neurons, num_free_params)),
+                    ]
+                )
+            )
+        )
         raise NotImplementedError
 
     def train_loop(
         self,
-        fun: Callable[...],
+        fun: Callable[..., Any],
         inputs: Union[
             pd.DataFrame, List[float], List[int], List[Tuple[Union[float, int], ...]]
         ],
         outputs: Iterable[Any],
-        initial_free_params: Iterable[Any],
+        initial_free_params: List[str],
         bounds: Union[List[Union[float, int]], Tuple[Union[float, int], ...], None],
         *args: Any,
         **kwargs: Any,
@@ -540,7 +569,7 @@ class tContini(Module, BaseClass):
             pd.DataFrame, List[float], List[int], List[Tuple[Union[float, int], ...]]
         ],
         outputs: Iterable[Any],
-        initial_free_params: Iterable[Any],
+        initial_free_params: list[str],
         bounds: Union[List[Union[float, int]], Tuple[Union[float, int], ...], None],
         *args: Any,
         **kwargs: Any,
