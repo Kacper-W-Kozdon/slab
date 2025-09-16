@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn as nn
 from scipy.signal import convolve
 from torch.nn import Module
 
@@ -118,6 +119,7 @@ class tContini(Module, BaseClass):
                 "err": 1 * 1e-6,
                 "ydata_info": {"_max_ydata": 1, "min_ydata": 0},
             }
+        self.model: type(nn.Sequential) = None
 
         # print(f"---INIT---\n{self._mua, self._musp, self._offset}")
 
@@ -485,11 +487,11 @@ class tContini(Module, BaseClass):
 
     def fit_settings(
         self,
+        *args: Any,
         values_to_fit: Union[List[str], Any] = None,
         free_params: Union[List[str], Any] = None,
         normalize: Union[bool, None] = None,
         log_scale: Union[bool, None] = None,
-        *args: Any,
         **kwargs: Any,
     ) -> None:
         """
@@ -512,6 +514,10 @@ class tContini(Module, BaseClass):
             log_scale if log_scale is not None else self.controls.get("log_scale")
         )
 
+    def set_up_model(self, *args: Any, **kwargs: Any) -> None:
+        """Sets up self.model with nn.Sequential."""
+        raise NotImplementedError
+
     def train_loop(
         self,
         fun: Callable[...],
@@ -524,6 +530,7 @@ class tContini(Module, BaseClass):
         *args: Any,
         **kwargs: Any,
     ) -> Tuple[Any, ...]:
+        """Training loop for the free parameters."""
         raise NotImplementedError
 
     def __fit(
