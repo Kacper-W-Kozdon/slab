@@ -16,10 +16,11 @@ repos:
     rev: 5.12.0
     hooks:
       - id: isort
+        additional_dependencies: [toml]
         args:
           [
             "--profile=black",
-            "--py=39",
+            "--py=auto",
             "--line-length=120",
             "--multi-line=3",
             "--trailing-comma",
@@ -27,6 +28,8 @@ repos:
             "--use-parentheses",
             "--ensure-newline-before-comments",
             "--project=CORE,src,config,preprocess,train,transform,main,model",
+            "--config-root=.",
+            "--resolve-all-configs",
           ]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks

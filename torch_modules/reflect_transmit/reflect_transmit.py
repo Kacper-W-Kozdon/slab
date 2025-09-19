@@ -84,7 +84,9 @@ def Reflectance_Transmittance_rho_t(
             Delta_plus = 1.0 * torch.tensor(r_plus == c * t)
             Delta_minus = 1.0 * torch.tensor(r_minus == c * t)
             Theta_plus = 1.0 * torch.tensor(r_plus < c * t)
-            Theta_minus = 1 * torch.tensor(r_minus < c * t)
+            Theta_minus = 1 * torch.tensor(
+                r_minus < c * t
+            )  # TODO: Fix the source of nan in the argument of G_func(). \endtodo
             G_plus = Theta_plus * G_func(
                 c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
                 **kwargs,

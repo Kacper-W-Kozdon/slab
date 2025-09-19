@@ -1,7 +1,17 @@
 import copy
 import datetime
 import pathlib
-from typing import Any, Callable, Dict, Iterable, List, Optional, OrderedDict, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    OrderedDict,
+    Tuple,
+    Union,
+)
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -58,37 +68,50 @@ class tContini(Module, BaseClass):
         controls: Union[Dict[Any, Any], None] = None,
     ) -> None:
         """
-        The class initiating the slab model with the RTE and DE Green's functions. Source- Contini.
+        The class initiating the slab model with the RTE and DE Green's
+        functions. Source- Contini.
 
         :param s: The thickness of the diffusing slab in [mm]. Default: 0.
         :type s: Union[int, float]
-        :param mua: Absorption coefficient of the slab in [mm^-1]. Default: None.
+        :param mua: Absorption coefficient of the slab in [mm^-1].
+                    Default: None.
         :type mua: Union[int, float]
-        :param musp: Reduced scattering coefficient of the slab in [mm^-1]. Default: None.
+        :param musp: Reduced scattering coefficient of the slab in [mm^-1].
+                     Default: None.
         :type musp: Union[int, float]
         :param n1: Refractive index of the external medium. Default: 0.
         :type n1: Union[int, float]
         :param n2: Refractive index of the diffusing medium (slab). Default: 0.
         :type n2: Union[int, float]
-        :param anisothropy_coeff: The anisothropy coefficient g. musp = (1 - g) * mus. Default: 0.85
+        :param anisothropy_coeff: The anisothropy coefficient g.
+                                  musp = (1 - g) * mus. Default: 0.85
         :type anisothropy_coeff: Union[int, float, None]
-        :param DD: Flag parameter to switch between mu = musp + mua for DD == "Dmuas" and mu = musp for DD == "Dmus" (Default).
+        :param DD: Flag parameter to switch between mu = musp + mua
+                   for DD == "Dmuas" and mu = musp for DD == "Dmus" (Default).
         :type DD: str
-        :param m: Number of mirror images (delta sources) in the lattice. Default: 100
+        :param m: Number of mirror images (delta sources) in the lattice.
+                  Default: 100
         :type m: int
-        :param eq: Flag parameter to switch between "RTE" and "DE" Green's functions. Default: "RTE"
+        :param eq: Flag parameter to switch between "RTE" and "DE" Green's
+                   functions. Default: "RTE"
         :type eq: str
-        :param IRF: Instrument Response Function as a list of the function's outputs. Default: None.
+        :param IRF: Instrument Response Function as a list of the function's
+                    outputs. Default: None.
         :type IRF: Union[List[Union[float, int]], None]
-        :param normalize: Decide whether to normalize the function's output to the data to fit. Default: True.
+        :param normalize: Decide whether to normalize the function's output to
+                          the data to fit. Default: True.
         :type normalize: bool
-        :param values_to_fit: Values passed to scipy.curve_fit(f, ydata, xdata, params) as ydata.
+        :param values_to_fit: Values passed to
+                              scipy.curve_fit(f, ydata, xdata, params) as ydata.
         :type values_to_fit: Union[List[str], Any]
-        :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
+        :param free_params: A list of free parameters passed down to
+                            scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
         :type free_params: Union[List[str], Any]
-        :param log_scale: bool that controls whether the outputs are rescaled with log. Default: None.
+        :param log_scale: bool that controls whether the outputs are rescaled
+                          with log. Default: None.
         :type log_scale: Union[bool, None]
-        :param controls: A dict collecting all the parameters controlling the forward pass and the fit.
+        :param controls: A dict collecting all the parameters controlling the
+                         forward pass and the fit.
         :type controls: Union[Dict[Any, Any], None]
         :param scaling: Linear scaling in the fit.
         :type scaling: Optional[float]
@@ -198,16 +221,21 @@ class tContini(Module, BaseClass):
         """
         The method evaluating parameters of the Contini model.
 
-        :param t_rho: Variables of the model in the form (time, radial_coordinate).
+        :param t_rho: Variables of the model in the form
+                      (time, radial_coordinate).
         :type t_rho: Union[Tuple[float, float], List[Tuple[float, float]]]
-        :param mua: Absorption coefficient of the slab in [mm^-1]. Default: None.
+        :param mua: Absorption coefficient of the slab in [mm^-1].
+                    Default: None.
         :type mua: Union[int, float]
-        :param musp: Reduced scattering coefficient of the slab in [mm^-1]. Default: None.
+        :param musp: Reduced scattering coefficient of the slab in [mm^-1].
+                     Default: None.
         :type musp: Union[int, float]
-        :param anisothropy_coeff: The anisothropy coefficient g. musp = (1 - g) * mus. Default: 0.85
+        :param anisothropy_coeff: The anisothropy coefficient g.
+                                  musp = (1 - g) * mus. Default: 0.85
         :type anisothropy_coeff: Union[int, float, None]
         :param kwargs: Optional kwargs:
-                       mode: available values: "approx", "sum"- controls G_function's computation method.
+                       mode: available values: "approx", "sum"- controls
+                             G_function's computation method.
         :type kwargs: Any
 
         Returns:
@@ -259,7 +287,7 @@ class tContini(Module, BaseClass):
         eq = kwargs.get("eq") or self.controls.get("eq")
 
         R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
-            rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff, **kwargs
+            rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff
         )
 
         R_rho, T_rho = Reflectance_Transmittance_rho(
@@ -314,19 +342,28 @@ class tContini(Module, BaseClass):
         """
         The call method returning the function used for scipy.curve_fit().
 
-        :param t_rho_array_like: Variables of the model in the form List[(time, radial_coordinate), ...], passed as xdata to scipy.curve_fit(f, ydata, xdata, params).
-        :type t_rho_array_like: Union[List[Tuple[float, float]], List[Tuple[int, int]], List[Tuple[int, float]], List[Tuple[float, int]], pd.DataFrame]
-        :param normalize: Controls whether normalization is applied to the output.
+        :param t_rho_array_like: Variables of the model in the form
+                                 List[(time, radial_coordinate), ...], passed as xdata to scipy.curve_fit(f, ydata, xdata, params).
+        :type t_rho_array_like: Union[List[Tuple[float, float]],
+                                      List[Tuple[int, int]],
+                                      List[Tuple[int, float]],
+                                      List[Tuple[float, int]], pd.DataFrame]
+        :param normalize: Controls whether normalization is applied
+                          to the output.
         :type normalize: bool
-        :param args: An iterable of the free_parameters for fitting in the order (mua, musp). The parameters have to match the free_params param. Anisothropy_coeff to be added.
+        :param args: An iterable of the free_parameters for fitting in
+                     the order (mua, musp). The parameters have to match
+                     the free_params param. Anisothropy_coeff to be added.
         :type args: Any
         :param kwargs: Optional kwargs:
-                       mode: available values: "approx", "sum", "correction", "mixed"- controls G_function's computation method.
+                       mode: available values: "approx", "sum", "correction",
+                             "mixed"- controls G_function's computation method.
                        kwargs supported by the scipy.curve_fit() method
         :type kwargs: Any
 
         Returns:
-        A dictionary with keys as passed in the values_to_fit param or a Union[float, List[float]] if a single value was provided.
+        A dictionary with keys as passed in the values_to_fit param
+        or a Union[float, List[float]] if a single value was provided.
 
         """
 
@@ -410,6 +447,8 @@ class tContini(Module, BaseClass):
             arg = 0 if arg is None else arg
             args_list[arg_index] = 1e-3 * arg
         args = tuple(args_list)
+        mua = args[0]
+        musp = args[1]
 
         value: Any
         max_ydata = self.controls.get("ydata_info").get("_max_ydata")
@@ -419,7 +458,7 @@ class tContini(Module, BaseClass):
 
             for value in values_to_fit:
                 index = int(values_to_fit.index(str(value)))
-                ret[value] = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
+                ret[value] = self.evaluate(t_rho_array_like, mua, musp, **kwargs)[index]
 
                 if IRF is not None:
                     ret[value] = convolve(ret[value], IRF, mode="same")
@@ -437,7 +476,7 @@ class tContini(Module, BaseClass):
             for value in values_to_fit:
                 index = int(available_values.index(str(value)))
                 ret = []
-                ret = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
+                ret = self.evaluate(t_rho_array_like, mua, musp, **kwargs)[index]
                 ret = np.array([float(ret_elem) for ret_elem in ret])
 
                 if IRF is not None:
@@ -459,7 +498,7 @@ class tContini(Module, BaseClass):
                 if normalize:
                     max_ret = np.max(ret) or 1
                     scaling = scaling or max_ydata / max_ret
-                    print(f"scaling: {scaling}")
+                    # print(f"scaling: {scaling}")
                     ret = scaling * np.array(ret) + offset
 
                 if log_scale:
@@ -469,7 +508,7 @@ class tContini(Module, BaseClass):
 
         elif isinstance(values_to_fit, str):
             index = available_values.index(values_to_fit)
-            ret = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
+            ret = self.evaluate(t_rho_array_like, mua, musp, **kwargs)[index]
 
             if IRF is not None:
                 ret = convolve(ret, IRF, mode="same")
@@ -497,11 +536,14 @@ class tContini(Module, BaseClass):
     ) -> None:
         """
         Updates fit settings.
-        :param values_to_fit: Values passed to scipy.curve_fit(f, ydata, xdata, params) as ydata.
+        :param values_to_fit: Values passed to
+                              scipy.curve_fit(f, ydata, xdata, params) as ydata.
         :type values_to_fit: Union[List[str], Any]
-        :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
+        :param free_params: A list of free parameters passed down to
+                            scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
         :type free_params: Union[List[str], Any]
-        :param log_scale: bool that controls whether the outputs are rescaled with log. Default: None.
+        :param log_scale: bool that controls whether the outputs are rescaled
+                          with log. Default: None.
         :type log_scale: Union[bool, None]
         """
         self.controls["values_to_fit"] = values_to_fit or self.controls.get(
@@ -575,20 +617,23 @@ class tContini(Module, BaseClass):
         **kwargs: Any,
     ) -> Tuple[Any, ...]:
         """
-        The method to obtain the fit parameters. To be updated with control flow for fitting methods other than curve_fit().
+        The method to obtain the fit parameters. To be updated with control
+        flow for fitting methods other than curve_fit().
 
         :param fun: Forward function for callback.
         :type fun: Callable[Any].
         :param inputs: Input data for the fitting function.
         :type inputs: Union[
-            pd.DataFrame, List[float], List[int], List[Tuple[Union[float, int], ...]]
+            pd.DataFrame, List[float], List[int],
+            List[Tuple[Union[float, int], ...]]
         ].
         :param outputs: Labels or expected outputs for the fitting function.
         :type outputs: Iterable[Any].
         :param initial_free_params: Free parameters for the fitting function.
         :type initial_free_params: Iterably[Any].
         :param bounds: Bounds on the initial_free_params.
-        :type bounds: Union[List[Union[float, int]], Tuple[Union[float, int], ...], None].
+        :type bounds: Union[List[Union[float, int]],
+                            Tuple[Union[float, int], ...], None].
         :param args: Optional args for the fitting function.
         :type args: Any.
         :param kwargs: Optional kwargs for the fitting function.
@@ -616,7 +661,7 @@ class tContini(Module, BaseClass):
             pd.DataFrame,
         ],
         ydata: Union[List[float], pd.DataFrame],
-        initial_free_params: List[Union[float, int]],
+        initial_free_params: List[Union[str]],
         *args: Any,
         IRF: Union[List[Union[float, int]], None, pd.DataFrame] = None,
         **kwargs: Any,
@@ -624,39 +669,59 @@ class tContini(Module, BaseClass):
         """
         Method used to fit the model by Contini to existing data.
 
-        :param _t_rho_array_like: An array-like input with tuples of the form (time, radial_coordinate), xdata.
-        :type _t_rho_array_like: Union[List[Tuple[float, float]], List[Tuple[int, int]], List[Tuple[int, float]], List[Tuple[float, int]], pd.DataFrame]
+        :param _t_rho_array_like: An array-like input with tuples of the form
+                                  (time, radial_coordinate), xdata.
+        :type _t_rho_array_like: Union[List[Tuple[float, float]],
+                                 List[Tuple[int, int]],
+                                 List[Tuple[int, float]],
+                                 List[Tuple[float, int]],
+                                 pd.DataFrame]
         :param ydata: The data the model's function gets fit to.
         :type ydata: List[float]
-        :param initial_free_params: The initial values for the free parameters to fit.
+        :param initial_free_params: The initial values for the free parameters
+                                    to fit.
         :type initial_free_params: List[Union[int, float]]
-        :param IRF: Instrument Response Function as a list of the function's outputs. Default: None.
+        :param IRF: Instrument Response Function as a list of the function's
+                    outputs. Default: None.
         :type IRF: Union[List[Union[float, int]]
-        :param normalize: Decide whether to normalize the function's output to the data to fit. Default: True.
+        :param normalize: Decide whether to normalize the function's output to
+                          the data to fit. Default: True.
         :type normalize: bool
-        :param values_to_fit: Values passed to scipy.curve_fit(f, ydata, xdata, params) as ydata.
+        :param values_to_fit: Values passed to
+                              scipy.curve_fit(f, ydata, xdata, params)
+                              as ydata.
         :type values_to_fit: Union[List[str], Any]
-        :param free_params: A list of free parameters passed down to scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
-        :type free_params: Union[List[str], Any]
-        :param plot: Controls whether to plot the results. The plots will be saved. Default: False.
+        :param initial_free_params: A list of free parameters passed down to
+                            scipy.curve_fit(f, ydata, xdata, params) as params
+                            for fitting.
+        :type initial_free_params: Union[List[str], Any]
+        :param plot: Controls whether to plot the results. The plots will
+                     be saved. Default: False.
         :type plot: bool
-        :param show_plot: Controls whether to display the plots. Default: False.
+        :param show_plot: Controls whether to display the plots.
+                          Default: False.
         :type show_plot: bool
-        :param save_path: The path where the plots will be saved if provided. Default: "".
+        :param save_path: The path where the plots will be saved if provided.
+                          Default: "".
         :type save_path: str
-        :param log_scale: bool that controls whether the outputs are rescaled with log. Default: None.
+        :param log_scale: bool that controls whether the outputs are rescaled
+                          with log. Default: None.
         :type log_scale: Union[bool, None]
-        :param bounds: Bounds for the parameters in the form of [List(lower bounds), List(upper bounds)],
+        :param bounds: Bounds for the parameters in the form of
+                       [List(lower bounds), List(upper bounds)],
         :type bounds: Union[List[Any], None]
-        :param filter_param: The parameter for filtering the output values below the threshold of filter_param * max_output + min_output. Default: None.
+        :param filter_param: The parameter for filtering the output values
+                             below the threshold of filter_param * max_output + min_output. Default: None.
         :type filter_param: Union[float, None]
         :param args: A tuple of free parameters for fitting.
         :type args: Any
-        :param kwargs: Supports kwargs of the scipy.curve_fit() as well as mode: "approx", "sum" of the G_function().
+        :param kwargs: Supports kwargs of the scipy.curve_fit() as well as
+                       mode: "approx", "sum" of the G_function().
         :type kwargs: Any
 
         Returns:
-        popt: Values of the free parameters obtained after the function has been fit to the data.
+        popt: Values of the free parameters obtained after the function has
+              been fit to the data.
         pcov: Covariance matrix of the output popt.
 
         """
@@ -753,7 +818,7 @@ class tContini(Module, BaseClass):
             else _ydata_raw
         )
 
-        IRF = self.IRF
+        IRF = self.controls.get("IRF")
 
         if self.controls.get("log_scale"):
             _ydata = np.log(ydata - np.min(ydata) + 1)
@@ -765,7 +830,7 @@ class tContini(Module, BaseClass):
         inputs = torch.tensor(_t_rho_array_like.values)
         outputs = torch.tensor(_ydata.values)
         irf = torch.tensor([value for index, value in _IRF.values])
-        self.IRF = irf if irf is not None else self.IRF
+        self.controls["IRF"] = irf if irf is not None else self.controls.get("IRF")
         try:
             popt, pcov, *_ = self.__fit(
                 self.forward,
