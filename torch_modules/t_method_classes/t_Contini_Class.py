@@ -410,6 +410,8 @@ class tContini(Module, BaseClass):
             arg = 0 if arg is None else arg
             args_list[arg_index] = 1e-3 * arg
         args = tuple(args_list)
+        mua = args[0]
+        musp = args[1]
 
         value: Any
         max_ydata = self.controls.get("ydata_info").get("_max_ydata")
@@ -419,7 +421,7 @@ class tContini(Module, BaseClass):
 
             for value in values_to_fit:
                 index = int(values_to_fit.index(str(value)))
-                ret[value] = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
+                ret[value] = self.evaluate(t_rho_array_like, mua, musp, **kwargs)[index]
 
                 if IRF is not None:
                     ret[value] = convolve(ret[value], IRF, mode="same")
@@ -437,7 +439,7 @@ class tContini(Module, BaseClass):
             for value in values_to_fit:
                 index = int(available_values.index(str(value)))
                 ret = []
-                ret = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
+                ret = self.evaluate(t_rho_array_like, mua, musp, **kwargs)[index]
                 ret = np.array([float(ret_elem) for ret_elem in ret])
 
                 if IRF is not None:
@@ -469,7 +471,7 @@ class tContini(Module, BaseClass):
 
         elif isinstance(values_to_fit, str):
             index = available_values.index(values_to_fit)
-            ret = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
+            ret = self.evaluate(t_rho_array_like, mua, musp, **kwargs)[index]
 
             if IRF is not None:
                 ret = convolve(ret, IRF, mode="same")
