@@ -222,9 +222,9 @@ def G_func(x, N_scatter=200, mode: str = "correction", **kwargs):
                         / factorial(N)
                     )
                 except OverflowError:
-                    # print(
-                    #     f"\rOverflowError warning. Stopping the computation of G_func at N = {N}."
-                    # )
+                    print(
+                        f"\rOverflowError warning. Stopping the computation of G_func at N = {N}."
+                    )
                     break
 
         return G
@@ -236,20 +236,17 @@ def G_func(x, N_scatter=200, mode: str = "correction", **kwargs):
     if mode == "correction":
         with warnings.catch_warnings():  # stop warnings about negative value under sqrt, we don't use that region
             warnings.simplefilter("ignore")
-            G = (
-                G_func(x, N_scatter=N_scatter, mode="sum", **kwargs)
-                if x <= 80
-                else G_func(x, N_scatter=N_scatter, mode="approx", **kwargs)
-                / cor_factor(x, 1.19318303, 1.41879319, 4.98107131, 5.54541984)
-            )
+            G = G_func(x, N_scatter=N_scatter, mode="sum", **kwargs) * (
+                x <= 80
+            ) + G_func(x, N_scatter=N_scatter, mode="approx", **kwargs) * (
+                x > 80
+            ) / cor_factor(x, 1.19318303, 1.41879319, 4.98107131, 5.54541984)
         return G
 
     if mode == "mixed":
-        G = (
-            G_func(x, N_scatter=N_scatter, mode="sum", **kwargs)
-            if x <= 0.98
-            else G_func(x, N_scatter=N_scatter, mode="approx", **kwargs)
-        )
+        G = G_func(x, N_scatter=N_scatter, mode="sum", **kwargs) * (x <= 0.98) + G_func(
+            x, N_scatter=N_scatter, mode="approx", **kwargs
+        ) * (x > 0.98)
         return G
 
 

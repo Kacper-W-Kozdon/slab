@@ -169,6 +169,7 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
     assert outputs_T_DE is not None, "forward function returned None for eq='DE'"
 
     for torch_output, output in zip(list(torch_outputs_T_RTE), list(outputs_T_RTE)):
+        # print(f"{torch_output=}, {output=}")
         assertions.assertAlmostEqual(torch_output, output)
 
     plt.plot(  # noqa: F841
@@ -183,7 +184,7 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
     plt.plot(  # noqa: F841
         inputs,
         torch_outputs_T_RTE,
-        color="o",
+        color="orange",
         label="test data T_RTE",
         marker="o",
         linestyle=" ",
@@ -208,7 +209,7 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
     plt.clf()
 
     for output_index, output in enumerate(zip(outputs_T_RTE, outputs_T_DE)):
-        if output_index > len(outputs_T_RTE) / 2:
+        if output_index < len(outputs_T_RTE) / 2:
             continue
         try:
             assertions.assertAlmostEqual(output[0], output[1])
