@@ -259,7 +259,7 @@ class tContini(Module, BaseClass):
         eq = kwargs.get("eq") or self.controls.get("eq")
 
         R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
-            rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff, **kwargs
+            rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff
         )
 
         R_rho, T_rho = Reflectance_Transmittance_rho(
@@ -461,7 +461,7 @@ class tContini(Module, BaseClass):
                 if normalize:
                     max_ret = np.max(ret) or 1
                     scaling = scaling or max_ydata / max_ret
-                    print(f"scaling: {scaling}")
+                    # print(f"scaling: {scaling}")
                     ret = scaling * np.array(ret) + offset
 
                 if log_scale:

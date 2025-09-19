@@ -233,7 +233,7 @@ class Contini(BaseClass):
             eq = kwargs.get("eq") or self.eq
 
             R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
-                rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff, **kwargs
+                rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff
             )
 
             R_rho, T_rho = Reflectance_Transmittance_rho(
