@@ -208,7 +208,7 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
     plt.clf()
 
     for output_index, output in enumerate(zip(outputs_T_RTE, outputs_T_DE)):
-        if output_index < 60:
+        if output_index > len(outputs_T_RTE) / 2:
             continue
         try:
             assertions.assertAlmostEqual(output[0], output[1])
