@@ -3,6 +3,7 @@ from collections import OrderedDict
 from decimal import localcontext
 
 import numpy as np
+import torch
 from numpy import exp, log, sqrt
 from scipy.special import factorial, gamma
 
@@ -205,8 +206,11 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
         return Z
 
 
-def G_func(x, N_scatter=200, mode: str = "correction", **kwargs):
+def G_func(input, N_scatter=200, mode: str = "correction", **kwargs):
     G = 0
+
+    x = torch.where(~torch.isnan(input), input, 0.0)
+
     if mode == "sum":
         with localcontext() as ctx:
             ctx.prec = 100

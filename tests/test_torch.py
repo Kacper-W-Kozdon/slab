@@ -133,7 +133,7 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
     for t_index, t in enumerate(range(1, 311, 2)):
         xdata.append((t, rho))
 
-    inputs = pd.DataFrame(xdata, columns=["t", "rho"])
+    inputs = pd.DataFrame(xdata, columns=["t", "rho"])  # noqa: F841
 
     # initial_params = {
     #     "mua": 0.05,
@@ -150,14 +150,14 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
     outputs_R = contini.forward(xdata)
     assert outputs_R is not None
 
-    plt.plot(  # noqa: F841
-        inputs,
-        outputs_R,
-        color="b",
-        label="test data R_RTE",
-        # marker="o",
-        # linestyle=" ",
-    )
+    # plt.plot(  # noqa: F841
+    #     inputs,
+    #     outputs_R,
+    #     color="b",
+    #     label="test data R_RTE",
+    #     # marker="o",
+    #     # linestyle=" ",
+    # )
 
     contini.values_to_fit = ["T_rho_t"]
 
@@ -172,41 +172,41 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
         # print(f"{torch_output=}, {output=}")
         assertions.assertAlmostEqual(torch_output, output)
 
-    plt.plot(  # noqa: F841
-        inputs,
-        outputs_T_RTE,
-        color="g",
-        label="test data T_RTE",
-        # marker="o",
-        linestyle="--",
-    )
+    # plt.plot(  # noqa: F841
+    #     inputs,
+    #     outputs_T_RTE,
+    #     color="g",
+    #     label="test data T_RTE",
+    #     # marker="o",
+    #     linestyle="--",
+    # )
 
-    plt.plot(  # noqa: F841
-        inputs,
-        torch_outputs_T_RTE,
-        color="orange",
-        label="test data T_RTE",
-        marker="o",
-        linestyle=" ",
-    )
+    # plt.plot(  # noqa: F841
+    #     inputs,
+    #     torch_outputs_T_RTE,
+    #     color="orange",
+    #     label="test data T_RTE",
+    #     marker="o",
+    #     linestyle=" ",
+    # )
 
-    plt.plot(  # noqa: F841
-        inputs,
-        outputs_T_DE,
-        color="r",
-        label="test data T_DE",
-        # marker="o",
-        linestyle="-.",
-    )
+    # plt.plot(  # noqa: F841
+    #     inputs,
+    #     outputs_T_DE,
+    #     color="r",
+    #     label="test data T_DE",
+    #     # marker="o",
+    #     linestyle="-.",
+    # )
 
-    plt.legend(loc="upper right")
-    plt.xlabel("Time in ps")
-    plt.ylabel("Intensity(t, rho=5[mm])/max(R(t, rho=5[mm])), s=3[mm]")
+    # plt.legend(loc="upper right")
+    # plt.xlabel("Time in ps")
+    # plt.ylabel("Intensity(t, rho=5[mm])/max(R(t, rho=5[mm])), s=3[mm]")
 
-    plt.show(block=False)
-    path = f"{pathlib.Path(__file__).resolve().parent.parent}\\plots\\pytestplot.pdf"
-    plt.savefig(path)
-    plt.clf()
+    # plt.show(block=False)
+    # path = f"{pathlib.Path(__file__).resolve().parent.parent}\\plots\\pytestplot.pdf"
+    # plt.savefig(path)
+    # plt.clf()
 
     for output_index, output in enumerate(zip(outputs_T_RTE, outputs_T_DE)):
         if output_index < len(outputs_T_RTE) / 2:
