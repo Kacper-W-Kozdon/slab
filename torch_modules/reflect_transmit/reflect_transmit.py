@@ -43,6 +43,13 @@ def Reflectance_Transmittance_rho_t(
             print(f"Failed to convert rho = {rho}, {type(rho)} to torch.Tensor")
             raise exc
 
+    # if not isinstance(s, torch.Tensor):
+    #     try:
+    #         s = torch.full_like(t, s)
+    #     except Exception as exc:
+    #         print(f"Failed to convert rho = {s}, {type(s)} to torch.Tensor")
+    #         raise exc
+
     if eq == "DE":
         for index in range(-m, m + 1):
             z1, z2, z3, z4 = Z[f"Z_{index}"]
@@ -84,9 +91,10 @@ def Reflectance_Transmittance_rho_t(
             Delta_plus = 1.0 * torch.tensor(r_plus == c * t)
             Delta_minus = 1.0 * torch.tensor(r_minus == c * t)
             Theta_plus = 1.0 * torch.tensor(r_plus < c * t)
-            Theta_minus = 1 * torch.tensor(
+            Theta_minus = 1.0 * torch.tensor(
                 r_minus < c * t
             )  # TODO: Fix the source of nan in the argument of G_func(). \endtodo
+
             G_plus = Theta_plus * G_func(
                 c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
                 **kwargs,
@@ -96,7 +104,6 @@ def Reflectance_Transmittance_rho_t(
                 **kwargs,
             )
             factor_plus = Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
-
             factor_minus = Theta_minus * (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
 
             R_rho_t_source_sum += exp(-c * t / mean_free_path) * (
@@ -119,18 +126,23 @@ def Reflectance_Transmittance_rho_t(
             Delta_minus = 1.0 * torch.tensor(r_minus == c * t)
             Theta_plus = 1.0 * torch.tensor(r_plus < c * t)
             Theta_minus = 1 * torch.tensor(r_minus < c * t)
-
-            G_plus = Theta_plus * G_func(
-                c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
-                **kwargs,
-            )
+            # print(f"{r_plus=}")
+            # print(f"{Delta_plus=}")
+            G_plus = (
+                Theta_plus
+                * G_func(
+                    c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
+                    **kwargs,
+                )
+            )  # TODO: nan comes from the ** (3/4) of a negative value. Add a check or a filter for negatives. \endtodo
             G_minus = Theta_minus * G_func(
                 c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4),
                 **kwargs,
             )
 
             factor_plus = Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
-
+            # print(f"{c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4)=}")
+            print(f"{c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2))=}")
             factor_minus = Theta_minus * (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
 
             T_rho_t_source_sum += exp(-c * t / mean_free_path) * (

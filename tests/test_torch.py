@@ -203,7 +203,7 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
     plt.xlabel("Time in ps")
     plt.ylabel("Intensity(t, rho=5[mm])/max(R(t, rho=5[mm])), s=3[mm]")
 
-    # plt.show(block=False)
+    plt.show(block=False)
     path = f"{pathlib.Path(__file__).resolve().parent.parent}\\plots\\pytestplot.pdf"
     plt.savefig(path)
     plt.clf()
