@@ -170,8 +170,13 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
 
     for torch_output, output in zip(list(torch_outputs_T_RTE), list(outputs_T_RTE)):
         # print(f"{torch_output=}, {output=}")
-        assertions.assertAlmostEqual(torch_output, output)
-
+        try:
+            assertions.assertAlmostEqual(torch_output, output)
+        except Exception as exc:
+            print(f"{torch_outputs_T_RTE=}")
+            print(f"{outputs_T_RTE=}")
+            raise AssertionError from exc  # TODO: Resolve mismatch of the outputs. \endtodo
+    # TODO: Reenable plots in test_torch. \endtodo
     # plt.plot(  # noqa: F841
     #     inputs,
     #     outputs_T_RTE,

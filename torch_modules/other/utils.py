@@ -207,14 +207,17 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
 
 
 def G_func(input, N_scatter=200, mode: str = "correction", **kwargs):
-    G = 0
+    G = torch.full_like(input, 0.0)
 
     x = torch.where(~torch.isnan(input), input, 0.0)
 
     if mode == "sum":
         with localcontext() as ctx:
             ctx.prec = 100
-            factor = 8 * (3 * x) ** (-3 / 2)
+            unfiltered_factor = 8 * (3 * x) ** (-3 / 2)
+            factor = torch.where(
+                ~torch.isnan(unfiltered_factor), unfiltered_factor, 0.0
+            )
 
             for N in range(1, N_scatter + 1):
                 try:
@@ -231,27 +234,38 @@ def G_func(input, N_scatter=200, mode: str = "correction", **kwargs):
                     )
                     break
 
-        return G
+        ret = torch.where(~torch.isnan(G) * ~torch.isinf(G), G, 0.0)
+        return ret
     if mode == "approx":
         G += exp(x) * sqrt(1 + 2.026 / x)
 
-        return G
+        ret = torch.where(~torch.isnan(G) * ~torch.isinf(G), G, 0.0)
+        return ret
 
     if mode == "correction":
         with warnings.catch_warnings():  # stop warnings about negative value under sqrt, we don't use that region
             warnings.simplefilter("ignore")
-            G = G_func(x, N_scatter=N_scatter, mode="sum", **kwargs) * (
-                x <= 80
-            ) + G_func(x, N_scatter=N_scatter, mode="approx", **kwargs) * (
-                x > 80
-            ) / cor_factor(x, 1.19318303, 1.41879319, 4.98107131, 5.54541984)
-        return G
+            unfiltered_cor_factor = cor_factor(
+                x, 1.19318303, 1.41879319, 4.98107131, 5.54541984
+            )
+            correction_factor = torch.where(
+                ~torch.isnan(unfiltered_cor_factor), unfiltered_cor_factor, 0.0
+            )
+            G = (
+                G_func(x, N_scatter=N_scatter, mode="sum", **kwargs) * (x <= 80)
+                + G_func(x, N_scatter=N_scatter, mode="approx", **kwargs)
+                * (x > 80)
+                / correction_factor
+            )
+            ret = torch.where(~torch.isnan(G) * ~torch.isinf(G), G, 0.0)
+        return ret
 
     if mode == "mixed":
         G = G_func(x, N_scatter=N_scatter, mode="sum", **kwargs) * (x <= 0.98) + G_func(
             x, N_scatter=N_scatter, mode="approx", **kwargs
         ) * (x > 0.98)
-        return G
+        ret = torch.where(~torch.isnan(G) * ~torch.isinf(G), G, 0.0)
+        return ret
 
 
 def cor_factor(x, a, b, x_0, c):

@@ -103,8 +103,18 @@ def Reflectance_Transmittance_rho_t(
                 c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4),
                 **kwargs,
             )
-            factor_plus = Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
-            factor_minus = Theta_minus * (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
+            factor_plus_unfiltered = Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (
+                1 / 8
+            )
+            factor_minus_unfiltered = Theta_minus * (
+                1 - r_minus**2 / (c**2 * t**2)
+            ) ** (1 / 8)
+            factor_plus = torch.where(
+                ~torch.isnan(factor_plus_unfiltered), factor_plus_unfiltered, 0.0
+            )
+            factor_minus = torch.where(
+                ~torch.isnan(factor_minus_unfiltered), factor_minus_unfiltered, 0.0
+            )
 
             R_rho_t_source_sum += exp(-c * t / mean_free_path) * (
                 1 / (4 * pi * r_plus**2) * Delta_plus
@@ -115,6 +125,14 @@ def Reflectance_Transmittance_rho_t(
                 )
                 / ((1 / 3 * 4 * pi * mean_free_path * c * t) ** (3 / 2))
             )
+            if any(torch.isnan(R_rho_t_source_sum)):
+                print(f"{G_plus=}")
+                print(f"{Delta_plus=}")
+                print(f"{Theta_plus=}")
+                print(f"{factor_plus=}")
+                raise ValueError(
+                    f"Found nan values in partial sum. {R_rho_t_source_sum=}"
+                )
 
         for index in range(-m, m + 1):
             z_plus, z_minus = Z[f"Z_{index}"]
@@ -128,22 +146,28 @@ def Reflectance_Transmittance_rho_t(
             Theta_minus = 1 * torch.tensor(r_minus < c * t)
             # print(f"{r_plus=}")
             # print(f"{Delta_plus=}")
-            G_plus = (
-                Theta_plus
-                * G_func(
-                    c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
-                    **kwargs,
-                )
-            )  # TODO: nan comes from the ** (3/4) of a negative value. Add a check or a filter for negatives. \endtodo
+            G_plus = Theta_plus * G_func(
+                c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
+                **kwargs,
+            )
             G_minus = Theta_minus * G_func(
                 c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4),
                 **kwargs,
             )
 
-            factor_plus = Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (1 / 8)
+            factor_plus_unfiltered = Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (
+                1 / 8
+            )
             # print(f"{c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4)=}")
-            print(f"{c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2))=}")
-            factor_minus = Theta_minus * (1 - r_minus**2 / (c**2 * t**2)) ** (1 / 8)
+            factor_minus_unfiltered = Theta_minus * (
+                1 - r_minus**2 / (c**2 * t**2)
+            ) ** (1 / 8)
+            factor_plus = torch.where(
+                ~torch.isnan(factor_plus_unfiltered), factor_plus_unfiltered, 0.0
+            )
+            factor_minus = torch.where(
+                ~torch.isnan(factor_minus_unfiltered), factor_minus_unfiltered, 0.0
+            )
 
             T_rho_t_source_sum += exp(-c * t / mean_free_path) * (
                 1 / (4 * pi * r_plus**2) * Delta_plus
@@ -154,6 +178,14 @@ def Reflectance_Transmittance_rho_t(
                 )
                 / ((1 / 3 * 4 * pi * mean_free_path * c * t) ** (3 / 2))
             )
+            if any(torch.isnan(T_rho_t_source_sum)):
+                print(f"{G_plus=}")
+                print(f"{Delta_plus=}")
+                print(f"{Theta_plus=}")
+                print(f"{factor_plus=}")
+                raise ValueError(
+                    f"Found nan values in partial sum. {T_rho_t_source_sum=}"
+                )
 
         R_rho_t = 1 / (2 * A) * R_rho_t_source_sum
         T_rho_t = 1 / (2 * A) * T_rho_t_source_sum
