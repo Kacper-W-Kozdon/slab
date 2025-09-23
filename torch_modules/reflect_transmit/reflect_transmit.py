@@ -143,18 +143,19 @@ def Reflectance_Transmittance_rho_t(
             Delta_plus = 1.0 * torch.tensor(r_plus == c * t)
             Delta_minus = 1.0 * torch.tensor(r_minus == c * t)
             Theta_plus = 1.0 * torch.tensor(r_plus < c * t)
-            Theta_minus = 1 * torch.tensor(r_minus < c * t)
+            Theta_minus = 1.0 * torch.tensor(r_minus < c * t)
             # print(f"{r_plus=}")
-            # print(f"{Delta_plus=}")
+            # print(f"{Theta_plus=}")
             G_plus = Theta_plus * G_func(
                 c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
                 **kwargs,
             )
+            print(f"{(1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4)=}, {t=}")
             G_minus = Theta_minus * G_func(
                 c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4),
                 **kwargs,
             )
-
+            print(f"{all(G_plus == 0.)=}, {all(Theta_plus == 0.)=}")
             factor_plus_unfiltered = Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (
                 1 / 8
             )
@@ -189,6 +190,8 @@ def Reflectance_Transmittance_rho_t(
 
         R_rho_t = 1 / (2 * A) * R_rho_t_source_sum
         T_rho_t = 1 / (2 * A) * T_rho_t_source_sum
+        if all(T_rho_t == 0.0) or all(R_rho_t == 0.0):
+            raise ValueError(f"Found only 0. values in the output. {T_rho_t=}")
         # R_rho_t = R_rho_t if R_rho_t > 0 else -R_rho_t
         # T_rho_t = T_rho_t if T_rho_t > 0 else -T_rho_t
 

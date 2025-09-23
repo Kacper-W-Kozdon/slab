@@ -255,7 +255,8 @@ class tContini(Module, BaseClass):
         """
         if not isinstance(t_rho, torch.Tensor):
             try:
-                t_rho = torch.tensor(t_rho).reshape(2, -1)
+                t_rho = torch.tensor(t_rho)
+
             except Exception as exc:
                 print(
                     f"There was an issue converting t_rho to torch.tensor.\n\n\
@@ -265,6 +266,7 @@ class tContini(Module, BaseClass):
             # mua = mua * 1e3 if self._mua is None else self._mua
             # musp = musp * 1e3 if self._musp is None else self._musp
 
+        t_rho_transposed = t_rho.clone().detach().mT.reshape(2, -1).requires_grad_(True)
         if mua is None:
             mua = self._mua
         else:
@@ -276,8 +278,8 @@ class tContini(Module, BaseClass):
 
         anisothropy_coeff = anisothropy_coeff or self.controls.get("anisothropy_coeff")
 
-        t = t_rho[0] * 1e-12
-        rho = t_rho[1] * 1e-3
+        t = t_rho_transposed[0] * 1e-12
+        rho = t_rho_transposed[1] * 1e-3
         s = kwargs.get("s") or self.controls.get("_s")
         n1 = kwargs.get("n1") or self.controls.get("n1")
         n2 = kwargs.get("n2") or self.controls.get("n2")
