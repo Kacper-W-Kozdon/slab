@@ -2,6 +2,7 @@
 
 ## TODO list:
 
+- [x] nan comes from the \*\* (3/4) of a negative value. Add a check or a filter for negatives.
 - [ ] Resolve mismatch of the outputs.
 - [ ] Reenable plots in test_torch.
 - [ ] Clean up type hints in methods in Contini.
