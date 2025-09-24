@@ -206,37 +206,52 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
 
 
 def G_func(input, N_scatter=200, mode: str = "correction", **kwargs):
-    G = torch.full_like(input, 0.0)
+    G = torch.full_like(input, 0.0, dtype=torch.float64)
 
     # x = torch.where(~torch.isnan(input), input, 0.0)
     x = input.clone().detach().requires_grad_(True)
 
+    if all(torch.isnan(x)):
+        return G
+
     if mode == "sum":
+        G *= 0.0
+
         with localcontext() as ctx:
             ctx.prec = 100
-            factor = 8 * (3 * x) ** (-3 / 2)
-            # factor = torch.where(
-            #     ~torch.isnan(unfiltered_factor), unfiltered_factor, 0.0
-            # )
+            unfiltered_factor = 8 * (3 * x) ** (-3 / 2)
+            factor = torch.where(
+                ~torch.isnan(unfiltered_factor), unfiltered_factor, 0.0
+            )
 
             for N in range(1, N_scatter + 1):
                 try:
+                    G_ = G.clone().detach().requires_grad_(True)
                     G += (
                         factor
-                        * gamma(3 / 4 * N + 3 / 2)
-                        / gamma(3 / 4 * N)
-                        * x**N
-                        / factorial(N)
-                    )
+                        * torch.where(
+                            factor != 0.0,
+                            gamma(3 / 4 * N + 3 / 2)
+                            / gamma(3 / 4 * N)
+                            * x**N
+                            / factorial(N),
+                            0.0,
+                        )
+                    )  # TODO: Source of the nans is in mode == "sum" of G_func()- ensure the addition is done correctly. \endtodo
+                    # print(f"{all(torch.isnan(G))=}, {N=}")
                 except OverflowError:
                     print(
                         f"\rOverflowError warning. Stopping the computation of G_func at N = {N}."
                     )
                     break
+                if all(torch.isnan(G)):
+                    G = G_
+                    break
 
         ret = torch.where(~torch.isnan(G) * ~torch.isinf(G), G, 0.0)
         return ret
     if mode == "approx":
+        G *= 0.0
         G += torch.exp(x) * torch.sqrt(1 + 2.026 / x)
 
         ret = torch.where(~torch.isnan(G) * ~torch.isinf(G), G, 0.0)

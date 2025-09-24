@@ -255,7 +255,7 @@ class tContini(Module, BaseClass):
         """
         if not isinstance(t_rho, torch.Tensor):
             try:
-                t_rho = torch.tensor(t_rho)
+                t_rho = torch.tensor(t_rho, dtype=torch.float)
 
             except Exception as exc:
                 print(
@@ -266,7 +266,13 @@ class tContini(Module, BaseClass):
             # mua = mua * 1e3 if self._mua is None else self._mua
             # musp = musp * 1e3 if self._musp is None else self._musp
 
-        t_rho_transposed = t_rho.clone().detach().mT.reshape(2, -1).requires_grad_(True)
+        t_rho_transposed = (
+            t_rho.clone()
+            .detach()
+            .mT.reshape(2, -1)
+            .to(torch.float)
+            .requires_grad_(True)
+        )
         if mua is None:
             mua = self._mua
         else:

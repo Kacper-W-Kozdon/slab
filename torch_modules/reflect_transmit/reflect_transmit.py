@@ -1,7 +1,7 @@
 import sys
 
 import torch
-from numpy import exp, pi, sqrt
+from numpy import exp, pi
 
 from ..other.utils import A_parameter, D_parameter, G_func, Image_Sources_Positions
 
@@ -54,20 +54,20 @@ def Reflectance_Transmittance_rho_t(
         for index in range(-m, m + 1):
             z1, z2, z3, z4 = Z[f"Z_{index}"]
 
-            R_rho_t_source_sum += z3 * exp(-(z3**2) / (4 * D * v * t)) - z4 * exp(
-                -(z4**2) / (4 * D * v * t)
-            )
+            R_rho_t_source_sum += z3 * torch.exp(
+                -(z3**2) / (4 * D * v * t)
+            ) - z4 * torch.exp(-(z4**2) / (4 * D * v * t))
 
-            T_rho_t_source_sum += z1 * exp(-(z1**2) / (4 * D * v * t)) - z2 * exp(
-                -(z2**2) / (4 * D * v * t)
-            )
+            T_rho_t_source_sum += z1 * torch.exp(
+                -(z1**2) / (4 * D * v * t)
+            ) - z2 * torch.exp(-(z2**2) / (4 * D * v * t))
         R_rho_t = (
             -exp(-mua * v * t - (rho**2) / (4 * D * v * t))
             / (2 * ((4 * pi * D * v) ** (3 / 2)) * t ** (5 / 2))
             * R_rho_t_source_sum
         )
         T_rho_t = (
-            exp(-mua * v * t - (rho**2) / (4 * D * v * t))
+            torch.exp(-mua * v * t - (rho**2) / (4 * D * v * t))
             / (2 * ((4 * pi * D * v) ** (3 / 2)) * t ** (5 / 2))
             * T_rho_t_source_sum
         )
@@ -85,8 +85,8 @@ def Reflectance_Transmittance_rho_t(
         for index in range(-m, m + 1):
             z_plus, z_minus = Z[f"Z_{index}"]
 
-            r_plus = sqrt(rho**2 + (z_plus) ** 2)
-            r_minus = sqrt(rho**2 + (z_minus) ** 2)
+            r_plus = torch.sqrt(rho**2 + (z_plus) ** 2)
+            r_minus = torch.sqrt(rho**2 + (z_minus) ** 2)
 
             Delta_plus = 1.0 * torch.tensor(r_plus == c * t)
             Delta_minus = 1.0 * torch.tensor(r_minus == c * t)
@@ -116,7 +116,7 @@ def Reflectance_Transmittance_rho_t(
                 ~torch.isnan(factor_minus_unfiltered), factor_minus_unfiltered, 0.0
             )
 
-            R_rho_t_source_sum += exp(-c * t / mean_free_path) * (
+            R_rho_t_source_sum += torch.exp(-c * t / mean_free_path) * (
                 1 / (4 * pi * r_plus**2) * Delta_plus
                 - 1 / (4 * pi * r_minus**2) * Delta_minus
                 + (
@@ -137,8 +137,8 @@ def Reflectance_Transmittance_rho_t(
         for index in range(-m, m + 1):
             z_plus, z_minus = Z[f"Z_{index}"]
 
-            r_plus = sqrt(rho**2 + (s - z_plus) ** 2)
-            r_minus = sqrt(rho**2 + (s - z_minus) ** 2)
+            r_plus = torch.sqrt(rho**2 + (s - z_plus) ** 2)
+            r_minus = torch.sqrt(rho**2 + (s - z_minus) ** 2)
 
             Delta_plus = 1.0 * torch.tensor(r_plus == c * t)
             Delta_minus = 1.0 * torch.tensor(r_minus == c * t)
@@ -150,12 +150,12 @@ def Reflectance_Transmittance_rho_t(
                 c * t / mean_free_path * (1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4),
                 **kwargs,
             )
-            print(f"{(1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4)=}, {t=}")
+            # print(f"{all(torch.isnan((1 - r_plus**2 / (c**2 * t**2)) ** (3 / 4)))=}")
             G_minus = Theta_minus * G_func(
                 c * t / mean_free_path * (1 - r_minus**2 / (c**2 * t**2)) ** (3 / 4),
                 **kwargs,
             )
-            print(f"{all(G_plus == 0.)=}, {all(Theta_plus == 0.)=}")
+            # print(f"{all(G_plus == 0.)=}, {all(Theta_plus == 0.)=}")
             factor_plus_unfiltered = Theta_plus * (1 - r_plus**2 / (c**2 * t**2)) ** (
                 1 / 8
             )
@@ -170,7 +170,7 @@ def Reflectance_Transmittance_rho_t(
                 ~torch.isnan(factor_minus_unfiltered), factor_minus_unfiltered, 0.0
             )
 
-            T_rho_t_source_sum += exp(-c * t / mean_free_path) * (
+            T_rho_t_source_sum += torch.exp(-c * t / mean_free_path) * (
                 1 / (4 * pi * r_plus**2) * Delta_plus
                 - 1 / (4 * pi * r_minus**2) * Delta_minus
                 + (
@@ -228,10 +228,10 @@ def Reflectance_Transmittance_rho(rho, mua, musp, s, m, n1, n2, DD, eq):
             R_rho_source_sum += z3 * (
                 D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z3**2) ** (-1)
                 + (rho**2 + z3**2) ** (-3 / 2)
-            ) * exp(-((mua * (rho**2 + z3**2) / D) ** (1 / 2))) - z4 * (
+            ) * torch.exp(-((mua * (rho**2 + z3**2) / D) ** (1 / 2))) - z4 * (
                 D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z4**2) ** (-1)
                 + (rho**2 + z4**2) ** (-3 / 2)
-            ) * exp(-((mua * (rho**2 + z4**2) / D) ** (1 / 2)))
+            ) * torch.exp(-((mua * (rho**2 + z4**2) / D) ** (1 / 2)))
 
             if m == 0:
                 continue
@@ -239,10 +239,10 @@ def Reflectance_Transmittance_rho(rho, mua, musp, s, m, n1, n2, DD, eq):
                 T_rho_source_sum += z1 * (
                     D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z1**2) ** (-1)
                     + (rho**2 + z1**2) ** (-3 / 2)
-                ) * exp(-((mua * (rho**2 + z1**2) / D) ** (1 / 2))) - z2 * (
+                ) * torch.exp(-((mua * (rho**2 + z1**2) / D) ** (1 / 2))) - z2 * (
                     D ** (-1 / 2) * mua ** (1 / 2) * (rho**2 + z2**2) ** (-1)
                     + (rho**2 + z2**2) ** (-3 / 2)
-                ) * exp(-((mua * (rho**2 + z2**2) / D) ** (1 / 2)))
+                ) * torch.exp(-((mua * (rho**2 + z2**2) / D) ** (1 / 2)))
 
     if eq == "RTE":
         pass
@@ -271,12 +271,12 @@ def Reflectance_Transmittance_t(t, mua, musp, s, m, n1, n2, DD, eq):
     if eq == "DE":
         for index in range(-m, m + 1):
             z1, z2, z3, z4 = Z[f"Z_{index}"]
-            R_t_source_sum += z3 * exp(-(z3**2) / (4 * D * v * t)) - z4 * exp(
-                -(z4**2) / (4 * D * v * t)
-            )
-            T_t_source_sum += z1 * exp(-(z1**2) / (4 * D * v * t)) - z2 * exp(
-                -(z2**2) / (4 * D * v * t)
-            )
+            R_t_source_sum += z3 * torch.exp(
+                -(z3**2) / (4 * D * v * t)
+            ) - z4 * torch.exp(-(z4**2) / (4 * D * v * t))
+            T_t_source_sum += z1 * torch.exp(
+                -(z1**2) / (4 * D * v * t)
+            ) - z2 * torch.exp(-(z2**2) / (4 * D * v * t))
 
         R_t = (
             -exp(-mua * v * t)
@@ -284,7 +284,7 @@ def Reflectance_Transmittance_t(t, mua, musp, s, m, n1, n2, DD, eq):
             * R_t_source_sum
         )
         T_t = (
-            exp(-mua * v * t)
+            torch.exp(-mua * v * t)
             / (2 * (4 * pi * D * v) ** (1 / 2) * t ** (3 / 2))
             * T_t_source_sum
         )
