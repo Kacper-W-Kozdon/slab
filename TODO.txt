@@ -1,5 +1,7 @@
 # SLAB Project
+
  ## TODO list:
+
  Resolve mismatch of the outputs.
  Reenable plots in test_torch.
  Clean up type hints in methods in Contini.

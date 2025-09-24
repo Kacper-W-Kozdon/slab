@@ -16,9 +16,9 @@ if __name__ == "__main__":
         ):
             scripts.append(script)
 
-    print(scripts)
+    # print(scripts)
 
-    todo_text = "# SLAB Project \n ## TODO list: \n"
+    todo_text = "# SLAB Project \n\n ## TODO list: \n\n"
 
     old_todo_text = ""
 
@@ -42,18 +42,18 @@ if __name__ == "__main__":
             with open(script) as todo_in:
                 for line in todo_in:
                     if "TODO:" in str(line):
-                        index_start = str(line).find("TODO:")
+                        index_start = str(line).find("TODO: ")
                         index_stop = str(line).find(r"\endtodo")
 
                         todo_text += f"{str(line)[index_start + 5 : index_stop]}\n"
 
         todo_out.write(todo_text)
 
-    readmemd_text = "# SLAB Project \n ## TODO list: \n"
+    readmemd_text = "# SLAB Project \n\n ## TODO list: \n\n"
     readmemd_text_old = ""
 
     with open(f"{proj_path}\\TODO.md", "r") as READMEmd_old:
-        finished_marker = "  - [x] "
+        finished_marker = "[x]"
 
         for line_readme_old in READMEmd_old:
             try:
@@ -67,7 +67,7 @@ if __name__ == "__main__":
                 pass
 
     with open(f"{proj_path}\\TODO.md", "w+") as READMEmd_out:
-        starting_index = len("  - [x] ") + 1
+        starting_index = len(" - [x] ")
 
         for line_readme in old_todo_text.split("\n"):
             print(
@@ -75,7 +75,7 @@ if __name__ == "__main__":
             )
             try:
                 if line_readme not in todo_text:
-                    formatted_line = f"  - [x] {str(line_readme)}\n"
+                    formatted_line = f" - [x] {str(line_readme)}\n"
                     readmemd_text += f"{str(formatted_line)}"
             except Exception as exc:
                 print("An issue occurred while opening the README.md.")
@@ -88,7 +88,7 @@ if __name__ == "__main__":
                     continue
 
                 elif line_todo not in readmemd_text:
-                    formatted_line_todo = f"  - [ ] {str(line_todo)}"
+                    formatted_line_todo = f" - [ ] {str(line_todo)}"
                     readmemd_text += f"{(formatted_line_todo)}"
 
         readmemd_text += readmemd_text_old

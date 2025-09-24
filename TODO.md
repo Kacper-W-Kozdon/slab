@@ -11,3 +11,4 @@
 - [ ] Fix the source of nan in the argument of G_func().
 - [ ] Try to move more methods and attributes into BaseClass and put it in a separate module.
 - [ ] Clean up type hints in methods in tContini.
+- [x] nan comes from the \*\* (3/4) of a negative value. Add a check or a filter for negatives.
