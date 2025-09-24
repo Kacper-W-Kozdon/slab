@@ -16,7 +16,7 @@ if __name__ == "__main__":
         ):
             scripts.append(script)
 
-    print(scripts)
+    # print(scripts)
 
     todo_text = "# SLAB Project \n ## TODO list: \n"
 
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     readmemd_text_old = ""
 
     with open(f"{proj_path}\\TODO.md", "r") as READMEmd_old:
-        finished_marker = "  - [x] "
+        finished_marker = "[x]"
 
         for line_readme_old in READMEmd_old:
             try:
@@ -67,7 +67,7 @@ if __name__ == "__main__":
                 pass
 
     with open(f"{proj_path}\\TODO.md", "w+") as READMEmd_out:
-        starting_index = len("  - [x] ") + 1
+        starting_index = len("  - [x] ")
 
         for line_readme in old_todo_text.split("\n"):
             print(
@@ -88,7 +88,7 @@ if __name__ == "__main__":
                     continue
 
                 elif line_todo not in readmemd_text:
-                    formatted_line_todo = f"  - [ ] {str(line_todo)}"
+                    formatted_line_todo = f" - [ ] {str(line_todo)}"
                     readmemd_text += f"{(formatted_line_todo)}"
 
         readmemd_text += readmemd_text_old
