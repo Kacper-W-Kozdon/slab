@@ -168,14 +168,6 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
     assert outputs_T_RTE is not None, "forward function returned None for eq='RTE'"
     assert outputs_T_DE is not None, "forward function returned None for eq='DE'"
 
-    for torch_output, output in zip(list(torch_outputs_T_RTE), list(outputs_T_RTE)):
-        # print(f"{torch_output=}, {output=}")
-        try:
-            assertions.assertAlmostEqual(torch_output, output)
-        except Exception as exc:
-            print(f"{torch_outputs_T_RTE=}")
-            print(f"{outputs_T_RTE=}")
-            raise AssertionError from exc  # TODO: Resolve mismatch of the outputs. \endtodo
     # TODO: Reenable plots in test_torch. \endtodo
     plt.plot(  # noqa: F841
         inputs,
@@ -212,6 +204,15 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
     path = f"{pathlib.Path(__file__).resolve().parent.parent}\\plots\\pytestplot.pdf"
     plt.savefig(path)
     plt.clf()
+
+    for torch_output, output in zip(list(torch_outputs_T_RTE), list(outputs_T_RTE)):
+        # print(f"{torch_output=}, {output=}")
+        try:
+            assertions.assertAlmostEqual(torch_output, output)
+        except Exception as exc:
+            print(f"{torch_outputs_T_RTE=}")
+            print(f"{outputs_T_RTE=}")
+            raise AssertionError from exc  # TODO: Resolve mismatch of the outputs. \endtodo
 
     for output_index, output in enumerate(zip(outputs_T_RTE, outputs_T_DE)):
         if output_index < len(outputs_T_RTE) / 2:
