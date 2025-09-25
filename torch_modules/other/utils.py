@@ -208,8 +208,8 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
 def G_func(input, N_scatter=200, mode: str = "correction", **kwargs):
     G = torch.full_like(input, 0.0, dtype=torch.float64)
 
-    # x = torch.where(~torch.isnan(input), input, 0.0)
-    x = input.clone().detach().requires_grad_(True)
+    x = torch.where(~torch.isnan(input) * (input > 0), input, 0.0)
+    # x = input.clone().detach().requires_grad_(True)
 
     if all(torch.isnan(x)):
         return G
@@ -221,7 +221,7 @@ def G_func(input, N_scatter=200, mode: str = "correction", **kwargs):
             ctx.prec = 100
             unfiltered_factor = 8 * (3 * x) ** (-3 / 2)
             factor = torch.where(
-                ~torch.isnan(unfiltered_factor), unfiltered_factor, 0.0
+                ~torch.isnan(unfiltered_factor) * (x != 0), unfiltered_factor, 0.0
             )
 
             for N in range(1, N_scatter + 1):
@@ -229,13 +229,11 @@ def G_func(input, N_scatter=200, mode: str = "correction", **kwargs):
                     G_ = G.clone().detach().requires_grad_(True)
                     G += (
                         factor
-                        * torch.where(
-                            factor != 0.0,
+                        * (
                             gamma(3 / 4 * N + 3 / 2)
                             / gamma(3 / 4 * N)
                             * x**N
-                            / factorial(N),
-                            0.0,
+                            / factorial(N)
                         )
                     )  # TODO: Source of the nans is in mode == "sum" of G_func()- ensure the addition is done correctly. \endtodo
                     # print(f"{all(torch.isnan(G))=}, {N=}")
@@ -244,7 +242,8 @@ def G_func(input, N_scatter=200, mode: str = "correction", **kwargs):
                         f"\rOverflowError warning. Stopping the computation of G_func at N = {N}."
                     )
                     break
-                if all(torch.isnan(G)):
+                if any(torch.isnan(G)) or any(torch.isinf(G)):
+                    print(f"{G_=}, {N=}")
                     G = G_
                     break
 
