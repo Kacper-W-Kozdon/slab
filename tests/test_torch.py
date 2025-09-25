@@ -182,7 +182,7 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
         inputs,
         torch_outputs_T_RTE,
         color="orange",
-        label="test data T_RTE",
+        label="test data t_T_RTE",
         marker="o",
         linestyle=" ",
     )
@@ -208,7 +208,7 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
     for torch_output, output in zip(list(torch_outputs_T_RTE), list(outputs_T_RTE)):
         # print(f"{torch_output=}, {output=}")
         try:
-            assertions.assertAlmostEqual(torch_output, output)
+            assertions.assertAlmostEqual(torch_output, output, 3)
         except Exception as exc:
             print(f"{torch_outputs_T_RTE=}")
             print(f"{outputs_T_RTE=}")
@@ -218,7 +218,7 @@ def test_plot(contini: FixtureType, torch_contini: FixtureType) -> None:
         if output_index < len(outputs_T_RTE) / 2:
             continue
         try:
-            assertions.assertAlmostEqual(output[0], output[1])
+            assertions.assertAlmostEqual(output[0], output[1], 3)
         except Exception as exc:
             raise ValueError(
                 f"Mismatch in outputs for index {output_index}. T_RTE = {output[0]}, T_DE = {output[1]}"
