@@ -21,6 +21,7 @@ import torch.nn as nn
 from scipy.signal import convolve
 from torch.nn import Module
 
+from ..other import fitting_method_args, training_methods
 from ..other.utils import A_parameter, Image_Sources_Positions, Mean_Path_T_R
 from ..reflect_transmit.reflect_transmit import (
     Reflectance_Transmittance,
@@ -607,10 +608,50 @@ class tContini(Module, BaseClass):
         initial_free_params: List[str],
         bounds: Union[List[Union[float, int]], Tuple[Union[float, int], ...], None],
         *args: Any,
+        fitting_method: str = "curve_fit",
         **kwargs: Any,
     ) -> Tuple[Any, ...]:
-        """Training loop for the free parameters."""
+        """
+        Training loop for the free parameters.
+
+        :param fun: Forward function for callback.
+        :type fun: Callable[Any].
+        :param inputs: Input data for the fitting function.
+        :type inputs: Union[
+            pd.DataFrame, List[float], List[int],
+            List[Tuple[Union[float, int], ...]]
+        ].
+        :param outputs: Labels or expected outputs for the fitting function.
+        :type outputs: Iterable[Any].
+        :param initial_free_params: Free parameters for the fitting function.
+        :type initial_free_params: Iterably[Any].
+        :param bounds: Bounds on the initial_free_params.
+        :type bounds: Union[List[Union[float, int]],
+                            Tuple[Union[float, int], ...], None].
+        :param fitting_method: The name of the fitting method to use.
+                               Available methods: ["curve_fit", "nn"]
+        :type fitting_method: str
+        :param args: Optional args for the fitting function.
+        :type args: Any.
+        :param kwargs: Optional kwargs for the fitting function.
+        :type kwargs: Any.
+        """
+        # TODO: Add training.py to torch_modules/other. \endtodo
+        # TODO: Make dictionary with functions or a function factory calling training loop functions/ \endtodo
+
+        if training_methods.get(fitting_method):
+            fit_args = (
+                inputs,
+                outputs,
+                initial_free_params,
+                *fitting_method_args.get(fitting_method),
+            )
+            fit_kwargs = {"bounds": bounds, **fitting_method_args.get(fitting_method)}
+
+            ret = training_methods.get(fitting_method)(*fit_args, **fit_kwargs)  # noqa: F841
+
         raise NotImplementedError
+        # return ret
 
     def __fit(
         self,
@@ -622,6 +663,7 @@ class tContini(Module, BaseClass):
         initial_free_params: list[str],
         bounds: Union[List[Union[float, int]], Tuple[Union[float, int], ...], None],
         *args: Any,
+        fitting_method: str = "curve_fit",
         **kwargs: Any,
     ) -> Tuple[Any, ...]:
         """
@@ -642,6 +684,9 @@ class tContini(Module, BaseClass):
         :param bounds: Bounds on the initial_free_params.
         :type bounds: Union[List[Union[float, int]],
                             Tuple[Union[float, int], ...], None].
+        :param fitting_method: The name of the fitting method to use.
+                               Available methods: ["curve_fit", "nn"]
+        :type fitting_method: str
         :param args: Optional args for the fitting function.
         :type args: Any.
         :param kwargs: Optional kwargs for the fitting function.
@@ -654,6 +699,7 @@ class tContini(Module, BaseClass):
             initial_free_params,
             bounds,
             *args,
+            fitting_method=fitting_method,
             **kwargs,
         )
 
