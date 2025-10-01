@@ -637,7 +637,7 @@ class tContini(Module, BaseClass):
         :type kwargs: Any.
         """
         # TODO: Add training.py to torch_modules/other. \endtodo
-        # TODO: Make dictionary with functions or a function factory calling training loop functions/ \endtodo
+        # TODO: Make dictionary with functions or a function factory calling training loop functions. \endtodo
 
         if training_methods.get(fitting_method):
             fit_args = (
