@@ -10,6 +10,6 @@
 - [ ] Fix the source of nan in the argument of G_func().
 - [ ] Try to move more methods and attributes into BaseClass and put it in a separate module.
 - [ ] Add training.py to torch_modules/other.
-- [ ] Make dictionary with functions or a function factory calling training loop functions/
+- [ ] Make dictionary with functions or a function factory calling training loop functions.
 - [ ] Clean up type hints in methods in tContini.
-- [x] nan comes from the \*\* (3/4) of a negative value. Add a check or a filter for negatives.
+- [x] nan comes from the \*\* (3/4) of a negative value. Add a check or a filter for negative.
