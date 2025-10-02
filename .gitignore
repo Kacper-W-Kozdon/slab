@@ -6,3 +6,4 @@
 !plots/*.pdf
 dataset/*
 dataset
+.env
