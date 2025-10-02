@@ -12,4 +12,3 @@
 - [ ] Add training.py to torch_modules/other.
 - [ ] Make dictionary with functions or a function factory calling training loop functions.
 - [ ] Clean up type hints in methods in tContini.
-- [x] nan comes from the \*\* (3/4) of a negative value. Add a check or a filter for negative.
