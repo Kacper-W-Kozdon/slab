@@ -1,6 +1,5 @@
 [project]
 name = "medscatter"
-version = "0.3.1"
 authors = [
   { name="Kacper Kozdon", email="k.kozdon@gmail.com" },
 ]
@@ -12,20 +11,24 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+keywords = ["physics", "numpy", "torch", "physics", "fitting", "scattering", "scipy", "optics", "research-paper", "boltzmann-equation"]
+dynamic = [ "version" ]
 
 [project.urls]
 Homepage = "https://github.com/Kacper-W-Kozdon/slab"
 Issues = "https://github.com/Kacper-W-Kozdon/slab/issues"
 
 [tool.poetry]
-packages = [{include = "modules"}]
+packages = [
+{include = "modules", from = "src"},
+{include = "torch_modules", from = "src"}
+]
 name = "medscatter"
-version = "0.3.1"
 authors = [
   "Kacper Kozdon",
 ]
 description = "The package to compute the scattering of a pencil beam in a medium."
-
+version = "0.0.1"
 
 [tool.poetry.dependencies]
 scipy = "*"
