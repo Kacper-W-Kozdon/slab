@@ -2,8 +2,8 @@ import warnings
 from collections import OrderedDict
 from decimal import localcontext
 
-import numpy as np
-from numpy import exp, log, sqrt
+import torch
+from numpy import log
 from scipy.special import factorial, gamma
 
 
@@ -205,54 +205,84 @@ def Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq):
         return Z
 
 
-def G_func(x, N_scatter=200, mode: str = "correction", **kwargs):
-    G = 0
+def G_func(input, N_scatter=200, mode: str = "correction", **kwargs):
+    G = torch.full_like(input, 0.0, dtype=torch.float64)
+
+    x = torch.where(~torch.isnan(input) * (input > 0), input, 0.0)
+    # x = input.clone().detach().requires_grad_(True)
+
+    if all(torch.isnan(x)):
+        return G
+
     if mode == "sum":
+        G *= 0.0
+
         with localcontext() as ctx:
             ctx.prec = 100
-            factor = 8 * (3 * x) ** (-3 / 2)
+            unfiltered_factor = 8 * (3 * x) ** (-3 / 2)
+            factor = torch.where(
+                ~torch.isnan(unfiltered_factor) * (x != 0), unfiltered_factor, 0.0
+            )
 
             for N in range(1, N_scatter + 1):
                 try:
+                    G_ = G.clone().detach().requires_grad_(True)
                     G += (
                         factor
-                        * gamma(3 / 4 * N + 3 / 2)
-                        / gamma(3 / 4 * N)
-                        * x**N
-                        / factorial(N)
-                    )
+                        * (
+                            gamma(3 / 4 * N + 3 / 2)
+                            / gamma(3 / 4 * N)
+                            * x**N
+                            / factorial(N)
+                        )
+                    )  # TODO: Source of the nans is in mode == "sum" of G_func()- ensure the addition is done correctly. \endtodo
+                    # print(f"{all(torch.isnan(G))=}, {N=}")
                 except OverflowError:
                     print(
-                        f"OverflowError warning. Stopping the computation of G_func at N = {N}."
+                        f"\rOverflowError warning. Stopping the computation of G_func at N = {N}."
                     )
                     break
+                if any(torch.isnan(G)) or any(torch.isinf(G)):
+                    print(f"{G_=}, {N=}")
+                    G = G_
+                    break
 
-        return G
+        ret = torch.where(~torch.isnan(G) * ~torch.isinf(G), G, 0.0)
+        return ret
     if mode == "approx":
-        G += exp(x) * sqrt(1 + 2.026 / x)
+        G *= 0.0
+        G += torch.exp(x) * torch.sqrt(1 + 2.026 / x)
 
-        return G
+        ret = torch.where(~torch.isnan(G) * ~torch.isinf(G), G, 0.0)
+        # print(f"{x=}")
+        return ret
 
     if mode == "correction":
         with warnings.catch_warnings():  # stop warnings about negative value under sqrt, we don't use that region
             warnings.simplefilter("ignore")
-            G = (
-                G_func(x, N_scatter=N_scatter, mode="sum", **kwargs)
-                if x <= 80
-                else G_func(x, N_scatter=N_scatter, mode="approx", **kwargs)
-                / cor_factor(x, 1.19318303, 1.41879319, 4.98107131, 5.54541984)
+            correction_factor = cor_factor(
+                x, 1.19318303, 1.41879319, 4.98107131, 5.54541984
             )
-        return G
+            # correction_factor = torch.where(
+            #     ~torch.isnan(unfiltered_cor_factor), unfiltered_cor_factor, 0.0
+            # )
+            G = (
+                G_func(x, N_scatter=N_scatter, mode="sum", **kwargs) * (x <= 80)
+                + G_func(x, N_scatter=N_scatter, mode="approx", **kwargs)
+                * (x > 80)
+                / correction_factor
+            )
+            ret = torch.where(~torch.isnan(G) * ~torch.isinf(G), G, 0.0)
+        return ret
 
     if mode == "mixed":
-        G = (
-            G_func(x, N_scatter=N_scatter, mode="sum", **kwargs)
-            if x <= 0.98
-            else G_func(x, N_scatter=N_scatter, mode="approx", **kwargs)
-        )
-        return G
+        G = G_func(x, N_scatter=N_scatter, mode="sum", **kwargs) * (x <= 0.98) + G_func(
+            x, N_scatter=N_scatter, mode="approx", **kwargs
+        ) * (x > 0.98)
+        ret = torch.where(~torch.isnan(G) * ~torch.isinf(G), G, 0.0)
+        return ret
 
 
 def cor_factor(x, a, b, x_0, c):
-    r = a * np.sqrt(b * (x - x_0) + c)
+    r = a * torch.sqrt(b * (x - x_0) + c)
     return r

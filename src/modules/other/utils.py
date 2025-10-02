@@ -222,9 +222,9 @@ def G_func(x, N_scatter=200, mode: str = "correction", **kwargs):
                         / factorial(N)
                     )
                 except OverflowError:
-                    print(
-                        f"OverflowError warning. Stopping the computation of G_func at N = {N}."
-                    )
+                    # print(
+                    #     f"\rOverflowError warning. Stopping the computation of G_func at N = {N}."
+                    # )
                     break
 
         return G

@@ -1,0 +1,968 @@
+import copy
+import datetime
+import pathlib
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    OrderedDict,
+    Tuple,
+    Union,
+)
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn as nn
+from scipy.signal import convolve
+from torch.nn import Module
+
+from ..other import fitting_method_args, training_methods
+from ..other.utils import A_parameter, Image_Sources_Positions, Mean_Path_T_R
+from ..reflect_transmit.reflect_transmit import (
+    Reflectance_Transmittance,
+    Reflectance_Transmittance_rho,
+    Reflectance_Transmittance_rho_t,
+    Reflectance_Transmittance_t,
+)
+from .base_class import BaseClass
+
+# import datetime
+# import pathlib
+# import matplotlib.pyplot as plt
+# import numpy as np
+# from scipy.optimize import curve_fit
+# from scipy.signal import convolve
+# from ..other.utils import A_parameter, Image_Sources_Positions, Mean_Path_T_R
+# from ..reflect_transmit.reflect_transmit import (
+#     Reflectance_Transmittance,
+#     Reflectance_Transmittance_rho,
+#     Reflectance_Transmittance_rho_t,
+#     Reflectance_Transmittance_t,
+# )
+
+
+class tContini(Module, BaseClass):
+    def __init__(
+        self,
+        s: Union[int, float, None] = None,
+        mua: Union[int, float, None] = None,
+        musp: Union[int, float, None] = None,
+        n1: Union[int, float, None] = None,
+        n2: Union[int, float, None] = None,
+        anisothropy_coeff: Union[int, float, None] = None,
+        phantom: Optional[str] = "",
+        DD: Optional[str] = "",
+        m: Union[int, None] = None,
+        eq: str = "",
+        IRF: Union[List[Union[float, int]], None] = None,
+        normalize: bool = True,
+        log_scale: Union[bool, None] = None,
+        values_to_fit: Optional[Union[List[str], Any]] = None,
+        free_params: Optional[Union[List[str], Any]] = None,
+        offset: Optional[float] = None,
+        scaling: Optional[float] = None,
+        controls: Union[Dict[Any, Any], None] = None,
+    ) -> None:
+        """
+        The class initiating the slab model with the RTE and DE Green's
+        functions. Source- Contini.
+
+        :param s: The thickness of the diffusing slab in [mm]. Default: 0.
+        :type s: Union[int, float]
+        :param mua: Absorption coefficient of the slab in [mm^-1].
+                    Default: None.
+        :type mua: Union[int, float]
+        :param musp: Reduced scattering coefficient of the slab in [mm^-1].
+                     Default: None.
+        :type musp: Union[int, float]
+        :param n1: Refractive index of the external medium. Default: 0.
+        :type n1: Union[int, float]
+        :param n2: Refractive index of the diffusing medium (slab). Default: 0.
+        :type n2: Union[int, float]
+        :param anisothropy_coeff: The anisothropy coefficient g.
+                                  musp = (1 - g) * mus. Default: 0.85
+        :type anisothropy_coeff: Union[int, float, None]
+        :param DD: Flag parameter to switch between mu = musp + mua
+                   for DD == "Dmuas" and mu = musp for DD == "Dmus" (Default).
+        :type DD: str
+        :param m: Number of mirror images (delta sources) in the lattice.
+                  Default: 100
+        :type m: int
+        :param eq: Flag parameter to switch between "RTE" and "DE" Green's
+                   functions. Default: "RTE"
+        :type eq: str
+        :param IRF: Instrument Response Function as a list of the function's
+                    outputs. Default: None.
+        :type IRF: Union[List[Union[float, int]], None]
+        :param normalize: Decide whether to normalize the function's output to
+                          the data to fit. Default: True.
+        :type normalize: bool
+        :param values_to_fit: Values passed to
+                              scipy.curve_fit(f, ydata, xdata, params) as ydata.
+        :type values_to_fit: Union[List[str], Any]
+        :param free_params: A list of free parameters passed down to
+                            scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
+        :type free_params: Union[List[str], Any]
+        :param log_scale: bool that controls whether the outputs are rescaled
+                          with log. Default: None.
+        :type log_scale: Union[bool, None]
+        :param controls: A dict collecting all the parameters controlling the
+                         forward pass and the fit.
+        :type controls: Union[Dict[Any, Any], None]
+        :param scaling: Linear scaling in the fit.
+        :type scaling: Optional[float]
+        """
+        super().__init__()
+
+        self._mua = None if not mua else mua * 1e3
+        self._musp = None if not musp else musp * 1e3
+        self._offset = offset or 0.0
+        self._scaling = scaling or 0.0
+        if controls:
+            self.controls = controls
+        else:
+            self.controls = {
+                "_s": s * 1e-3 if s is not None else 0,  # 40 * 1e-3,
+                "n1": n1 if n1 is not None else 0,
+                "n2": n2 if n2 is not None else 0,
+                "phantom": phantom or "",
+                "anisothropy_coeff": anisothropy_coeff or 0.85,
+                "DD": DD or "Dmuas",
+                "m": m or 100,
+                "eq": eq or "RTE",
+                "IRF": IRF or None,
+                "normalize": normalize or True,
+                "values_to_fit": values_to_fit or ["T_rho_t"],
+                "free_params": free_params or ["mua", "musp", "offset", "scaling"],
+                "log_scale": log_scale or None,
+                "err": 1 * 1e-6,
+                "ydata_info": {"_max_ydata": 1, "min_ydata": 0},
+            }
+        self.model: Union[nn.Sequential, None] = None
+        self.model_controls: dict[str, Union[int, float, torch.Tensor]] = {}
+
+        # print(f"---INIT---\n{self._mua, self._musp, self._offset}")
+
+    @property
+    def scaling(self) -> Union[None, float]:
+        return self._scaling
+
+    @scaling.setter
+    def scaling(self, value: float) -> None:
+        if value is not None:
+            self._scaling = value
+
+    @scaling.deleter
+    def scaling(self) -> None:
+        self._scaling = 0.0
+
+    @property
+    def mua(self) -> Union[None, float]:
+        return self._mua
+
+    @mua.setter
+    def mua(self, value: float) -> None:
+        if value is None:
+            self._mua = None
+        else:
+            self._mua = value * 1e3
+
+    @mua.deleter
+    def mua(self) -> None:
+        self._mua = None
+
+    @property
+    def musp(self) -> Union[None, float]:
+        return self._musp
+
+    @musp.setter
+    def musp(self, value: float) -> None:
+        if value is None:
+            self._musp = None
+        else:
+            self._musp = value * 1e3
+
+    @musp.deleter
+    def musp(self) -> None:
+        self._musp = None
+
+    @property
+    def offset(self) -> float:
+        return self._offset
+
+    @offset.setter
+    def offset(self, value: float) -> None:
+        self._offset = value
+
+    @offset.deleter
+    def offset(self) -> None:
+        self._offset = 0.0
+
+    def evaluate(
+        self,
+        t_rho: Union[
+            Tuple[Any, Any],
+            List[Tuple[float, float]],
+            List[Tuple[int, int]],
+            List[Tuple[int, float]],
+            List[Tuple[float, int]],
+            pd.DataFrame,
+        ],
+        mua: Union[int, float, None] = None,
+        musp: Union[int, float, None] = None,
+        # offset: Union[int, float] = 0,
+        anisothropy_coeff: Union[int, float, None] = None,
+        **kwargs: Any,
+    ) -> Union[Tuple[Any, ...], Tuple[List[Any], ...]]:
+        """
+        The method evaluating parameters of the Contini model.
+
+        :param t_rho: Variables of the model in the form
+                      (time, radial_coordinate).
+        :type t_rho: Union[Tuple[float, float], List[Tuple[float, float]]]
+        :param mua: Absorption coefficient of the slab in [mm^-1].
+                    Default: None.
+        :type mua: Union[int, float]
+        :param musp: Reduced scattering coefficient of the slab in [mm^-1].
+                     Default: None.
+        :type musp: Union[int, float]
+        :param anisothropy_coeff: The anisothropy coefficient g.
+                                  musp = (1 - g) * mus. Default: 0.85
+        :type anisothropy_coeff: Union[int, float, None]
+        :param kwargs: Optional kwargs:
+                       mode: available values: "approx", "sum"- controls
+                             G_function's computation method.
+        :type kwargs: Any
+
+        Returns:
+        R_rho_t: time resolved reflectance mm^(-2) ps^(-1)
+        T_rho_t: time resolved transmittance mm^(-2) ps^(-1)
+        R_rho: reflectance mm^(-2)
+        T_rho: transmittance mm^(-2)
+        R_t: ps^(-1)
+        T_t: ps^(-1)
+        l_rho_R: mean free path (reflected) mm
+        l_rho_T: mean free path (transmitted) mm
+        R: to be added
+        T: to be added
+        A: A parameter
+        Z: Positions of the source images
+
+        """
+        if not isinstance(t_rho, torch.Tensor):
+            try:
+                t_rho = torch.tensor(t_rho, dtype=torch.float)
+
+            except Exception as exc:
+                print(
+                    f"There was an issue converting t_rho to torch.tensor.\n\n\
+                      t_rho = {t_rho}"
+                )
+                raise TypeError from exc
+            # mua = mua * 1e3 if self._mua is None else self._mua
+            # musp = musp * 1e3 if self._musp is None else self._musp
+
+        t_rho_transposed = (
+            t_rho.clone()
+            .detach()
+            .mT.reshape(2, -1)
+            .to(torch.float)
+            .requires_grad_(True)
+        )
+        if mua is None:
+            mua = self._mua
+        else:
+            mua = 1e3 * mua
+        if musp is None:
+            musp = self._musp
+        else:
+            musp = 1e3 * musp
+
+        anisothropy_coeff = anisothropy_coeff or self.controls.get("anisothropy_coeff")
+
+        t = t_rho_transposed[0] * 1e-12
+        rho = t_rho_transposed[1] * 1e-3
+        s = kwargs.get("s") or self.controls.get("_s")
+        n1 = kwargs.get("n1") or self.controls.get("n1")
+        n2 = kwargs.get("n2") or self.controls.get("n2")
+        phantom = kwargs.get("phantom") or self.controls.get("phantom")  # noqa: F841
+        DD = kwargs.get("DD") or self.controls.get("DD")
+        m = kwargs.get("m") or self.controls.get("m")
+        eq = kwargs.get("eq") or self.controls.get("eq")
+
+        R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
+            rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff
+        )
+
+        R_rho, T_rho = Reflectance_Transmittance_rho(
+            rho, mua, musp, s, m, n1, n2, DD, eq
+        )
+
+        R_t, T_t = Reflectance_Transmittance_t(t, mua, musp, s, m, n1, n2, DD, eq)
+
+        l_rho_R, l_rho_T = Mean_Path_T_R(rho, mua, musp, s, m, n1, n2, DD, eq)
+
+        R, T = Reflectance_Transmittance(mua, musp, s, m, n1, n2, DD, eq)
+
+        A = A_parameter(n1, n2)
+
+        Z = Image_Sources_Positions(s, mua, musp, n1, n2, DD, m, eq)
+
+        return (
+            R_rho_t,
+            T_rho_t,
+            R_rho,
+            T_rho,
+            R_t,
+            T_t,
+            l_rho_R,
+            l_rho_T,
+            R,
+            T,
+            A,
+            Z,
+        )
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        """
+        Invokes the forward method.
+        """
+        self.forward(*args, **kwargs)
+
+    def forward(
+        self,
+        inputs: Union[
+            Tuple[Any, Any],
+            List[Tuple[float, float]],
+            List[Tuple[int, int]],
+            List[Tuple[int, float]],
+            List[Tuple[float, int]],
+            pd.DataFrame,
+            torch.Tensor,
+        ],
+        *args: Any,
+        **kwargs: Any,
+    ) -> Union[List[float], Dict[Any, Any], float, int, None]:
+        """
+        The call method returning the function used for scipy.curve_fit().
+
+        :param t_rho_array_like: Variables of the model in the form
+                                 List[(time, radial_coordinate), ...], passed as xdata to scipy.curve_fit(f, ydata, xdata, params).
+        :type t_rho_array_like: Union[List[Tuple[float, float]],
+                                      List[Tuple[int, int]],
+                                      List[Tuple[int, float]],
+                                      List[Tuple[float, int]], pd.DataFrame]
+        :param normalize: Controls whether normalization is applied
+                          to the output.
+        :type normalize: bool
+        :param args: An iterable of the free_parameters for fitting in
+                     the order (mua, musp). The parameters have to match
+                     the free_params param. Anisothropy_coeff to be added.
+        :type args: Any
+        :param kwargs: Optional kwargs:
+                       mode: available values: "approx", "sum", "correction",
+                             "mixed"- controls G_function's computation method.
+                       kwargs supported by the scipy.curve_fit() method
+        :type kwargs: Any
+
+        Returns:
+        A dictionary with keys as passed in the values_to_fit param
+        or a Union[float, List[float]] if a single value was provided.
+
+        """
+
+        t_rho_array_like = inputs
+
+        values_to_fit: Union[List[str], Any] = self.controls.get("values_to_fit") or [
+            "T_rho_t"
+        ]
+        free_params: Union[List[str], Any] = self.controls.get("free_params") or [
+            "musp",
+            "offset",
+            "scaling",
+        ]
+        normalize: Union[Any, bool] = self.controls.get("normalize") or False
+        if kwargs.get("normalize") is not None:
+            normalize = kwargs.get("normalize")  # noqa: F841
+
+        log_scale: Union[Any, bool] = self.controls.get("log_scale") or False
+        if kwargs.get("log_scale") is not None:
+            log_scale = kwargs.get("log_scale")
+
+        IRF: pd.DataFrame = (
+            self.controls.get("IRF")
+            if self.controls.get("IRF") is not None
+            else kwargs.get("IRF")
+        )
+
+        available_values = [
+            "R_rho_t",
+            "T_rho_t",
+            "R_rho",
+            "T_rho",
+            "R_t",
+            "T_t",
+            "l_rho_R",
+            "l_rho_T",
+        ]
+        available_free_params = ["mua", "musp", "offset", "scaling"]
+
+        if not all([param in available_free_params for param in free_params]):
+            raise ValueError(
+                f"Obtained params: {free_params} not in the list of params available for fitting."
+            )
+
+        if not all([value in available_values for value in values_to_fit]):
+            raise ValueError(
+                f"Obtained values: {values_to_fit} not in the list of values available for fitting."
+            )
+
+        ret: Union[Dict[Any, Any], Any] = None
+        args_list = list(args)
+
+        if not args:
+            args_list = [self._mua, self._musp, self._offset, self._scaling]
+
+        for param_index, param in enumerate(available_free_params):
+            if (param not in free_params) and args:
+                param_value: Any = None
+                if param_index == 0:
+                    param_value = self._mua
+                if param_index == 1:
+                    param_value = self._musp
+                if param_index == 2:
+                    param_value = self._offset
+                if param_index == 3:
+                    param_value = self._scaling
+                try:
+                    args_list.insert(param_index, param_value)
+                except UnboundLocalError as exc:
+                    print(UnboundLocalError)
+                    print(param_index)
+                    raise UnboundLocalError from exc
+
+        index_offset = available_free_params.index("offset")
+        index_scaling = available_free_params.index("scaling")
+        offset = args_list[index_offset] or self._offset
+        scaling = args_list[index_scaling] or self._scaling
+        for arg_index, arg in enumerate(args_list):
+            if arg_index in [index_offset, index_scaling]:
+                continue
+            arg = 0 if arg is None else arg
+            args_list[arg_index] = 1e-3 * arg
+        args = tuple(args_list)
+        mua = args[0]
+        musp = args[1]
+
+        value: Any
+        max_ydata = self.controls.get("ydata_info").get("_max_ydata")
+
+        if isinstance(values_to_fit, list) and len(values_to_fit) > 1:
+            ret = {}
+
+            for value in values_to_fit:
+                index = int(values_to_fit.index(str(value)))
+                ret[value] = self.evaluate(t_rho_array_like, mua, musp, **kwargs)[index]
+
+                if IRF is not None:
+                    ret[value] = convolve(ret[value], IRF, mode="same")
+                if normalize:
+                    max_ret = np.max(ret[value]) or 1
+                    scaling = scaling or max_ydata / max_ret
+                    ret[value] = scaling * np.array(ret[value]) + offset
+
+                if log_scale:
+                    ret = np.log(ret - np.min(ret[value]) + 1)
+
+            return ret
+
+        elif isinstance(values_to_fit, list) and len(values_to_fit) == 1:
+            for value in values_to_fit:
+                index = int(available_values.index(str(value)))
+                ret = []
+                ret = self.evaluate(t_rho_array_like, mua, musp, **kwargs)[index]
+                ret = np.array([float(ret_elem) for ret_elem in ret])
+
+                if IRF is not None:
+                    IRF = (
+                        IRF
+                        if (not isinstance(IRF, pd.DataFrame))
+                        else [float(value) for value in IRF.values]
+                    )
+
+                    try:
+                        ret = convolve(ret, IRF, mode="same")
+                    except Exception as e:
+                        print("---ERROR---")
+                        print(e)
+                        irf = [value for value in IRF.values]
+                        print(type(IRF))
+                        print(irf)
+                        print("---END ERROR---")
+                if normalize:
+                    max_ret = np.max(ret) or 1
+                    scaling = scaling or max_ydata / max_ret
+                    # print(f"scaling: {scaling}")
+                    ret = scaling * np.array(ret) + offset
+
+                if log_scale:
+                    ret = np.log(ret - np.min(ret) + 1)
+
+            return ret
+
+        elif isinstance(values_to_fit, str):
+            index = available_values.index(values_to_fit)
+            ret = self.evaluate(t_rho_array_like, mua, musp, **kwargs)[index]
+
+            if IRF is not None:
+                ret = convolve(ret, IRF, mode="same")
+            if normalize:
+                max_ret = np.max(ret) or 1
+                scaling = scaling or max_ydata / max_ret
+                ret = scaling * np.array(ret) + offset
+
+            if log_scale:
+                ret = np.log(ret - np.min(ret) + 1)
+
+            return ret
+
+        else:
+            return None
+
+    def fit_settings(
+        self,
+        *args: Any,
+        values_to_fit: Union[List[str], Any] = None,
+        free_params: Union[List[str], Any] = None,
+        normalize: Union[bool, None] = None,
+        log_scale: Union[bool, None] = None,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Updates fit settings.
+        :param values_to_fit: Values passed to
+                              scipy.curve_fit(f, ydata, xdata, params) as ydata.
+        :type values_to_fit: Union[List[str], Any]
+        :param free_params: A list of free parameters passed down to
+                            scipy.curve_fit(f, ydata, xdata, params) as params for fitting.
+        :type free_params: Union[List[str], Any]
+        :param log_scale: bool that controls whether the outputs are rescaled
+                          with log. Default: None.
+        :type log_scale: Union[bool, None]
+        """
+        self.controls["values_to_fit"] = values_to_fit or self.controls.get(
+            "values_to_fit"
+        )
+        self.controls["free_params"] = free_params or self.controls.get("free_params")
+        self.controls["normalize"] = (
+            normalize if normalize is not None else self.controls.get("normalize")
+        )
+        self.controls["log_scale"] = (
+            log_scale if log_scale is not None else self.controls.get("log_scale")
+        )
+
+    def set_up_model(
+        self,
+        initial_free_params: List[str],
+        inputs_dim: Union[int],
+        *args: Any,
+        model: Any = None,
+        **kwargs: Any,
+    ) -> None:
+        """Sets up self.model with nn.Sequential."""
+
+        num_neurons = 10
+        num_free_params = len(initial_free_params)
+
+        self.model = (
+            model
+            if model
+            else nn.Sequential(
+                OrderedDict(
+                    [
+                        ("linear1", nn.Linear(inputs_dim, num_neurons)),
+                        ("norm1", nn.LayerNorm(num_neurons)),
+                        ("relu1", nn.ReLU()),
+                        ("layer2", nn.Linear(num_neurons, num_neurons)),
+                        ("norm2", nn.LayerNorm(num_neurons)),
+                        ("relu2", nn.ReLU()),
+                        ("out_params", nn.Linear(num_neurons, num_free_params)),
+                    ]
+                )
+            )
+        )
+        raise NotImplementedError
+
+    def train_loop(
+        self,
+        fun: Callable[..., Any],
+        inputs: Union[
+            pd.DataFrame, List[float], List[int], List[Tuple[Union[float, int], ...]]
+        ],
+        outputs: Iterable[Any],
+        initial_free_params: List[str],
+        bounds: Union[List[Union[float, int]], Tuple[Union[float, int], ...], None],
+        *args: Any,
+        fitting_method: str = "curve_fit",
+        **kwargs: Any,
+    ) -> Tuple[Any, ...]:
+        """
+        Training loop for the free parameters.
+
+        :param fun: Forward function for callback.
+        :type fun: Callable[Any].
+        :param inputs: Input data for the fitting function.
+        :type inputs: Union[
+            pd.DataFrame, List[float], List[int],
+            List[Tuple[Union[float, int], ...]]
+        ].
+        :param outputs: Labels or expected outputs for the fitting function.
+        :type outputs: Iterable[Any].
+        :param initial_free_params: Free parameters for the fitting function.
+        :type initial_free_params: Iterably[Any].
+        :param bounds: Bounds on the initial_free_params.
+        :type bounds: Union[List[Union[float, int]],
+                            Tuple[Union[float, int], ...], None].
+        :param fitting_method: The name of the fitting method to use.
+                               Available methods: ["curve_fit", "nn"]
+        :type fitting_method: str
+        :param args: Optional args for the fitting function.
+        :type args: Any.
+        :param kwargs: Optional kwargs for the fitting function.
+        :type kwargs: Any.
+        """
+        # TODO: Add training.py to torch_modules/other. \endtodo
+        # TODO: Make dictionary with functions or a function factory calling training loop functions. \endtodo
+
+        if training_methods.get(fitting_method):
+            fit_args = (
+                inputs,
+                outputs,
+                initial_free_params,
+                *fitting_method_args.get(fitting_method),
+            )
+            fit_kwargs = {"bounds": bounds, **fitting_method_args.get(fitting_method)}
+
+            ret = training_methods.get(fitting_method)(*fit_args, **fit_kwargs)  # noqa: F841
+
+        raise NotImplementedError
+        # return ret
+
+    def __fit(
+        self,
+        fun: Callable[..., Any],
+        inputs: Union[
+            pd.DataFrame, List[float], List[int], List[Tuple[Union[float, int], ...]]
+        ],
+        outputs: Iterable[Any],
+        initial_free_params: list[str],
+        bounds: Union[List[Union[float, int]], Tuple[Union[float, int], ...], None],
+        *args: Any,
+        fitting_method: str = "curve_fit",
+        **kwargs: Any,
+    ) -> Tuple[Any, ...]:
+        """
+        The method to obtain the fit parameters. To be updated with control
+        flow for fitting methods other than curve_fit().
+
+        :param fun: Forward function for callback.
+        :type fun: Callable[Any].
+        :param inputs: Input data for the fitting function.
+        :type inputs: Union[
+            pd.DataFrame, List[float], List[int],
+            List[Tuple[Union[float, int], ...]]
+        ].
+        :param outputs: Labels or expected outputs for the fitting function.
+        :type outputs: Iterable[Any].
+        :param initial_free_params: Free parameters for the fitting function.
+        :type initial_free_params: Iterably[Any].
+        :param bounds: Bounds on the initial_free_params.
+        :type bounds: Union[List[Union[float, int]],
+                            Tuple[Union[float, int], ...], None].
+        :param fitting_method: The name of the fitting method to use.
+                               Available methods: ["curve_fit", "nn"]
+        :type fitting_method: str
+        :param args: Optional args for the fitting function.
+        :type args: Any.
+        :param kwargs: Optional kwargs for the fitting function.
+        :type kwargs: Any.
+        """
+        popt, pcov, *_ = self.train_loop(
+            fun,
+            inputs,
+            outputs,
+            initial_free_params,
+            bounds,
+            *args,
+            fitting_method=fitting_method,
+            **kwargs,
+        )
+
+        return popt, pcov, *_
+
+    def fit(
+        self,
+        t_rho_array_like: Union[
+            List[Tuple[float, float]],
+            List[Tuple[int, int]],
+            List[Tuple[int, float]],
+            List[Tuple[float, int]],
+            pd.DataFrame,
+        ],
+        ydata: Union[List[float], pd.DataFrame],
+        initial_free_params: List[Union[str]],
+        *args: Any,
+        IRF: Union[List[Union[float, int]], None, pd.DataFrame] = None,
+        **kwargs: Any,
+    ) -> Tuple[List[float], ...]:
+        """
+        Method used to fit the model by Contini to existing data.
+
+        :param _t_rho_array_like: An array-like input with tuples of the form
+                                  (time, radial_coordinate), xdata.
+        :type _t_rho_array_like: Union[List[Tuple[float, float]],
+                                 List[Tuple[int, int]],
+                                 List[Tuple[int, float]],
+                                 List[Tuple[float, int]],
+                                 pd.DataFrame]
+        :param ydata: The data the model's function gets fit to.
+        :type ydata: List[float]
+        :param initial_free_params: The initial values for the free parameters
+                                    to fit.
+        :type initial_free_params: List[Union[int, float]]
+        :param IRF: Instrument Response Function as a list of the function's
+                    outputs. Default: None.
+        :type IRF: Union[List[Union[float, int]]
+        :param normalize: Decide whether to normalize the function's output to
+                          the data to fit. Default: True.
+        :type normalize: bool
+        :param values_to_fit: Values passed to
+                              scipy.curve_fit(f, ydata, xdata, params)
+                              as ydata.
+        :type values_to_fit: Union[List[str], Any]
+        :param initial_free_params: A list of free parameters passed down to
+                            scipy.curve_fit(f, ydata, xdata, params) as params
+                            for fitting.
+        :type initial_free_params: Union[List[str], Any]
+        :param plot: Controls whether to plot the results. The plots will
+                     be saved. Default: False.
+        :type plot: bool
+        :param show_plot: Controls whether to display the plots.
+                          Default: False.
+        :type show_plot: bool
+        :param save_path: The path where the plots will be saved if provided.
+                          Default: "".
+        :type save_path: str
+        :param log_scale: bool that controls whether the outputs are rescaled
+                          with log. Default: None.
+        :type log_scale: Union[bool, None]
+        :param bounds: Bounds for the parameters in the form of
+                       [List(lower bounds), List(upper bounds)],
+        :type bounds: Union[List[Any], None]
+        :param filter_param: The parameter for filtering the output values
+                             below the threshold of filter_param * max_output + min_output. Default: None.
+        :type filter_param: Union[float, None]
+        :param args: A tuple of free parameters for fitting.
+        :type args: Any
+        :param kwargs: Supports kwargs of the scipy.curve_fit() as well as
+                       mode: "approx", "sum" of the G_function().
+        :type kwargs: Any
+
+        Returns:
+        popt: Values of the free parameters obtained after the function has
+              been fit to the data.
+        pcov: Covariance matrix of the output popt.
+
+        """
+
+        normalize: bool = kwargs.get("normalize") or True
+        values_to_fit: Union[List[str], Any] = kwargs.get("values_to_fit") or [
+            "T_rho_t"
+        ]
+        free_params: Union[List[str], Any] = kwargs.get("free_params") or [
+            "musp",
+            "offset",
+            "scaling",
+        ]
+        plot: bool = kwargs.get("plot") or False
+        show_plot: bool = kwargs.get("show_plot") or False
+        save_path: str = kwargs.get("save_path") or ""
+        log_scale: Union[bool, None] = kwargs.get("log_scale")
+        bounds: Union[List[Union[float, int]], Tuple[Union[float, int], ...], None] = (
+            kwargs.get("bounds") or [None, None]
+        )
+        filter_param: Union[float, None] = kwargs.get("filter_param")
+
+        self.fit_settings(
+            values_to_fit=values_to_fit,
+            free_params=free_params,
+            normalize=normalize,
+            log_scale=log_scale,
+        )
+
+        if self.controls.get("normalize"):
+            max_ydata = np.max(ydata) if np.max(ydata) != 0 else 1
+            self._max_ydata = max_ydata
+
+        _ydata_raw: Union[pd.DataFrame, torch.Tensor] = copy.copy(ydata)
+        _y_max = np.max(_ydata_raw)
+        _y_max_head = np.max(_ydata_raw.head(10))
+
+        if not isinstance(t_rho_array_like, pd.DataFrame):
+            _t_rho_array_like_raw: Union[pd.DataFrame, Any] = pd.DataFrame(
+                t_rho_array_like, columns=["t", "rho"]
+            )
+        else:
+            _t_rho_array_like_raw: Union[pd.DataFrame, Any] = copy.copy(
+                t_rho_array_like
+            )
+
+        _IRF_raw: Union[pd.DataFrame, Any] = copy.copy(IRF)
+        _IRF_max = np.max(_IRF_raw)
+        _IRF_max_head = np.max(_IRF_raw.head(10))
+
+        _IRF_raw.reset_index(inplace=True)
+
+        _t_rho_array_like = (
+            _t_rho_array_like_raw.loc[
+                (
+                    _ydata_raw[_ydata_raw.columns[0]]
+                    >= _y_max_head + filter_param * _y_max
+                )
+                | (
+                    _IRF_raw[_IRF_raw.columns[0]]
+                    >= _IRF_max_head + filter_param * _IRF_max
+                )
+            ]
+            if filter_param is not None
+            else _t_rho_array_like_raw
+        )
+
+        _IRF = (
+            _IRF_raw.loc[
+                (
+                    _ydata_raw[_ydata_raw.columns[0]]
+                    >= _y_max_head + filter_param * _y_max
+                )
+                | (
+                    _IRF_raw[_IRF_raw.columns[0]]
+                    >= _IRF_max_head + filter_param * _IRF_max
+                )
+            ]
+            if filter_param is not None
+            else _IRF_raw
+        )
+        _ydata = (
+            _ydata_raw.loc[
+                (
+                    _ydata_raw[_ydata_raw.columns[0]]
+                    >= _y_max_head + filter_param * _y_max
+                )
+                | (
+                    _IRF_raw[_IRF_raw.columns[0]]
+                    >= _IRF_max_head + filter_param * _IRF_max
+                )
+            ]
+            if filter_param is not None
+            else _ydata_raw
+        )
+
+        IRF = self.controls.get("IRF")
+
+        if self.controls.get("log_scale"):
+            _ydata = np.log(ydata - np.min(ydata) + 1)
+
+        self.controls["ydata_info"] = {
+            "ydata_min": np.min(_ydata),
+            "ydata_max": np.max(_ydata),
+        }
+        inputs = torch.tensor(_t_rho_array_like.values)
+        outputs = torch.tensor(_ydata.values)
+        irf = torch.tensor([value for index, value in _IRF.values])
+        self.controls["IRF"] = irf if irf is not None else self.controls.get("IRF")
+        try:
+            popt, pcov, *_ = self.__fit(
+                self.forward,
+                inputs,
+                outputs,
+                initial_free_params,
+                # method="trf",
+                bounds,
+                *args,
+                **kwargs,
+            )
+        except Exception as e:
+            print("\n\n---ERROR---\n")
+            print(inputs)
+            print(outputs)
+            print(e)
+            print("---END ERROR---")
+            raise e
+
+        if plot:
+            rho = _t_rho_array_like[0][1]
+            xdata_t = [t_rho[0] for t_rho in _t_rho_array_like]
+            for value in values_to_fit:
+                index = int(values_to_fit.index(value))
+                params = popt.clone()
+                offset = self._offset if ("offset" not in free_params) else params.pop()
+                musp = self._musp if ("musp" not in free_params) else params.pop()
+                mua = self._mua if ("mua" not in free_params) else params.pop()
+
+                ydata_fit_ = self.forward(
+                    _t_rho_array_like,
+                    mua=mua,
+                    musp=musp,
+                    offset=offset,
+                    normalize=True,
+                    IRF=IRF,
+                )
+
+                if hasattr(ydata_fit_, "__getitem__") or isinstance(
+                    ydata_fit_, Iterable
+                ):
+                    ydata_fit = ydata_fit_[index]
+                else:
+                    ydata_fit = ydata_fit_
+
+                # Fit plot.
+                plt.plot(  # noqa: F841
+                    xdata_t,
+                    ydata_fit,
+                    color="r",
+                    label=f"fit: mua={mua}, musp={musp}, off={offset}",
+                )  # noqa: F841
+
+                # Raw data plot.
+                plt.plot(  # noqa: F841
+                    xdata_t,
+                    ydata,
+                    color="b",
+                    label="raw data",
+                    marker="o",
+                    linestyle=" ",
+                )
+
+                plt.legend(loc="upper right")
+                plt.xlabel("Time in ps")
+                plt.ylabel(f"{value}(t, rho={rho}[mm])/max({value}(t, rho={rho}[mm]))")
+
+                if show_plot:
+                    plt.show()
+                timestamp = datetime.datetime.now().isoformat()
+                path = (
+                    save_path
+                    or f"{pathlib.Path(__file__).resolve().parent.parent.parent}\\plots"
+                )
+                plt.savefig(f"{path}\\{value}{timestamp}.pdf")
+                plt.clf()
+
+        return popt, pcov
+
+
+# TODO: Clean up type hints in methods in tContini.

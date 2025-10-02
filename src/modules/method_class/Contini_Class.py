@@ -2,7 +2,7 @@ import copy
 import datetime
 import pathlib
 from collections.abc import Iterable
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -85,8 +85,8 @@ class Contini(BaseClass):
         self.IRF = IRF
         self.normalize = normalize
         self.values_to_fit = values_to_fit or ["T_rho_t"]
-        self.free_params = free_params or ["musp", "offset", "scaling"]
-        self.ydata_info: Dict[Any, Any] = {}
+        self.free_params = free_params or ["mua", "musp", "offset", "scaling"]
+        self.ydata_info: Dict[Any, Any] = {"_max_ydata": 1, "min_ydata": 0}
         self._offset = 0.0
         self._scaling = 0.0
         self._max_ydata = 1.0
@@ -233,7 +233,7 @@ class Contini(BaseClass):
             eq = kwargs.get("eq") or self.eq
 
             R_rho_t, T_rho_t = Reflectance_Transmittance_rho_t(
-                rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff, **kwargs
+                rho, t, mua, musp, s, m, n1, n2, DD, eq, anisothropy_coeff
             )
 
             R_rho, T_rho = Reflectance_Transmittance_rho(
@@ -478,6 +478,8 @@ class Contini(BaseClass):
             arg = 0 if arg is None else arg
             args_list[arg_index] = 1e-3 * arg
         args = tuple(args_list)
+        mua = args[0]
+        musp = args[1]
 
         value: Any
 
@@ -486,7 +488,7 @@ class Contini(BaseClass):
 
             for value in values_to_fit:
                 index = int(values_to_fit.index(str(value)))
-                ret[value] = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
+                ret[value] = self.evaluate(t_rho_array_like, mua, musp, **kwargs)[index]
 
                 if IRF is not None:
                     ret[value] = convolve(ret[value], IRF, mode="same")
@@ -504,7 +506,7 @@ class Contini(BaseClass):
             for value in values_to_fit:
                 index = int(available_values.index(str(value)))
                 ret = []
-                ret = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
+                ret = self.evaluate(t_rho_array_like, mua, musp, **kwargs)[index]
                 ret = np.array([float(ret_elem) for ret_elem in ret])
 
                 if IRF is not None:
@@ -536,7 +538,7 @@ class Contini(BaseClass):
 
         elif isinstance(values_to_fit, str):
             index = available_values.index(values_to_fit)
-            ret = self.evaluate(t_rho_array_like, *args, **kwargs)[index]
+            ret = self.evaluate(t_rho_array_like, mua, musp, **kwargs)[index]
 
             if IRF is not None:
                 ret = convolve(ret, IRF, mode="same")
@@ -553,22 +555,46 @@ class Contini(BaseClass):
         else:
             return None
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        """
+        Invokes the forward method.
+        """
         return self.forward(*args, **kwargs)
 
     def __fit(
         self,
+        fun: Callable[..., Any],
         inputs: Union[
             pd.DataFrame, List[float], List[int], List[Tuple[Union[float, int], ...]]
         ],
-        outputs: Iterable,
-        initial_free_params: Iterable,
+        outputs: Iterable[Any],
+        initial_free_params: Iterable[Any],
         bounds: Union[List[Union[float, int]], Tuple[Union[float, int], ...]],
         *args: Any,
         **kwargs: Any,
     ) -> Tuple[Any, ...]:
+        """
+        The method to obtain the fit parameters. To be updated with control flow for fitting methods other than curve_fit().
+
+        :param fun: Forward function for callback.
+        :type fun: Callable[Any].
+        :param inputs: Input data for the fitting function.
+        :type inputs: Union[
+            pd.DataFrame, List[float], List[int], List[Tuple[Union[float, int], ...]]
+        ].
+        :param outputs: Labels or expected outputs for the fitting function.
+        :type outputs: Iterable[Any].
+        :param initial_free_params: Free parameters for the fitting function.
+        :type initial_free_params: Iterably[Any].
+        :param bounds: Bounds on the initial_free_params.
+        :type bounds: Union[List[Union[float, int]], Tuple[Union[float, int], ...]].
+        :param args: Optional args for the fitting function.
+        :type args: Any.
+        :param kwargs: Optional kwargs for the fitting function.
+        :type kwargs: Any.
+        """
         popt, pcov, *_ = curve_fit(
-            self.forward,
+            fun,
             inputs,
             outputs,
             initial_free_params,
@@ -815,13 +841,17 @@ class Contini(BaseClass):
         return popt, pcov
 
     def load_data(self, *args: Any, **kwargs: Any) -> None:
-        return NotImplemented
+        raise NotImplementedError
 
     def _load_IRF(self, *args: Any, **kwargs: Any) -> None:
-        return NotImplemented
+        raise NotImplementedError
 
     def load_xdata(self, *args: Any, **kwargs: Any) -> None:
-        return NotImplemented
+        raise NotImplementedError
 
     def _convolve(self, *args: Any, **kwargs: Any) -> None:
-        return NotImplemented
+        raise NotImplementedError
+
+    # TODO: Clean up type hints in methods in Contini.
+
+    # TODO: Add a webhook to automatically update the list of issues on GitHub.

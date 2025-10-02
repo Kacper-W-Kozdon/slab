@@ -5,6 +5,15 @@ default_stages: [commit]
 default_install_hook_types: [pre-commit, commit-msg]
 
 repos:
+  - repo: local
+    hooks:
+      - id: TODO
+        name: TODO
+        entry: python TODO.py
+        language: system
+        always_run: true
+        verbose: true
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.1.11
     hooks:
@@ -16,10 +25,11 @@ repos:
     rev: 5.12.0
     hooks:
       - id: isort
+        additional_dependencies: [toml]
         args:
           [
             "--profile=black",
-            "--py=39",
+            "--py=auto",
             "--line-length=120",
             "--multi-line=3",
             "--trailing-comma",
@@ -27,6 +37,8 @@ repos:
             "--use-parentheses",
             "--ensure-newline-before-comments",
             "--project=CORE,src,config,preprocess,train,transform,main,model",
+            "--config-root=.",
+            "--resolve-all-configs",
           ]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
