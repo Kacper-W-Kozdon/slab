@@ -5,8 +5,8 @@ from typing import Any, NewType
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
-from modules import Contini
-from torch_modules import tContini
+from src.modules import Contini
+from src.torch_modules import tContini
 
 print("\n\n")
 print(pathlib.Path(__file__).resolve(), pathlib.Path(__file__).resolve().parent)

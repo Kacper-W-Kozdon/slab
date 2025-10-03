@@ -3,7 +3,7 @@ import unittest
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from modules import Contini
+from src.modules import Contini
 
 # def func(x, k, s, u):
 #     x=np.array(x)
