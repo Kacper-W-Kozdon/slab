@@ -1,5 +1,6 @@
 import copy
 import os
+import pathlib
 
 import requests.sessions
 from dotenv import load_dotenv
@@ -9,7 +10,10 @@ load_dotenv()
 
 todo_body = []
 
-with open("TODO.md", "r") as todo_file:
+root = pathlib.Path(__file__).parent.resolve()
+print(root)
+
+with open(f"{root}\\TODO.md", "r") as todo_file:
     for line in todo_file:
         line = line.replace("\n", "")
         line = line.replace("\\", "")
