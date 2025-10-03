@@ -11,7 +11,9 @@ todo_body = []
 
 with open("TODO.md", "r") as todo_file:
     for line in todo_file:
-        line = line.replace("\n", "<br>")
+        line = line.replace("\n", "")
+        line = line.replace("\\", "")
+        line = line.replace('"', "'")
         todo_body.append(line)
 
 todo_body_text = "".join(todo_body)
@@ -29,24 +31,33 @@ authorize_headers: dict[str, str] = {
 markdown_headers: dict[str, str] = {
     "X-GitHub-Api-Version": "2022-11-28",
     "Accept": "text/html",
+    "Authorization": f"Bearer {token}",
 }
 
-markdown_data = todo_body_text
+markdown_data = todo_body
 
 session = Session()
 
 
 def markdown_body(
-    url: str, headers: dict[str, str], session: requests.sessions.Session, data: str
+    url: str,
+    headers: dict[str, str],
+    session: requests.sessions.Session,
+    body_list: list[str],
 ) -> str:
-    data = '{"text": ""}'
-    data = data.replace('"text": ""', f'"text": "{data}"')
+    ret = ""
+    for body in body_list:
+        data = '{"text": ""}'
+        # print(body)
+        data = data.replace('"text": ""', f'"text": "{body}"')
 
-    markdown = Request("POST", url, headers=headers, data=data)
-    prepped_markdown = markdown.prepare()
-    resp = session.send(prepped_markdown)
-    print(resp.status_code)
-    return resp.content
+        markdown = Request("POST", url, headers=headers, data=data)
+        prepped_markdown = markdown.prepare()
+        resp = session.send(prepped_markdown)
+        ret += resp.text
+    ret = ret.replace("\n", "")
+    ret = ret.replace('"', "'")
+    return ret
 
 
 print(markdown_body(markdown_url, markdown_headers, session, markdown_data))
@@ -57,9 +68,9 @@ def update_TODO(
 ) -> None:
     print("---Updating TODO---\n")
     auth_headers = copy.copy(headers)
-    test_body = "**TEST1**<br>-[ ] TEST2"
+    # test_body = "<div><h1 class='heading-element'>SLAB Project</h1></div>"
     data = '{"title": "TODO", "body": "", "state": "open"}'
-    data = data.replace('"body": ""', f'"body": "{test_body}"')
+    data = data.replace('"body": ""', f'"body": "{body}"')
     print(data)
 
     patch = Request("PATCH", url, headers=auth_headers, data=data)
@@ -80,7 +91,8 @@ def create_TODO(
 ) -> None:
     print("---Creating TODO---\n")
     auth_headers = copy.copy(headers)
-    data = {"title": "TODO", "body": body, "state": "open"}
+    data = '{"title": "TODO", "body": "", "state": "open"}'
+    data = data.replace('"body": ""', f'"body": "{body}"')
 
     create = Request("POST", url, headers=auth_headers, data=data)
     prepped_create = create.prepare()
@@ -100,6 +112,8 @@ prepped = get.prepare()
 response = session.send(prepped)
 
 if response.json().get("id") is not None:
-    update_TODO(url, authorize_headers, session, todo_body_text)
+    body = markdown_body(markdown_url, markdown_headers, session, markdown_data)
+    update_TODO(url, authorize_headers, session, body)
 else:
-    create_TODO(url, authorize_headers, session, todo_body_text)
+    body = markdown_body(markdown_url, markdown_headers, session, markdown_data)
+    create_TODO(url, authorize_headers, session, body)
